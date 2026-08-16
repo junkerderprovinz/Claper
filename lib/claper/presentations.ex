@@ -258,6 +258,31 @@ defmodule Claper.Presentations do
     |> broadcast(:state_updated)
   end
 
+  @doc """
+  Returns true when the event only accepts messages from authenticated users.
+
+  Always reads the current state from the database, so a caller holding a
+  presentation state loaded earlier cannot accept a message with a stale value
+  after the moderator turned the setting on.
+
+  ## Examples
+
+      iex> authenticated_chat_only?(event_id)
+      false
+
+  """
+  def authenticated_chat_only?(event_id) do
+    query =
+      from(ps in PresentationState,
+        join: pf in PresentationFile,
+        on: ps.presentation_file_id == pf.id,
+        where: pf.event_id == ^event_id,
+        select: ps.authenticated_chat_only
+      )
+
+    Repo.one(query) == true
+  end
+
   @interaction_schemas [
     Claper.Polls.Poll,
     Claper.Forms.Form,

@@ -804,6 +804,23 @@ defmodule ClaperWeb.EventLive.Manage do
   @impl true
   def handle_event(
         "checked",
+        %{"key" => "authenticated_chat_only", "value" => value},
+        %{assigns: %{state: state}} = socket
+      ) do
+    {:ok, new_state} =
+      Claper.Presentations.update_presentation_state(
+        state,
+        %{
+          :authenticated_chat_only => value
+        }
+      )
+
+    {:noreply, socket |> assign(:state, new_state)}
+  end
+
+  @impl true
+  def handle_event(
+        "checked",
         %{"key" => "message_reaction_enabled", "value" => value},
         %{assigns: %{state: state}} = socket
       ) do

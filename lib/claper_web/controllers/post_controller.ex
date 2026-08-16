@@ -19,8 +19,17 @@ defmodule ClaperWeb.PostController do
   def create(conn, %{"event_id" => event_id, "body" => body}) do
     try do
       with event <- Claper.Events.get_event!(event_id) do
-        case Claper.Posts.create_post(event, %{body: body}) do
-          {:ok, post} -> render(conn, "post.json", post: post)
+        # Posts created here carry no user, so an event that only accepts
+        # messages from authenticated attendees cannot accept them.
+        if Claper.Presentations.authenticated_chat_only?(event.id) do
+          conn
+          |> put_status(:forbidden)
+          |> put_view(ClaperWeb.ErrorView)
+          |> render(:"403")
+        else
+          case Claper.Posts.create_post(event, %{body: body}) do
+            {:ok, post} -> render(conn, "post.json", post: post)
+          end
         end
       end
     rescue

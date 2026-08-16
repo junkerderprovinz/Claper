@@ -440,6 +440,17 @@ defmodule ClaperWeb.EventLive.Show do
   @impl true
   def handle_event(
         "save",
+        _params,
+        %{assigns: %{state: %{authenticated_chat_only: true}, current_user: current_user}} =
+          socket
+      )
+      when not is_map(current_user) do
+    {:noreply, socket |> put_flash(:error, gettext("You must be logged in to post a message"))}
+  end
+
+  @impl true
+  def handle_event(
+        "save",
         %{"post" => post_params},
         %{assigns: %{current_user: current_user} = _assigns} = socket
       )
