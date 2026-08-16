@@ -2,7 +2,7 @@ defmodule ClaperWeb.EventLive.ShowTest do
   use ClaperWeb.ConnCase
 
   import Phoenix.LiveViewTest
-  import Claper.{AccountsFixtures, PostsFixtures, PresentationsFixtures}
+  import Claper.{AccountsFixtures, PollsFixtures, PostsFixtures, PresentationsFixtures}
 
   setup [:register_and_log_in_user]
 
@@ -107,6 +107,48 @@ defmodule ClaperWeb.EventLive.ShowTest do
            |> Floki.parse_document!()
            |> Floki.find("[data-caption-text]")
            |> Floki.text() =~ "Live caption text"
+  end
+
+  test "rates a slider poll and shows the average once voted", %{conn: conn, user: user} do
+    presentation_file = presentation_file_fixture(%{user: user}, [:event])
+    presentation_state_fixture(%{presentation_file: presentation_file})
+
+    poll_fixture(%{
+      presentation_file_id: presentation_file.id,
+      position: 0,
+      enabled: true,
+      show_results: true,
+      type: :slider,
+      min_value: 1,
+      max_value: 10,
+      min_label: "Poor",
+      max_label: "Excellent",
+      poll_opts: []
+    })
+
+    {:ok, view, html} = live(conn, ~p"/e/#{presentation_file.event.code}")
+
+    document = Floki.parse_document!(html)
+
+    assert html =~ "Drag the slider to rate"
+    assert html =~ "Poor"
+    assert html =~ "Excellent"
+    assert Floki.attribute(document, "#extended-poll input[type=range]", "min") == ["1"]
+    assert Floki.attribute(document, "#extended-poll input[type=range]", "max") == ["10"]
+    assert Floki.attribute(document, "#extended-poll input[type=range]", "value") == ["5"]
+
+    view
+    |> element("#extended-poll form")
+    |> render_submit(%{"value" => "8"})
+
+    # the vote is broadcast back on the event topic, which refreshes the poll
+    html = render(view)
+
+    assert html =~ "Average rating"
+    assert html =~ "8.0"
+
+    # the slider is gone once the attendee has rated
+    assert html |> Floki.parse_document!() |> Floki.find("#extended-poll input[type=range]") == []
   end
 
   defp classes(document, selector) do

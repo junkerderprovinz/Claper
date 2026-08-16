@@ -176,4 +176,195 @@ defmodule Claper.PollsTest do
                )
     end
   end
+
+  describe "slider polls" do
+    import Claper.{PollsFixtures, PresentationsFixtures}
+
+    test "create_poll/1 accepts a slider poll without any pre-defined choice" do
+      presentation_file = presentation_file_fixture()
+
+      poll =
+        poll_fixture(%{
+          presentation_file_id: presentation_file.id,
+          type: :slider,
+          min_value: 1,
+          max_value: 10,
+          poll_opts: []
+        })
+
+      assert poll.type == :slider
+      assert poll.min_value == 1
+      assert poll.max_value == 10
+      assert poll.poll_opts == []
+    end
+
+    test "create_poll/1 rejects a range whose highest value is not above the lowest one" do
+      presentation_file = presentation_file_fixture()
+
+      assert {:error, %Ecto.Changeset{} = changeset} =
+               Polls.create_poll(%{
+                 title: "some title",
+                 position: 0,
+                 presentation_file_id: presentation_file.id,
+                 type: :slider,
+                 min_value: 5,
+                 max_value: 5,
+                 poll_opts: []
+               })
+
+      assert "must be greater than the lowest value" in errors_on(changeset).max_value
+    end
+
+    test "submit_rating/4 records a rating nobody picked yet as a new poll_opt" do
+      presentation_file = presentation_file_fixture(%{}, [:event])
+
+      poll =
+        poll_fixture(%{
+          presentation_file_id: presentation_file.id,
+          type: :slider,
+          min_value: 1,
+          max_value: 10,
+          poll_opts: []
+        })
+
+      assert {:ok, %Polls.Poll{} = updated_poll} =
+               Polls.submit_rating(
+                 "attendee-1",
+                 presentation_file.event_id,
+                 poll.id,
+                 "7"
+               )
+
+      assert [%{content: "7", vote_count: 1}] = updated_poll.poll_opts
+    end
+
+    test "submit_rating/4 increments a rating already picked instead of duplicating it" do
+      presentation_file = presentation_file_fixture(%{}, [:event])
+
+      poll =
+        poll_fixture(%{
+          presentation_file_id: presentation_file.id,
+          type: :slider,
+          min_value: 1,
+          max_value: 10,
+          poll_opts: []
+        })
+
+      {:ok, _} = Polls.submit_rating("attendee-1", presentation_file.event_id, poll.id, "7")
+
+      {:ok, updated_poll} =
+        Polls.submit_rating("attendee-2", presentation_file.event_id, poll.id, "7")
+
+      assert [%{content: "7", vote_count: 2}] = updated_poll.poll_opts
+    end
+
+    test "submit_rating/4 records a poll_vote, so the attendee cannot rate twice" do
+      presentation_file = presentation_file_fixture(%{}, [:event])
+
+      poll =
+        poll_fixture(%{
+          presentation_file_id: presentation_file.id,
+          type: :slider,
+          min_value: 1,
+          max_value: 10,
+          poll_opts: []
+        })
+
+      {:ok, _} = Polls.submit_rating("attendee-1", presentation_file.event_id, poll.id, "7")
+
+      assert [%Polls.PollVote{}] = Polls.get_poll_vote("attendee-1", poll.id)
+    end
+
+    test "submit_rating/4 with a value outside the poll's range returns an error" do
+      presentation_file = presentation_file_fixture(%{}, [:event])
+
+      poll =
+        poll_fixture(%{
+          presentation_file_id: presentation_file.id,
+          type: :slider,
+          min_value: 1,
+          max_value: 10,
+          poll_opts: []
+        })
+
+      assert {:error, :out_of_range} =
+               Polls.submit_rating("attendee-1", presentation_file.event_id, poll.id, "42")
+
+      assert {:error, :out_of_range} =
+               Polls.submit_rating("attendee-1", presentation_file.event_id, poll.id, "0")
+
+      assert {:error, :out_of_range} =
+               Polls.submit_rating("attendee-1", presentation_file.event_id, poll.id, "seven")
+    end
+
+    test "average_rating/1 weights every value by the number of votes it got" do
+      presentation_file = presentation_file_fixture()
+
+      poll =
+        poll_fixture(%{
+          presentation_file_id: presentation_file.id,
+          type: :slider,
+          min_value: 1,
+          max_value: 10,
+          poll_opts: [
+            %{content: "2", vote_count: 1},
+            %{content: "9", vote_count: 3}
+          ]
+        })
+
+      assert Polls.average_rating(poll) == 7.3
+    end
+
+    test "average_rating/1 returns nil while nobody has rated yet" do
+      presentation_file = presentation_file_fixture()
+
+      poll =
+        poll_fixture(%{
+          presentation_file_id: presentation_file.id,
+          type: :slider,
+          min_value: 1,
+          max_value: 10,
+          poll_opts: []
+        })
+
+      assert Polls.average_rating(poll) == nil
+    end
+
+    test "rating_distribution/1 covers the whole range and scales to the most picked value" do
+      presentation_file = presentation_file_fixture()
+
+      poll =
+        poll_fixture(%{
+          presentation_file_id: presentation_file.id,
+          type: :slider,
+          min_value: 1,
+          max_value: 3,
+          poll_opts: [
+            %{content: "1", vote_count: 1},
+            %{content: "3", vote_count: 4}
+          ]
+        })
+
+      assert [
+               %{value: 1, vote_count: 1, percentage: 25},
+               %{value: 2, vote_count: 0, percentage: 0},
+               %{value: 3, vote_count: 4, percentage: 100}
+             ] = Polls.rating_distribution(poll)
+    end
+
+    test "default_rating/1 starts the slider in the middle of the range" do
+      presentation_file = presentation_file_fixture()
+
+      poll =
+        poll_fixture(%{
+          presentation_file_id: presentation_file.id,
+          type: :slider,
+          min_value: 1,
+          max_value: 5,
+          poll_opts: []
+        })
+
+      assert Polls.default_rating(poll) == 3
+    end
+  end
 end
