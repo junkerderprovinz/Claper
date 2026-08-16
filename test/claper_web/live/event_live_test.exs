@@ -211,6 +211,21 @@ defmodule ClaperWeb.EventLiveTest do
         assert render(manage_live) =~ "Thumbnail regeneration started"
       end)
     end
+
+    test "toggles requiring a login to post", %{
+      conn: conn,
+      presentation_file: presentation_file
+    } do
+      {:ok, manage_live, html} = live(conn, ~p"/e/#{presentation_file.event.code}/manage")
+
+      assert html =~ "Require login to post"
+      refute Claper.Presentations.authenticated_chat_only?(presentation_file.event_id)
+
+      render_click(manage_live, "checked", %{"key" => "authenticated_chat_only", "value" => true})
+
+      assert Claper.Presentations.authenticated_chat_only?(presentation_file.event_id)
+      assert render(manage_live) =~ "Allow messages without login"
+    end
   end
 
   describe "Stats" do
