@@ -37,59 +37,59 @@
 
       <%= if input_value(f, :type) != :word_cloud do %>
         <%= inputs_for f, :poll_opts, fn i -> %>
-        <.text_field
-          form={i}
-          key={:content}
-          label={ngettext("Choice %{count}", "Choice %{count}", i.index + 1)}
-          autocomplete="off"
-          required
-        >
-          <:trailing :if={i.index >= 2}>
-            <button
-              type="button"
-              phx-click="remove_opt"
-              phx-value-opt={i.index}
-              phx-target={@myself}
-              aria-label={gettext("Remove choice")}
-              class="btn btn-circle btn-error !size-12 shrink-0"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke-width="2"
-                stroke="currentColor"
-                class="h-5 w-5"
+          <.text_field
+            form={i}
+            key={:content}
+            label={ngettext("Choice %{count}", "Choice %{count}", i.index + 1)}
+            autocomplete="off"
+            required
+          >
+            <:trailing :if={i.index >= 2}>
+              <button
+                type="button"
+                phx-click="remove_opt"
+                phx-value-opt={i.index}
+                phx-target={@myself}
+                aria-label={gettext("Remove choice")}
+                class="btn btn-circle btn-error !size-12 shrink-0"
               >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M4 7h16M10 11v6M14 11v6M5 7l1 13a2 2 0 002 2h8a2 2 0 002-2l1-13M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3"
-                />
-              </svg>
-            </button>
-          </:trailing>
-        </.text_field>
-      <% end %>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke-width="2"
+                  stroke="currentColor"
+                  class="h-5 w-5"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M4 7h16M10 11v6M14 11v6M5 7l1 13a2 2 0 002 2h8a2 2 0 002-2l1-13M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3"
+                  />
+                </svg>
+              </button>
+            </:trailing>
+          </.text_field>
+        <% end %>
 
-      <button
-        type="button"
-        phx-click="add_opt"
-        phx-target={@myself}
-        class="btn btn-sm bg-base-200 text-base-content border-none hover:bg-base-300 gap-1.5 self-start !h-9"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke-width="2"
-          stroke="currentColor"
-          class="h-4 w-4"
+        <button
+          type="button"
+          phx-click="add_opt"
+          phx-target={@myself}
+          class="btn btn-sm bg-base-200 text-base-content border-none hover:bg-base-300 gap-1.5 self-start !h-9"
         >
-          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-        </svg>
-        {gettext("Add")}
-      </button>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="2"
+            stroke="currentColor"
+            class="h-4 w-4"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+          </svg>
+          {gettext("Add")}
+        </button>
       <% end %>
     </div>
 

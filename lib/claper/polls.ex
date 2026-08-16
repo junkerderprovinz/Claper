@@ -367,7 +367,8 @@ defmodule Claper.Polls do
 
   defp find_matching_poll_opt(poll_id, normalized) do
     from(o in PollOpt,
-      where: o.poll_id == ^poll_id and fragment("lower(?)", o.content) == ^String.downcase(normalized)
+      where:
+        o.poll_id == ^poll_id and fragment("lower(?)", o.content) == ^String.downcase(normalized)
     )
     |> Repo.one()
   end

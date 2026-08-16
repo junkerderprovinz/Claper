@@ -37,6 +37,7 @@ defmodule ClaperWeb.EventLive.PollComponent do
           </div>
         </button>
       </div>
+
       <div
         id="extended-poll"
         class={[
@@ -68,7 +69,9 @@ defmodule ClaperWeb.EventLive.PollComponent do
           </button>
 
           <p class="mb-1 text-xs font-semibold text-gray-400">{gettext("Current poll")}</p>
+
           <p class="mb-1 text-lg font-bold leading-snug text-white">{@poll.title}</p>
+
           <%= cond do %>
             <% @poll.type == :word_cloud -> %>
               <p class="mb-4 text-sm text-gray-400">{gettext("Type your own word or phrase")}</p>
@@ -78,6 +81,7 @@ defmodule ClaperWeb.EventLive.PollComponent do
               <p class="mb-4 text-sm text-gray-400">{gettext("Select one option")}</p>
           <% end %>
         </div>
+
         <div :if={@poll.type == :word_cloud}>
           <.word_cloud_body
             poll={@poll}
@@ -85,6 +89,7 @@ defmodule ClaperWeb.EventLive.PollComponent do
             show_results={@show_results}
           />
         </div>
+
         <div :if={@poll.type != :word_cloud}>
           <div id="poll-options" class="flex flex-col gap-2">
             <%= if (length @poll.poll_opts) > 0 do %>
@@ -104,6 +109,7 @@ defmodule ClaperWeb.EventLive.PollComponent do
                       ]}
                     >
                     </div>
+
                     <div class="z-10 flex min-w-0 items-center gap-3 text-left">
                       <span class={[
                         "grid h-4 w-4 shrink-0 place-items-center border-2",
@@ -124,6 +130,7 @@ defmodule ClaperWeb.EventLive.PollComponent do
                       </span>
                       <span class="min-w-0 flex-1 pr-2">{opt.content}</span>
                     </div>
+
                     <span :if={@show_results} class="z-10 shrink-0 text-xs font-bold text-white">
                       {opt.percentage}% ({opt.vote_count})
                     </span>
@@ -147,6 +154,7 @@ defmodule ClaperWeb.EventLive.PollComponent do
                       class="absolute inset-y-0 left-0 rounded-lg bg-primary-900/40 transition-all duration-700"
                     >
                     </div>
+
                     <div class="z-10 flex min-w-0 items-center gap-3 text-left">
                       <span class={[
                         "grid h-4 w-4 shrink-0 place-items-center border-2",
@@ -167,6 +175,7 @@ defmodule ClaperWeb.EventLive.PollComponent do
                       </span>
                       <span class="min-w-0 flex-1 pr-2">{opt.content}</span>
                     </div>
+
                     <span :if={@show_results} class="z-10 shrink-0 text-xs font-bold text-white">
                       {opt.percentage}% ({opt.vote_count})
                     </span>
@@ -194,8 +203,7 @@ defmodule ClaperWeb.EventLive.PollComponent do
                 stroke-linejoin="round"
                 aria-hidden="true"
               >
-                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                <path d="M5 12l5 5l10 -10" />
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" /> <path d="M5 12l5 5l10 -10" />
               </svg>
               {gettext("Voted")}
             </button>
@@ -234,11 +242,7 @@ defmodule ClaperWeb.EventLive.PollComponent do
 
     ~H"""
     <div>
-      <form
-        :if={!@already_submitted}
-        phx-submit="submit-word"
-        class="flex items-center gap-2"
-      >
+      <form :if={!@already_submitted} phx-submit="submit-word" class="flex items-center gap-2">
         <input
           type="text"
           name="word"
@@ -248,7 +252,11 @@ defmodule ClaperWeb.EventLive.PollComponent do
           class="input input-bordered flex-1 bg-gray-800 text-white placeholder:text-gray-500"
           required
         />
-        <button type="submit" phx-disable-with="..." class="btn-gradient rounded-lg px-4 py-2 text-sm font-bold">
+        <button
+          type="submit"
+          phx-disable-with="..."
+          class="btn-gradient rounded-lg px-4 py-2 text-sm font-bold"
+        >
           {gettext("Send")}
         </button>
       </form>
@@ -275,6 +283,16 @@ defmodule ClaperWeb.EventLive.PollComponent do
 
   # Scales word-cloud font size from the option's share of total votes:
   # smallest legible size at 0%, up to a clearly-dominant size at 100%.
+  # Polls.calculate_percentage/2 returns a binary (via :erlang.float_to_binary),
+  # not a number -- same as every other opt.percentage use in this file, which
+  # all interpolate it directly into a string ("{opt.percentage}%").
+  defp word_size(percentage) when is_binary(percentage) do
+    case Integer.parse(percentage) do
+      {value, _rest} -> 14 + round(value / 100 * 34)
+      :error -> 14
+    end
+  end
+
   defp word_size(percentage) when is_number(percentage) do
     14 + round(percentage / 100 * 34)
   end

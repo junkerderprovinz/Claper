@@ -212,7 +212,9 @@ defmodule Claper.PollsTest do
         })
 
       {:ok, _} = Polls.submit_word("attendee-1", presentation_file.event_id, poll.id, "Great")
-      {:ok, updated_poll} = Polls.submit_word("attendee-2", presentation_file.event_id, poll.id, "great")
+
+      {:ok, updated_poll} =
+        Polls.submit_word("attendee-2", presentation_file.event_id, poll.id, "great")
 
       assert [%{content: "Great", vote_count: 2}] = updated_poll.poll_opts
     end
