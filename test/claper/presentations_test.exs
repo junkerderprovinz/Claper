@@ -171,6 +171,29 @@ defmodule Claper.PresentationsTest do
       assert {:ok, %PresentationState{}} =
                Presentations.update_presentation_state(presentation_state, update_attrs)
     end
+
+    test "authenticated_chat_only?/1 returns false by default" do
+      presentation_file = presentation_file_fixture()
+      presentation_state_fixture(%{presentation_file: presentation_file})
+
+      refute Presentations.authenticated_chat_only?(presentation_file.event_id)
+    end
+
+    test "authenticated_chat_only?/1 returns true once the moderator enabled it" do
+      presentation_file = presentation_file_fixture()
+      presentation_state = presentation_state_fixture(%{presentation_file: presentation_file})
+
+      {:ok, _presentation_state} =
+        Presentations.update_presentation_state(presentation_state, %{
+          authenticated_chat_only: true
+        })
+
+      assert Presentations.authenticated_chat_only?(presentation_file.event_id)
+    end
+
+    test "authenticated_chat_only?/1 returns false for an unknown event" do
+      refute Presentations.authenticated_chat_only?(-1)
+    end
   end
 
   defp put_local_storage_config(storage_dir) do

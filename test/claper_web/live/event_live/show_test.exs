@@ -4,6 +4,8 @@ defmodule ClaperWeb.EventLive.ShowTest do
   import Phoenix.LiveViewTest
   import Claper.{AccountsFixtures, PostsFixtures, PresentationsFixtures}
 
+  alias Claper.Posts
+
   setup [:register_and_log_in_user]
 
   test "renders the fixed attendee room stack and identity menu", %{
@@ -107,6 +109,103 @@ defmodule ClaperWeb.EventLive.ShowTest do
            |> Floki.parse_document!()
            |> Floki.find("[data-caption-text]")
            |> Floki.text() =~ "Live caption text"
+  end
+
+  describe "authenticated_chat_only" do
+    test "replaces the composer with a log in prompt for anonymous attendees", %{user: user} do
+      presentation_file = presentation_file_fixture(%{user: user}, [:event])
+
+      presentation_state_fixture(%{
+        presentation_file: presentation_file,
+        chat_enabled: true,
+        authenticated_chat_only: true
+      })
+
+      {:ok, _view, html} = live(build_conn(), ~p"/e/#{presentation_file.event.code}")
+
+      document = Floki.parse_document!(html)
+
+      assert Floki.find(document, "#post-form") == []
+      assert Floki.find(document, "#login-required-composer") != []
+      assert html =~ "Log in to post a message"
+    end
+
+    test "keeps the composer for logged in attendees", %{conn: conn, user: user} do
+      presentation_file = presentation_file_fixture(%{user: user}, [:event])
+
+      presentation_state_fixture(%{
+        presentation_file: presentation_file,
+        chat_enabled: true,
+        authenticated_chat_only: true
+      })
+
+      {:ok, _view, html} = live(conn, ~p"/e/#{presentation_file.event.code}")
+
+      document = Floki.parse_document!(html)
+
+      assert Floki.find(document, "#post-form") != []
+      assert Floki.find(document, "#login-required-composer") == []
+    end
+
+    test "rejects a message pushed by an anonymous attendee", %{user: user} do
+      presentation_file = presentation_file_fixture(%{user: user}, [:event])
+
+      presentation_state_fixture(%{
+        presentation_file: presentation_file,
+        chat_enabled: true,
+        anonymous_chat_enabled: true,
+        authenticated_chat_only: true
+      })
+
+      {:ok, view, _html} = live(build_conn(), ~p"/e/#{presentation_file.event.code}")
+
+      html = render_click(view, "save", %{"post" => %{"body" => "troll message"}})
+
+      assert html =~ "You must be logged in to post a message"
+      assert Posts.list_posts(presentation_file.event.uuid) == []
+    end
+
+    test "accepts a message from a logged in attendee", %{conn: conn, user: user} do
+      presentation_file = presentation_file_fixture(%{user: user}, [:event])
+
+      presentation_state_fixture(%{
+        presentation_file: presentation_file,
+        chat_enabled: true,
+        anonymous_chat_enabled: true,
+        authenticated_chat_only: true
+      })
+
+      {:ok, view, _html} = live(conn, ~p"/e/#{presentation_file.event.code}")
+
+      render_click(view, "save", %{"post" => %{"body" => "a legitimate question"}})
+
+      assert [%{body: "a legitimate question", user_id: user_id}] =
+               Posts.list_posts(presentation_file.event.uuid)
+
+      assert user_id == user.id
+    end
+
+    test "swaps the composer when the moderator turns it on mid-session", %{user: user} do
+      presentation_file = presentation_file_fixture(%{user: user}, [:event])
+
+      state =
+        presentation_state_fixture(%{
+          presentation_file: presentation_file,
+          chat_enabled: true,
+          authenticated_chat_only: false
+        })
+
+      {:ok, view, html} = live(build_conn(), ~p"/e/#{presentation_file.event.code}")
+
+      assert Floki.find(Floki.parse_document!(html), "#post-form") != []
+
+      send(view.pid, {:state_updated, %{state | authenticated_chat_only: true}})
+
+      document = view |> render() |> Floki.parse_document!()
+
+      assert Floki.find(document, "#post-form") == []
+      assert Floki.find(document, "#login-required-composer") != []
+    end
   end
 
   defp classes(document, selector) do
