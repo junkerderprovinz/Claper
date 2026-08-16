@@ -272,7 +272,7 @@ defmodule ClaperWeb.EventLive.PollComponent do
         <span
           :for={opt <- @poll.poll_opts}
           class="font-bold text-primary-300"
-          style={"font-size: #{word_size(opt.percentage)}px"}
+          style={"font-size: #{ClaperWeb.Helpers.word_size(opt.percentage)}px"}
         >
           {opt.content}
         </span>
@@ -280,24 +280,6 @@ defmodule ClaperWeb.EventLive.PollComponent do
     </div>
     """
   end
-
-  # Scales word-cloud font size from the option's share of total votes:
-  # smallest legible size at 0%, up to a clearly-dominant size at 100%.
-  # Polls.calculate_percentage/2 returns a binary (via :erlang.float_to_binary),
-  # not a number -- same as every other opt.percentage use in this file, which
-  # all interpolate it directly into a string ("{opt.percentage}%").
-  defp word_size(percentage) when is_binary(percentage) do
-    case Integer.parse(percentage) do
-      {value, _rest} -> 14 + round(value / 100 * 34)
-      :error -> 14
-    end
-  end
-
-  defp word_size(percentage) when is_number(percentage) do
-    14 + round(percentage / 100 * 34)
-  end
-
-  defp word_size(_), do: 14
 
   def toggle_poll(js \\ %JS{}) do
     js
