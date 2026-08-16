@@ -699,6 +699,41 @@ defmodule ClaperWeb.EventLive.Show do
 
   @impl true
   def handle_event(
+        "submit-word",
+        %{"word" => word},
+        %{assigns: %{current_user: current_user}} = socket
+      )
+      when is_map(current_user) do
+    case Claper.Polls.submit_word(
+           current_user.id,
+           socket.assigns.event.uuid,
+           socket.assigns.current_interaction.id,
+           word
+         ) do
+      {:ok, poll} -> {:noreply, socket |> get_current_vote(poll.id)}
+      {:error, _changeset} -> {:noreply, socket}
+    end
+  end
+
+  @impl true
+  def handle_event(
+        "submit-word",
+        %{"word" => word},
+        %{assigns: %{attendee_identifier: attendee_identifier}} = socket
+      ) do
+    case Claper.Polls.submit_word(
+           attendee_identifier,
+           socket.assigns.event.uuid,
+           socket.assigns.current_interaction.id,
+           word
+         ) do
+      {:ok, poll} -> {:noreply, socket |> get_current_vote(poll.id)}
+      {:error, _changeset} -> {:noreply, socket}
+    end
+  end
+
+  @impl true
+  def handle_event(
         "next-question",
         _params,
         %{assigns: %{current_quiz_question_idx: current_quiz_question_idx}} = socket

@@ -19,7 +19,24 @@
         autofocus
       />
 
-      <%= inputs_for f, :poll_opts, fn i -> %>
+      <.select_field
+        form={f}
+        key={:type}
+        label={gettext("Poll type")}
+        options={[
+          {gettext("Choice"), :choice},
+          {gettext("Word Cloud"), :word_cloud}
+        ]}
+      />
+
+      <p :if={input_value(f, :type) == :word_cloud} class="text-sm text-base-content/70">
+        {gettext(
+          "Attendees type their own word or short phrase - no choices to set up, the cloud builds itself from what they submit."
+        )}
+      </p>
+
+      <%= if input_value(f, :type) != :word_cloud do %>
+        <%= inputs_for f, :poll_opts, fn i -> %>
         <.text_field
           form={i}
           key={:content}
@@ -73,6 +90,7 @@
         </svg>
         {gettext("Add")}
       </button>
+      <% end %>
     </div>
 
     <div class="flex flex-col gap-1">
@@ -84,7 +102,12 @@
         label={gettext("Attendees can see the results on their device")}
       />
 
-      <.checkbox form={f} key={:multiple} label={gettext("Multiple answers")} />
+      <.checkbox
+        :if={input_value(f, :type) != :word_cloud}
+        form={f}
+        key={:multiple}
+        label={gettext("Multiple answers")}
+      />
     </div>
 
     <div class="flex flex-col gap-2">

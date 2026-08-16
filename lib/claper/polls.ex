@@ -304,6 +304,74 @@ defmodule Claper.Polls do
     end
   end
 
+  @doc """
+  Submits a word for a word-cloud poll: matches it (case-insensitively,
+  trimmed) against an existing poll_opt on this poll and increments its
+  vote_count, or creates a new poll_opt if no match exists. Also records a
+  PollVote the same way a regular choice vote does, so "have I already
+  voted" (Polls.get_poll_vote/2) works identically for both poll types.
+
+  ## Examples
+
+      iex> submit_word(attendee_identifier, event_uuid, poll_id, "great")
+      {:ok, %Poll{}}
+
+      iex> submit_word(attendee_identifier, event_uuid, poll_id, "")
+      {:error, %Ecto.Changeset{}}
+
+  """
+  def submit_word(identifier, event_uuid, poll_id, word) do
+    normalized = word |> String.trim() |> String.slice(0, 60)
+
+    Repo.transaction(fn ->
+      poll_opt =
+        case find_matching_poll_opt(poll_id, normalized) do
+          nil ->
+            %PollOpt{}
+            |> PollOpt.changeset(%{content: normalized, vote_count: 1, poll_id: poll_id})
+            |> Repo.insert()
+
+          opt ->
+            opt
+            |> PollOpt.changeset(%{vote_count: opt.vote_count + 1})
+            |> Repo.update()
+        end
+
+      case poll_opt do
+        {:ok, poll_opt} ->
+          vote_attrs = %{poll_opt_id: poll_opt.id, poll_id: poll_id}
+
+          vote_attrs =
+            if is_number(identifier),
+              do: Map.put(vote_attrs, :user_id, identifier),
+              else: Map.put(vote_attrs, :attendee_identifier, identifier)
+
+          case %PollVote{} |> PollVote.changeset(vote_attrs) |> Repo.insert() do
+            {:ok, _vote} -> poll_opt
+            {:error, changeset} -> Repo.rollback(changeset)
+          end
+
+        {:error, changeset} ->
+          Repo.rollback(changeset)
+      end
+    end)
+    |> case do
+      {:ok, _poll_opt} ->
+        poll = get_poll!(poll_id)
+        broadcast({:ok, poll, event_uuid}, :poll_updated)
+
+      {:error, changeset} ->
+        {:error, changeset}
+    end
+  end
+
+  defp find_matching_poll_opt(poll_id, normalized) do
+    from(o in PollOpt,
+      where: o.poll_id == ^poll_id and fragment("lower(?)", o.content) == ^String.downcase(normalized)
+    )
+    |> Repo.one()
+  end
+
   def disable_all(presentation_file_id, position) do
     from(p in Poll,
       where: p.presentation_file_id == ^presentation_file_id and p.position == ^position

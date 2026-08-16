@@ -9,6 +9,7 @@ defmodule Claper.Polls.Poll do
           total: integer() | nil,
           enabled: boolean() | nil,
           multiple: boolean() | nil,
+          type: :choice | :word_cloud | nil,
           presentation_file_id: integer() | nil,
           poll_opts: [Claper.Polls.PollOpt.t()],
           poll_votes: [Claper.Polls.PollVote.t()] | nil,
@@ -25,6 +26,7 @@ defmodule Claper.Polls.Poll do
     field :enabled, :boolean
     field :multiple, :boolean
     field :show_results, :boolean
+    field :type, Ecto.Enum, values: [:choice, :word_cloud], default: :choice
 
     belongs_to :presentation_file, Claper.Presentations.PresentationFile
 
@@ -47,10 +49,21 @@ defmodule Claper.Polls.Poll do
       :enabled,
       :total,
       :multiple,
-      :show_results
+      :show_results,
+      :type
     ])
-    |> cast_assoc(:poll_opts, required: true)
+    |> cast_assoc(:poll_opts, required: word_cloud?(poll, attrs) == false)
     |> validate_required([:title, :presentation_file_id, :position])
     |> validate_length(:title, max: 255)
+  end
+
+  # Word cloud polls have no pre-defined choices -- attendees type their own
+  # words, which become poll_opts on the fly (see Polls.submit_word/4) --
+  # so, unlike a :choice poll, an empty poll_opts list is valid here.
+  defp word_cloud?(poll, attrs) do
+    type =
+      Map.get(attrs, "type") || Map.get(attrs, :type) || poll.type
+
+    to_string(type) == "word_cloud"
   end
 end

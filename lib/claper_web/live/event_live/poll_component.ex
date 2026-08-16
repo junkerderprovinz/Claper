@@ -69,13 +69,23 @@ defmodule ClaperWeb.EventLive.PollComponent do
 
           <p class="mb-1 text-xs font-semibold text-gray-400">{gettext("Current poll")}</p>
           <p class="mb-1 text-lg font-bold leading-snug text-white">{@poll.title}</p>
-          <%= if @poll.multiple do %>
-            <p class="mb-4 text-sm text-gray-400">{gettext("Select one or multiple options")}</p>
-          <% else %>
-            <p class="mb-4 text-sm text-gray-400">{gettext("Select one option")}</p>
+          <%= cond do %>
+            <% @poll.type == :word_cloud -> %>
+              <p class="mb-4 text-sm text-gray-400">{gettext("Type your own word or phrase")}</p>
+            <% @poll.multiple -> %>
+              <p class="mb-4 text-sm text-gray-400">{gettext("Select one or multiple options")}</p>
+            <% true -> %>
+              <p class="mb-4 text-sm text-gray-400">{gettext("Select one option")}</p>
           <% end %>
         </div>
-        <div>
+        <div :if={@poll.type == :word_cloud}>
+          <.word_cloud_body
+            poll={@poll}
+            current_poll_vote={@current_poll_vote}
+            show_results={@show_results}
+          />
+        </div>
+        <div :if={@poll.type != :word_cloud}>
           <div id="poll-options" class="flex flex-col gap-2">
             <%= if (length @poll.poll_opts) > 0 do %>
               <%= for {opt, idx} <- Enum.with_index(@poll.poll_opts) do %>
@@ -213,6 +223,63 @@ defmodule ClaperWeb.EventLive.PollComponent do
     </div>
     """
   end
+
+  attr :poll, :map, required: true
+  attr :current_poll_vote, :list, required: true
+  attr :show_results, :boolean, required: true
+
+  defp word_cloud_body(assigns) do
+    already_submitted = length(assigns.current_poll_vote) > 0
+    assigns = assigns |> assign(:already_submitted, already_submitted)
+
+    ~H"""
+    <div>
+      <form
+        :if={!@already_submitted}
+        phx-submit="submit-word"
+        class="flex items-center gap-2"
+      >
+        <input
+          type="text"
+          name="word"
+          maxlength="60"
+          autocomplete="off"
+          placeholder={gettext("Type one word or a short phrase...")}
+          class="input input-bordered flex-1 bg-gray-800 text-white placeholder:text-gray-500"
+          required
+        />
+        <button type="submit" phx-disable-with="..." class="btn-gradient rounded-lg px-4 py-2 text-sm font-bold">
+          {gettext("Send")}
+        </button>
+      </form>
+
+      <div :if={@already_submitted && !@show_results} class="text-sm text-gray-400">
+        {gettext("Thanks! Your word has been added to the cloud.")}
+      </div>
+
+      <div
+        :if={(@already_submitted || @show_results) && length(@poll.poll_opts) > 0}
+        class="flex flex-wrap items-baseline justify-center gap-x-3 gap-y-1 py-2"
+      >
+        <span
+          :for={opt <- @poll.poll_opts}
+          class="font-bold text-primary-300"
+          style={"font-size: #{word_size(opt.percentage)}px"}
+        >
+          {opt.content}
+        </span>
+      </div>
+    </div>
+    """
+  end
+
+  # Scales word-cloud font size from the option's share of total votes:
+  # smallest legible size at 0%, up to a clearly-dominant size at 100%.
+  defp word_size(percentage) when is_number(percentage) do
+    14 + round(percentage / 100 * 34)
+  end
+
+  defp word_size(_), do: 14
 
   def toggle_poll(js \\ %JS{}) do
     js

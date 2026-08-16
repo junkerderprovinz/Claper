@@ -176,4 +176,59 @@ defmodule Claper.PollsTest do
                )
     end
   end
+
+  describe "word cloud polls" do
+    import Claper.{PollsFixtures, PresentationsFixtures}
+
+    test "submit_word/4 creates a new poll_opt for a word not seen before" do
+      presentation_file = presentation_file_fixture(%{}, [:event])
+
+      poll =
+        poll_fixture(%{
+          presentation_file_id: presentation_file.id,
+          type: :word_cloud,
+          poll_opts: []
+        })
+
+      assert {:ok, %Polls.Poll{} = updated_poll} =
+               Polls.submit_word(
+                 "attendee-1",
+                 presentation_file.event_id,
+                 poll.id,
+                 "great"
+               )
+
+      assert [%{content: "great", vote_count: 1}] = updated_poll.poll_opts
+    end
+
+    test "submit_word/4 merges a repeated word case-insensitively instead of duplicating it" do
+      presentation_file = presentation_file_fixture(%{}, [:event])
+
+      poll =
+        poll_fixture(%{
+          presentation_file_id: presentation_file.id,
+          type: :word_cloud,
+          poll_opts: []
+        })
+
+      {:ok, _} = Polls.submit_word("attendee-1", presentation_file.event_id, poll.id, "Great")
+      {:ok, updated_poll} = Polls.submit_word("attendee-2", presentation_file.event_id, poll.id, "great")
+
+      assert [%{content: "Great", vote_count: 2}] = updated_poll.poll_opts
+    end
+
+    test "submit_word/4 with a blank word returns an error changeset" do
+      presentation_file = presentation_file_fixture(%{}, [:event])
+
+      poll =
+        poll_fixture(%{
+          presentation_file_id: presentation_file.id,
+          type: :word_cloud,
+          poll_opts: []
+        })
+
+      assert {:error, %Ecto.Changeset{}} =
+               Polls.submit_word("attendee-1", presentation_file.event_id, poll.id, "   ")
+    end
+  end
 end
