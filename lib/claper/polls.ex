@@ -324,35 +324,11 @@ defmodule Claper.Polls do
     normalized = word |> String.trim() |> String.slice(0, 60)
 
     Repo.transaction(fn ->
-      poll_opt =
-        case find_matching_poll_opt(poll_id, normalized) do
-          nil ->
-            %PollOpt{}
-            |> PollOpt.changeset(%{content: normalized, vote_count: 1, poll_id: poll_id})
-            |> Repo.insert()
-
-          opt ->
-            opt
-            |> PollOpt.changeset(%{vote_count: opt.vote_count + 1})
-            |> Repo.update()
-        end
-
-      case poll_opt do
-        {:ok, poll_opt} ->
-          vote_attrs = %{poll_opt_id: poll_opt.id, poll_id: poll_id}
-
-          vote_attrs =
-            if is_number(identifier),
-              do: Map.put(vote_attrs, :user_id, identifier),
-              else: Map.put(vote_attrs, :attendee_identifier, identifier)
-
-          case %PollVote{} |> PollVote.changeset(vote_attrs) |> Repo.insert() do
-            {:ok, _vote} -> poll_opt
-            {:error, changeset} -> Repo.rollback(changeset)
-          end
-
-        {:error, changeset} ->
-          Repo.rollback(changeset)
+      with {:ok, poll_opt} <- upsert_word_poll_opt(poll_id, normalized),
+           {:ok, _vote} <- create_word_poll_vote(identifier, poll_id, poll_opt) do
+        poll_opt
+      else
+        {:error, changeset} -> Repo.rollback(changeset)
       end
     end)
     |> case do
@@ -364,6 +340,36 @@ defmodule Claper.Polls do
         {:error, changeset}
     end
   end
+
+  defp upsert_word_poll_opt(poll_id, normalized) do
+    case find_matching_poll_opt(poll_id, normalized) do
+      nil ->
+        %PollOpt{}
+        |> PollOpt.changeset(%{content: normalized, vote_count: 1, poll_id: poll_id})
+        |> Repo.insert()
+
+      opt ->
+        opt
+        |> PollOpt.changeset(%{vote_count: opt.vote_count + 1})
+        |> Repo.update()
+    end
+  end
+
+  defp create_word_poll_vote(identifier, poll_id, poll_opt) do
+    %PollVote{}
+    |> PollVote.changeset(word_poll_vote_attrs(identifier, poll_id, poll_opt))
+    |> Repo.insert()
+  end
+
+  defp word_poll_vote_attrs(user_id, poll_id, poll_opt) when is_number(user_id),
+    do: %{poll_opt_id: poll_opt.id, poll_id: poll_id, user_id: user_id}
+
+  defp word_poll_vote_attrs(attendee_identifier, poll_id, poll_opt),
+    do: %{
+      poll_opt_id: poll_opt.id,
+      poll_id: poll_id,
+      attendee_identifier: attendee_identifier
+    }
 
   defp find_matching_poll_opt(poll_id, normalized) do
     from(o in PollOpt,
