@@ -701,16 +701,21 @@ defmodule ClaperWeb.EventLive.Show do
   def handle_event(
         "submit-word",
         %{"word" => word},
-        %{assigns: %{current_user: current_user}} = socket
+        %{
+          assigns: %{
+            current_user: current_user,
+            current_interaction: %Polls.Poll{type: :word_cloud, enabled: true} = poll
+          }
+        } = socket
       )
       when is_map(current_user) do
     case Claper.Polls.submit_word(
            current_user.id,
            socket.assigns.event.uuid,
-           socket.assigns.current_interaction.id,
+           poll.id,
            word
          ) do
-      {:ok, poll} -> {:noreply, socket |> get_current_vote(poll.id)}
+      {:ok, updated_poll} -> {:noreply, socket |> get_current_vote(updated_poll.id)}
       {:error, _changeset} -> {:noreply, socket}
     end
   end
@@ -719,17 +724,33 @@ defmodule ClaperWeb.EventLive.Show do
   def handle_event(
         "submit-word",
         %{"word" => word},
-        %{assigns: %{attendee_identifier: attendee_identifier}} = socket
+        %{
+          assigns: %{
+            attendee_identifier: attendee_identifier,
+            current_interaction: %Polls.Poll{type: :word_cloud, enabled: true} = poll
+          }
+        } = socket
       ) do
     case Claper.Polls.submit_word(
            attendee_identifier,
            socket.assigns.event.uuid,
-           socket.assigns.current_interaction.id,
+           poll.id,
            word
          ) do
-      {:ok, poll} -> {:noreply, socket |> get_current_vote(poll.id)}
+      {:ok, updated_poll} -> {:noreply, socket |> get_current_vote(updated_poll.id)}
       {:error, _changeset} -> {:noreply, socket}
     end
+  end
+
+  # Ignore "submit-word" unless the interaction currently on screen really is an
+  # enabled word cloud poll. The event is client-triggered, so without this the
+  # id of whatever unrelated interaction happens to be active would be handed to
+  # Polls.submit_word/4 -- injecting an arbitrary option into a running choice
+  # poll, or raising on an id that belongs to a form/quiz/embed rather than a
+  # poll. Silently ignored, like the other guards in this module.
+  @impl true
+  def handle_event("submit-word", _params, socket) do
+    {:noreply, socket}
   end
 
   @impl true
