@@ -266,7 +266,7 @@ defmodule ClaperWeb.EventLive.PollComponent do
       </div>
 
       <div
-        :if={(@already_submitted || @show_results) && length(@poll.poll_opts) > 0}
+        :if={@show_results && length(@poll.poll_opts) > 0}
         class="flex flex-wrap items-baseline justify-center gap-x-3 gap-y-1 py-2"
       >
         <span
