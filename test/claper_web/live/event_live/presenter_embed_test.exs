@@ -449,6 +449,31 @@ defmodule ClaperWeb.EventLive.PresenterEmbedTest do
       assert presenter =~ "background: black"
     end
 
+    # The first live test in PowerPoint showed nothing at all: the ground had
+    # been made transparent while the text stayed white, which is invisible on a
+    # white slide. Nothing in the markup was wrong, so no test could catch it.
+    test "brings its own light ground so the text is not white on white", %{
+      conn: conn,
+      token: token,
+      presentation_file: presentation_file
+    } do
+      Claper.PollsFixtures.poll_fixture(%{
+        presentation_file_id: presentation_file.id,
+        position: 0,
+        title: "readable poll",
+        show_results: true
+      })
+
+      show_poll(presentation_file)
+
+      html = get(conn, ~p"/embed/interaction/#{token}") |> html_response(200)
+      poll_block = html |> String.split(~s(id="poll")) |> Enum.at(1) |> String.slice(0, 1200)
+
+      assert poll_block =~ "bg-white"
+      assert poll_block =~ "text-gray-900"
+      refute poll_block =~ "text-white"
+    end
+
     test "the same token opens both views", %{conn: conn, token: token} do
       assert {:ok, _view, _html} = live(conn, ~p"/embed/interaction/#{token}")
       assert {:ok, _view, _html} = live(conn, ~p"/embed/presenter/#{token}")

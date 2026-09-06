@@ -55,7 +55,7 @@
       id="poll"
       class={
         if @interaction_only,
-          do: "w-full flex flex-col justify-center p-4",
+          do: "w-full flex flex-col justify-center p-4 bg-white/95 rounded-2xl shadow-lg",
           else:
             "#{if @state.poll_visible, do: "opacity-100", else: "opacity-0 pointer-events-none"} h-full w-full flex flex-col justify-center bg-black/90 absolute z-30 left-1/2 top-1/2 transform -translate-y-1/2 -translate-x-1/2 p-10 transition-opacity"
       }
@@ -63,14 +63,17 @@
       <div class={
         if @interaction_only, do: "w-full mx-auto", else: "w-full md:w-1/2 mx-auto h-full"
       }>
-        <p class={"#{if @iframe, do: "text-xl mb-12", else: "text-5xl mb-24"} text-white font-bold  text-center"}>
+        <%!-- On the projected view this sits on a black overlay, so the text is white.
+        An embed on someone else's slide has no ground of its own, so the block
+        brings a light one and the text turns dark with it. --%>
+        <p class={"#{if @iframe, do: "text-xl mb-6", else: "text-5xl mb-24"} #{if @interaction_only, do: "text-gray-900", else: "text-white"} font-bold text-center"}>
           {@current_poll.title}
         </p>
 
         <div class={"#{if @iframe, do: "space-y-5", else: "space-y-8"} flex flex-col"}>
           <%= if (length @current_poll.poll_opts) > 0 do %>
             <%= for opt <- @current_poll.poll_opts do %>
-              <div class={"#{if @iframe, do: "py-1", else: "py-4"} bg-gray-500 px-6 rounded-3xl flex justify-between items-center relative text-white"}>
+              <div class={"#{if @iframe, do: "py-1", else: "py-4"} #{if @interaction_only, do: "bg-gray-200 text-gray-900", else: "bg-gray-500 text-white"} px-6 rounded-3xl flex justify-between items-center relative"}>
                 <%!-- show_results is the owner's choice about other devices,
                 and the attendee view honours it for both the bar and the
                 numbers. The embed is another device. --%>
