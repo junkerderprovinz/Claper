@@ -386,10 +386,15 @@ defmodule ClaperWeb.AddinControllerTest do
              |> json_response(401)
     end
 
-    test "asking again replaces the previous link", %{conn: conn, token: token} do
+    # An event holds one link at a time, and the one being replaced may live in
+    # a different deck. The sidebar can only warn about that if the answer says
+    # it happened.
+    test "asking again replaces the previous link, and says so", %{conn: conn, token: token} do
       first = conn |> auth(token) |> post(~p"/api/addin/embed_token") |> json_response(201)
       second = conn |> auth(token) |> post(~p"/api/addin/embed_token") |> json_response(201)
 
+      assert first["replaced"] == false
+      assert second["replaced"] == true
       refute first["token"] == second["token"]
       assert build_conn() |> get(~p"/embed/interaction/#{second["token"]}") |> html_response(200)
       assert build_conn() |> get(~p"/embed/interaction/#{first["token"]}") |> html_response(404)

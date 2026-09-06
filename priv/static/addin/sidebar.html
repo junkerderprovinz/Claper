@@ -666,13 +666,17 @@
             cfg.embed = body.token;
             docSet(DOC_EMBED, body.token, function (saved) {
               showLink();
-              say(
-                $("linkMsg"),
-                saved
-                  ? "Ready. Paste it into the Claper object on a slide."
-                  : "Ready, but it could not be saved into this file. Save the presentation, then create it again.",
-                saved ? "ok" : "err"
-              );
+
+              if (!saved) {
+                say($("linkMsg"), "Made, but it could not be saved into this file. Save the presentation, then create it again.", "err");
+              } else if (body.replaced) {
+                // The event holds one link at a time, and it may have been in
+                // another deck. Saying so beats letting the author find out on
+                // a slide that has quietly gone blank.
+                say($("linkMsg"), "Ready. This replaced the event's previous link, so any object still using the old one has stopped working.", "err");
+              } else {
+                say($("linkMsg"), "Ready. Paste it into the Claper object on a slide.", "ok");
+              }
             });
           })
           .catch(function (e) { say($("linkMsg"), e.message, "err"); })

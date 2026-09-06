@@ -191,8 +191,11 @@ defmodule ClaperWeb.AddinController do
   """
   def embed_token(%{assigns: %{addin_event: event}} = conn, _params) do
     case Claper.Events.create_presenter_embed_token_for_addin(event) do
-      {:ok, token} -> conn |> put_status(:created) |> json(%{token: token})
-      {:error, _} -> error(conn, 422, "link could not be created")
+      {:ok, token, replaced} ->
+        conn |> put_status(:created) |> json(%{token: token, replaced: replaced})
+
+      {:error, _} ->
+        error(conn, 422, "link could not be created")
     end
   end
 

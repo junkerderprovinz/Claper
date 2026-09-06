@@ -372,10 +372,12 @@ defmodule Claper.Events do
 
   """
   def create_presenter_embed_token(%Event{} = event, %Accounts.User{} = user) do
-    if leads_event?(event, user) do
-      do_create_presenter_embed_token(event, user)
+    with true <- leads_event?(event, user),
+         {:ok, token, _replaced} <- do_create_presenter_embed_token(event, user) do
+      {:ok, token}
     else
-      {:error, :unauthorized}
+      false -> {:error, :unauthorized}
+      error -> error
     end
   end
 
@@ -387,7 +389,10 @@ defmodule Claper.Events do
   recorded against the event's owner, who is the one whose event the link
   exposes, and who can revoke it from the manage screen like any other.
 
-  It rotates like every other embed link: an event has one at a time.
+  It rotates like every other embed link: an event has one at a time. Returns
+  `{:ok, token, replaced?}`, because the sidebar has to be able to say that the
+  deck's previous link has just stopped working rather than leave the author to
+  discover it on a slide.
   """
   def create_presenter_embed_token_for_addin(%Event{} = event) do
     case Repo.preload(event, :user) do
@@ -415,7 +420,7 @@ defmodule Claper.Events do
     with {:ok, replaced} <- result do
       Claper.Audit.log_resource_action(user, "event.embed_token.create", "event", event.id)
       if replaced > 0, do: broadcast_event(event.uuid, {:presenter_embed_revoked})
-      {:ok, encoded_token}
+      {:ok, encoded_token, replaced > 0}
     end
   end
 
