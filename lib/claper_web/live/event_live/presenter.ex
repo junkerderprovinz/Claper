@@ -22,8 +22,10 @@ defmodule ClaperWeb.EventLive.Presenter do
     # following the deck: the slide it sits on is what selects it, and the
     # presenter advances PowerPoint rather than Claper. Scoped to the event, so
     # an id from another event resolves to nothing.
-    |> assign(:pinned_poll_id, pinned_poll_id(params["poll"]))
+    |> assign(:pinned_poll_id, pinned_id(params["poll"]))
+    |> assign(:pinned_quiz_id, pinned_id(params["quiz"]))
     |> assign(:embed_style, embed_style(params))
+    |> assign(:embed_show, embed_show(params))
     |> mount_event(event, true)
   end
 
@@ -69,6 +71,75 @@ defmodule ClaperWeb.EventLive.Presenter do
   end
 
   @doc """
+  What an embedded block shows: the current interaction, the joining details or
+  the audience's messages.
+
+  `join` is the one that deliberately carries the event code, because a slide
+  deck that keeps its own slides never shows Claper's joining screen, and
+  without it nobody in the room can answer anything. Everywhere else the code
+  stays out of the markup, so putting it on a slide has to be an explicit
+  choice rather than a side effect.
+  """
+  def embed_show(params), do: one_of(params["show"], ~w(interaction join messages), "interaction")
+
+  @doc """
+  The messages an embedded block may show.
+
+  Empty while the owner keeps the chat hidden, so hiding it on the projected
+  view hides it on the slide too. Deleted posts stay in the list as tombstones
+  for the live update on the presenter screen, and are dropped here.
+  """
+  def embed_posts(state, posts, pinned_posts)
+
+  def embed_posts(%{chat_visible: false}, _posts, _pinned_posts), do: []
+
+  def embed_posts(%{show_only_pinned: true}, _posts, pinned_posts),
+    do: Enum.reject(pinned_posts, &(&1.__meta__.state == :deleted))
+
+  def embed_posts(_state, posts, _pinned_posts),
+    do: Enum.reject(posts, &(&1.__meta__.state == :deleted))
+
+  @doc """
+  The heading of an embedded quiz: its title while the questions are not being
+  stepped through, and the current question once they are.
+  """
+  def quiz_heading(%Quiz{} = quiz, idx) when is_integer(idx) and idx >= 0 do
+    case Enum.at(quiz.quiz_questions, idx) do
+      nil -> quiz.title
+      question -> question.content
+    end
+  end
+
+  def quiz_heading(%Quiz{} = quiz, _idx), do: quiz.title
+
+  @doc """
+  The options of the question an embedded quiz is on, or none between questions.
+  """
+  def quiz_opts(%Quiz{} = quiz, idx) when is_integer(idx) and idx >= 0 do
+    case Enum.at(quiz.quiz_questions, idx) do
+      nil -> []
+      question -> question.quiz_question_opts
+    end
+  end
+
+  def quiz_opts(_quiz, _idx), do: []
+
+  @doc """
+  Colours one option of an embedded quiz.
+
+  The correct one is marked only after the owner has released the results.
+  Before that every option looks the same, because the embed sits on a slide the
+  audience is looking at while it answers.
+  """
+  def quiz_opt_colours(opt, show_results, theme)
+
+  def quiz_opt_colours(%{is_correct: true}, true, _theme), do: "bg-green-600 text-white"
+
+  def quiz_opt_colours(_opt, _show_results, "dark"), do: "bg-white/15 text-white"
+
+  def quiz_opt_colours(_opt, _show_results, _theme), do: "bg-gray-200 text-gray-900"
+
+  @doc """
   The corner treatment a bar gets, from the link's `radius`.
   """
   def bar_radius("sharp"), do: "rounded-none"
@@ -81,17 +152,17 @@ defmodule ClaperWeb.EventLive.Presenter do
 
   defp one_of(_value, _allowed, fallback), do: fallback
 
-  # The poll id a pinned embed carries in its query, or nil. Anything that is
-  # not a positive integer is nil rather than an error: the value comes from a
-  # URL a third party document holds.
-  defp pinned_poll_id(raw) when is_binary(raw) do
+  # The interaction id a pinned embed carries in its query, or nil. Anything
+  # that is not a positive integer is nil rather than an error: the value comes
+  # from a URL a third party document holds.
+  defp pinned_id(raw) when is_binary(raw) do
     case Integer.parse(raw) do
       {id, ""} when id > 0 -> id
       _ -> nil
     end
   end
 
-  defp pinned_poll_id(_), do: nil
+  defp pinned_id(_), do: nil
 
   defp mount_event(socket, event, iframe) do
     if connected?(socket) do
@@ -128,7 +199,9 @@ defmodule ClaperWeb.EventLive.Presenter do
         socket.assigns[:live_action] == :interaction
       end)
       |> assign_new(:pinned_poll_id, fn -> nil end)
+      |> assign_new(:pinned_quiz_id, fn -> nil end)
       |> assign_new(:embed_style, fn -> embed_style(%{}) end)
+      |> assign_new(:embed_show, fn -> "interaction" end)
       # False on the regular presenter route. The template uses it to leave the
       # join screen out entirely rather than only hiding it, because the join
       # screen carries the event code and the embeddable link is meant to be
@@ -404,53 +477,31 @@ defmodule ClaperWeb.EventLive.Presenter do
         {:review_quiz_questions},
         socket
       ) do
-    send_update(
-      ClaperWeb.EventLive.ManageableQuizComponent,
-      id: "#{socket.assigns.current_quiz.id}-quiz",
-      current_question_idx: 0
-    )
-
-    {:noreply, socket |> assign(:current_question_idx, 0)}
+    move_to_quiz_question(socket, 0)
   end
 
   @impl true
   def handle_info(
         {:next_quiz_question},
-        socket
+        %{assigns: %{current_quiz: %Quiz{} = quiz, current_question_idx: idx}} = socket
       ) do
-    idx =
-      if socket.assigns.current_question_idx <
-           length(socket.assigns.current_quiz.quiz_questions) - 1,
-         do: socket.assigns.current_question_idx + 1,
-         else: -1
-
-    send_update(
-      ClaperWeb.EventLive.ManageableQuizComponent,
-      id: "#{socket.assigns.current_quiz.id}-quiz",
-      current_question_idx: idx
-    )
-
-    {:noreply, socket |> assign(:current_question_idx, idx)}
+    next = if idx < length(quiz.quiz_questions) - 1, do: idx + 1, else: -1
+    move_to_quiz_question(socket, next)
   end
+
+  @impl true
+  def handle_info({:next_quiz_question}, socket), do: {:noreply, socket}
 
   @impl true
   def handle_info(
         {:prev_quiz_question},
-        socket
+        %{assigns: %{current_quiz: %Quiz{}, current_question_idx: idx}} = socket
       ) do
-    idx =
-      if socket.assigns.current_question_idx > 0,
-        do: socket.assigns.current_question_idx - 1,
-        else: 0
-
-    send_update(
-      ClaperWeb.EventLive.ManageableQuizComponent,
-      id: "#{socket.assigns.current_quiz.id}-quiz",
-      current_question_idx: idx
-    )
-
-    {:noreply, socket |> assign(:current_question_idx, idx)}
+    move_to_quiz_question(socket, max(idx - 1, 0))
   end
+
+  @impl true
+  def handle_info({:prev_quiz_question}, socket), do: {:noreply, socket}
 
   @impl true
   def handle_info({:transcription_created, transcription}, socket) do
@@ -520,11 +571,17 @@ defmodule ClaperWeb.EventLive.Presenter do
     socket
   end
 
-  # A pinned embed keeps its own poll whatever the deck does, so the presenter
-  # moving through Claper cannot change what a PowerPoint slide shows.
+  # An embed keeps the interaction its link names whatever the deck does, so the
+  # presenter moving through Claper cannot change what a PowerPoint slide shows.
   defp poll_at_position(%{assigns: %{pinned_poll_id: id, event: event}} = socket)
        when is_integer(id) do
     assign(socket, :current_poll, Claper.Polls.get_poll_for_event(id, event.id))
+  end
+
+  # A link that names a quiz named one interaction, not two, so the poll the
+  # presenter happens to be standing on in Claper does not come along with it.
+  defp poll_at_position(%{assigns: %{pinned_quiz_id: id}} = socket) when is_integer(id) do
+    assign(socket, :current_poll, nil)
   end
 
   defp poll_at_position(%{assigns: %{event: event, state: state}} = socket) do
@@ -555,6 +612,47 @@ defmodule ClaperWeb.EventLive.Presenter do
            ) do
       socket |> assign(:current_embed, embed)
     end
+  end
+
+  # Stepping through the questions is broadcast to every viewer of the event,
+  # but the component that holds the question index is not on every viewer's
+  # screen: an embed only mounts it once results are released, and an embedded
+  # interaction block draws the quiz itself. Updating a component that is not
+  # there raises, so the index is kept in the socket and only handed on when the
+  # component really is mounted.
+  defp move_to_quiz_question(socket, idx) do
+    if quiz_component_mounted?(socket) do
+      send_update(
+        ClaperWeb.EventLive.ManageableQuizComponent,
+        id: "#{socket.assigns.current_quiz.id}-quiz",
+        current_question_idx: idx
+      )
+    end
+
+    {:noreply, assign(socket, :current_question_idx, idx)}
+  end
+
+  defp quiz_component_mounted?(%{assigns: %{current_quiz: %Quiz{} = quiz} = assigns}) do
+    !assigns.interaction_only && (!assigns.presenter_embed || quiz.show_results)
+  end
+
+  defp quiz_component_mounted?(_socket), do: false
+
+  defp quiz_at_position(%{assigns: %{pinned_quiz_id: id, event: event}} = socket)
+       when is_integer(id) do
+    quiz =
+      Claper.Quizzes.get_quiz_for_event(id, event.id, [
+        :quiz_questions,
+        quiz_questions: :quiz_question_opts
+      ])
+
+    socket |> assign(:current_quiz, quiz) |> assign(:current_question_idx, 0)
+  end
+
+  # The other half of the pair above: a link that names a poll shows that poll
+  # alone.
+  defp quiz_at_position(%{assigns: %{pinned_poll_id: id}} = socket) when is_integer(id) do
+    socket |> assign(:current_quiz, nil) |> assign(:current_question_idx, 0)
   end
 
   defp quiz_at_position(%{assigns: %{event: event, state: state}} = socket) do

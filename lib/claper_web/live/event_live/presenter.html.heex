@@ -44,7 +44,89 @@
       </span>
     </div>
   </div>
-  <!-- POLL -->
+  <%!-- JOIN BLOCK FOR AN EMBEDDED SLIDE --%>
+  <%!-- The deck belongs to PowerPoint here, so Claper's own joining screen is
+  never projected and nobody would know how to answer. This block is that
+  screen, reduced to a card, and it is the single place where an embed carries
+  the event code on purpose. --%>
+  <div
+    :if={@interaction_only && @embed_show == "join"}
+    class={
+      [
+        "w-full flex flex-col items-center justify-center gap-3 p-5 text-center",
+        if(@embed_style.panel == "on",
+          do:
+            if(@embed_style.theme == "dark",
+              do: "bg-gray-900/95 rounded-2xl",
+              else: "bg-white/95 rounded-2xl"
+            ),
+          else: ""
+        ),
+        if(@embed_style.shadow == "on", do: "shadow-lg", else: ""),
+        if(@embed_style.theme == "dark", do: "text-white", else: "text-gray-900")
+      ]
+      |> Enum.join(" ")
+    }
+  >
+    <p class="text-lg font-bold">{gettext("Scan to interact in real-time")}</p>
+    <%!-- A fixed size, not the presenter screen's viewport-relative one: this
+    block is sized by the slide that embeds it, not by the browser window. --%>
+    <div
+      phx-hook="QRCode"
+      data-code={@event.code}
+      data-size="180"
+      id="embed-qr"
+      phx-update="ignore"
+      class="rounded-lg bg-white p-2 flex items-center justify-center"
+    >
+    </div>
+    <p class="text-sm">{gettext("Or go to %{url} and use the code:", url: @host)}</p>
+    <p class="text-3xl font-bold tracking-wide">#{String.upcase(@event.code)}</p>
+  </div>
+
+  <%!-- MESSAGES ON AN EMBEDDED SLIDE --%>
+  <%!-- Claper's own message column lives beside the deck, which a PowerPoint
+  slide does not have, so an embed gets them as a plain list. Only what the
+  owner already shows on the projected view, so hiding the chat hides this too. --%>
+  <div
+    :if={@interaction_only && @embed_show == "messages"}
+    class={
+      [
+        "w-full flex flex-col gap-2 p-4",
+        if(@embed_style.panel == "on",
+          do:
+            if(@embed_style.theme == "dark",
+              do: "bg-gray-900/95 rounded-2xl",
+              else: "bg-white/95 rounded-2xl"
+            ),
+          else: ""
+        ),
+        if(@embed_style.shadow == "on", do: "shadow-lg", else: "")
+      ]
+      |> Enum.join(" ")
+    }
+  >
+    <p
+      :if={!@state.chat_visible}
+      class={"text-sm #{if @embed_style.theme == "dark", do: "text-gray-300", else: "text-gray-500"}"}
+    >
+      {gettext("Messages are hidden for this event.")}
+    </p>
+    <div
+      :for={post <- embed_posts(@state, @posts, @pinned_posts)}
+      class={"px-3 py-2 #{bar_radius(@embed_style.radius)} #{if @embed_style.theme == "dark", do: "bg-white/10 text-white", else: "bg-gray-100 text-gray-900"}"}
+    >
+      <p
+        :if={post.name}
+        class={"text-xs font-semibold #{if @embed_style.theme == "dark", do: "text-gray-300", else: "text-gray-500"}"}
+      >
+        {post.name}
+      </p>
+      <p class="text-base">{post.body}</p>
+    </div>
+  </div>
+  
+<!-- POLL -->
   <%!-- The embed leaves a hidden poll out entirely rather than fading it to
   opacity-0. On the projected view the only reader is the logged in owner, so
   hiding is enough. Behind an embed link the markup is readable by anyone who
@@ -53,7 +135,8 @@
   <%!-- A pinned embed shows its own poll without waiting for poll_visible: putting
   it on a slide IS the release, and the slide is only shown when the presenter
   reaches it. The results stay behind show_results either way. --%>
-  <%= if @current_poll && (!@presenter_embed || @state.poll_visible || @pinned_poll_id) do %>
+  <%= if (!@interaction_only || @embed_show == "interaction") && @current_poll &&
+           (!@presenter_embed || @state.poll_visible || @pinned_poll_id) do %>
     <div
       id="poll"
       class={
@@ -116,12 +199,61 @@
       </div>
     </div>
   <% end %>
-  <!-- QUIZ -->
+  <%!-- QUIZ ON AN EMBEDDED SLIDE --%>
+  <%!-- Drawn here rather than through ManageableQuizComponent, which marks the
+  correct option with bg-green-600 in the markup and only fades the block out.
+  On the owner's own screen that is fine. Through an embed link it is the answer
+  key, readable while the quiz runs, so this block emits the correct option and
+  the counts only once the owner has released the results. --%>
+  <div
+    :if={@interaction_only && @embed_show == "interaction" && @current_quiz}
+    id="embed-quiz"
+    class={
+      [
+        "w-full flex flex-col justify-center p-4",
+        if(@embed_style.panel == "on",
+          do:
+            if(@embed_style.theme == "dark",
+              do: "bg-gray-900/95 rounded-2xl",
+              else: "bg-white/95 rounded-2xl"
+            ),
+          else: ""
+        ),
+        if(@embed_style.shadow == "on", do: "shadow-lg", else: "")
+      ]
+      |> Enum.join(" ")
+    }
+  >
+    <p class={"text-xl mb-6 font-bold text-center #{if @embed_style.theme == "dark", do: "text-white", else: "text-gray-900"}"}>
+      {quiz_heading(@current_quiz, @current_question_idx)}
+    </p>
+
+    <div :if={@current_question_idx >= 0} class="space-y-5 flex flex-col">
+      <div
+        :for={opt <- quiz_opts(@current_quiz, @current_question_idx)}
+        class={"py-1 px-6 flex justify-between items-center relative overflow-hidden #{bar_radius(@embed_style.radius)} #{quiz_opt_colours(opt, @current_quiz.show_results, @embed_style.theme)}"}
+      >
+        <div
+          style={"width: #{if @current_quiz.show_results, do: opt.percentage, else: 0}%;"}
+          class={"bg-primary h-full absolute left-0 transition-all #{bar_radius(@embed_style.radius)}"}
+        >
+        </div>
+        <div class="flex space-x-3 z-10 text-left">
+          <span class="text-base flex-1 font-bold pr-2">{opt.content}</span>
+        </div>
+        <span :if={@current_quiz.show_results} class="text-base z-10 font-bold">
+          {opt.percentage}% ({opt.response_count})
+        </span>
+      </div>
+    </div>
+  </div>
+  
+<!-- QUIZ -->
   <%!-- Same reason as the poll above, and it matters more here: with
   show_results false the component renders the question, every option and the
   correct one marked with bg-green-600, all of it only faded out. Through an
   embed link that is the answer key, readable while the quiz runs. --%>
-  <%= if @current_quiz && (!@presenter_embed || @current_quiz.show_results) do %>
+  <%= if !@interaction_only && @current_quiz && (!@presenter_embed || @current_quiz.show_results) do %>
     <.live_component
       module={ClaperWeb.EventLive.ManageableQuizComponent}
       id={"#{@current_quiz.id}-quiz"}

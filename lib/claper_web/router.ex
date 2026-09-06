@@ -139,6 +139,22 @@ defmodule ClaperWeb.Router do
     post("/polls", AddinController, :create)
     patch("/polls/:id", AddinController, :update)
     delete("/polls/:id", AddinController, :delete)
+
+    get("/quizzes", AddinController, :quiz_index)
+    post("/quizzes", AddinController, :quiz_create)
+    patch("/quizzes/:id", AddinController, :quiz_update)
+    delete("/quizzes/:id", AddinController, :quiz_delete)
+
+    post("/embed_token", AddinController, :embed_token)
+  end
+
+  # What a block already sitting on a slide may show. Reached with the read-only
+  # embed token, so the block can offer a list of the event's interactions
+  # instead of needing an id typed into its URL by hand.
+  scope "/api/embed", ClaperWeb do
+    pipe_through([:api, ClaperWeb.Plugs.PresenterEmbedEnabled, ClaperWeb.Plugs.EmbedCatalogToken])
+
+    get("/:token/interactions", EmbedCatalogController, :index)
   end
 
   # Enables LiveDashboard only for development

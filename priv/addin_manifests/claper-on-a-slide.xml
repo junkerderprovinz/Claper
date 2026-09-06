@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  The block that sits on a slide. Replace every https://claper.example.com below
+  with your own Claper address, then follow
+  priv/addin_manifests/README.md.
+
+  Separate from the sidebar manifest because a manifest holds one add-in and
+  these are different kinds: this one is placed on a slide, the sidebar is a
+  task pane. Both are needed.
+-->
+<OfficeApp
+  xmlns="http://schemas.microsoft.com/office/appforoffice/1.1"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:type="ContentApp">
+
+  <Id>337a07ef-8c39-479d-a0df-691e752c75bd</Id>
+  <Version>1.0.0.0</Version>
+  <ProviderName>Claper</ProviderName>
+  <DefaultLocale>en-US</DefaultLocale>
+  <DisplayName DefaultValue="Claper on a slide" />
+  <Description DefaultValue="Shows one Claper interaction on this slide: a poll, a quiz, the messages from the room, or how to join. Results come in live while you present." />
+  <IconUrl DefaultValue="https://claper.example.com/images/favicon.png" />
+  <SupportUrl DefaultValue="https://github.com/ClaperCo/Claper" />
+
+  <AppDomains>
+    <AppDomain>https://claper.example.com</AppDomain>
+  </AppDomains>
+
+  <Hosts>
+    <Host Name="Presentation" />
+  </Hosts>
+
+  <DefaultSettings>
+    <SourceLocation DefaultValue="https://claper.example.com/addin/slide.html" />
+    <RequestedWidth>640</RequestedWidth>
+    <RequestedHeight>420</RequestedHeight>
+  </DefaultSettings>
+
+  <Permissions>ReadWriteDocument</Permissions>
+</OfficeApp>

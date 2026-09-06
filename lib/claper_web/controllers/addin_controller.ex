@@ -4,12 +4,14 @@ defmodule ClaperWeb.AddinController do
 
   Every action works on the event the token resolved to, never on an id the
   caller supplies, so the token is the whole authorisation. The surface is kept
-  to what the sidebar needs: list the polls of this event, and create one.
+  to what the sidebar needs: the polls and quizzes of this event, creating and
+  editing them, and issuing the read-only link a slide block reads.
   """
 
   use ClaperWeb, :controller
 
   alias Claper.Polls
+  alias Claper.Quizzes
 
   @doc """
   The event behind the token and its polls, so the sidebar can show what exists
@@ -100,6 +102,100 @@ defmodule ClaperWeb.AddinController do
     end
   end
 
+  @doc """
+  The quizzes of this event.
+  """
+  def quiz_index(%{assigns: %{addin_event: event}} = conn, _params) do
+    quizzes =
+      case event.presentation_file do
+        nil -> []
+        file -> Quizzes.list_quizzes(file.id)
+      end
+
+    json(conn, %{quizzes: Enum.map(quizzes, &quiz_json/1)})
+  end
+
+  @doc """
+  Creates a quiz on this event.
+
+  Positioned past the deck for the same reason a poll made here is: it is
+  selected by its id from a slide of another document, not by a Claper position.
+  """
+  def quiz_create(%{assigns: %{addin_event: event}} = conn, params) do
+    with {:ok, file} <- presentation_file(event),
+         {:ok, title} <- fetch_title(params),
+         {:ok, questions} <- fetch_questions(params) do
+      attrs = %{
+        "title" => title,
+        "presentation_file_id" => file.id,
+        "position" => next_position(file),
+        "enabled" => true,
+        # False, unlike a poll: a quiz has a correct answer, and releasing it
+        # while the room is still answering gives it away. The owner releases it
+        # from the manage screen when the question is over.
+        "show_results" => Map.get(params, "show_results", false),
+        "quiz_questions" => questions
+      }
+
+      case Quizzes.create_quiz(attrs) do
+        {:ok, quiz} ->
+          conn |> put_status(:created) |> json(quiz_json(reload_quiz(quiz)))
+
+        {:error, _changeset} ->
+          error(conn, 422, "quiz could not be created")
+      end
+    else
+      {:error, status, message} -> error(conn, status, message)
+    end
+  end
+
+  @doc """
+  Renames a quiz or replaces its questions.
+  """
+  def quiz_update(%{assigns: %{addin_event: event}} = conn, %{"id" => id} = params) do
+    with {:ok, quiz} <- find_quiz(event, id),
+         {:ok, attrs} <- quiz_update_attrs(params, quiz) do
+      case Quizzes.update_quiz(event.uuid, quiz, attrs) do
+        {:ok, quiz} -> json(conn, quiz_json(reload_quiz(quiz)))
+        {:error, _changeset} -> error(conn, 422, "quiz could not be updated")
+      end
+    else
+      {:error, status, message} -> error(conn, status, message)
+    end
+  end
+
+  @doc """
+  Deletes a quiz of this event.
+  """
+  def quiz_delete(%{assigns: %{addin_event: event}} = conn, %{"id" => id}) do
+    case find_quiz(event, id) do
+      {:ok, quiz} ->
+        Quizzes.delete_quiz(event.uuid, quiz)
+        send_resp(conn, :no_content, "")
+
+      {:error, status, message} ->
+        error(conn, status, message)
+    end
+  end
+
+  @doc """
+  Issues the read-only link a block on a slide reads, and returns it once.
+
+  The sidebar keeps this in the document's own settings, so a deck asks for one
+  link and reuses it. It is a different token from the one authenticating this
+  call: that one writes and stays on this machine, this one only reads and is
+  meant to travel inside the file.
+
+  It replaces any embed link the event already had, the same way the button on
+  the manage screen does, so the response says so and the sidebar asks first.
+  """
+  def embed_token(%{assigns: %{addin_event: event}} = conn, _params) do
+    case Claper.Events.create_presenter_embed_token_for_addin(event) do
+      {:ok, token} -> conn |> put_status(:created) |> json(%{token: token})
+      {:error, _} -> error(conn, 422, "link could not be created")
+    end
+  end
+
   defp find_poll(event, id) do
     with {parsed, ""} <- Integer.parse(to_string(id)),
          poll when not is_nil(poll) <- Polls.get_poll_for_event(parsed, event.id) do
@@ -130,6 +226,94 @@ defmodule ClaperWeb.AddinController do
         {:ok, %{"title" => title}}
     end
   end
+
+  defp find_quiz(event, id) do
+    with {parsed, ""} <- Integer.parse(to_string(id)),
+         quiz when not is_nil(quiz) <-
+           Quizzes.get_quiz_for_event(parsed, event.id, quiz_preload()) do
+      {:ok, quiz}
+    else
+      _ -> {:error, 404, "no such quiz on this event"}
+    end
+  end
+
+  defp quiz_preload, do: [:quiz_questions, quiz_questions: :quiz_question_opts]
+
+  defp reload_quiz(quiz), do: Quizzes.get_quiz!(quiz.id, quiz_preload())
+
+  defp quiz_update_attrs(params, quiz) do
+    title =
+      case fetch_title(params) do
+        {:ok, value} -> value
+        _ -> quiz.title
+      end
+
+    case params do
+      %{"questions" => _} ->
+        with {:ok, questions} <- fetch_questions(params) do
+          {:ok, %{"title" => title, "quiz_questions" => questions}}
+        end
+
+      _ ->
+        {:ok, %{"title" => title}}
+    end
+  end
+
+  # Questions arrive as a list of {content, options}, each option {content,
+  # correct}. Rebuilt rather than patched: the sidebar edits a whole quiz and
+  # sends it back, and `on_replace: :delete` on the association makes that the
+  # shape Ecto expects.
+  defp fetch_questions(%{"questions" => questions}) when is_list(questions) do
+    parsed = Enum.map(questions, &parse_question/1)
+
+    cond do
+      parsed == [] ->
+        {:error, 422, "at least one question is required"}
+
+      Enum.find(parsed, &match?({:error, _, _}, &1)) ->
+        Enum.find(parsed, &match?({:error, _, _}, &1))
+
+      true ->
+        {:ok, Enum.map(parsed, fn {:ok, question} -> question end)}
+    end
+  end
+
+  defp fetch_questions(_), do: {:error, 422, "questions must be a list"}
+
+  defp parse_question(%{"content" => content, "options" => options})
+       when is_binary(content) and is_list(options) do
+    opts =
+      options
+      |> Enum.filter(&is_map/1)
+      |> Enum.map(fn opt ->
+        %{
+          "content" => opt |> Map.get("content", "") |> to_string() |> String.trim(),
+          "is_correct" => opt |> Map.get("correct", false) |> truthy?()
+        }
+      end)
+      |> Enum.reject(&(&1["content"] == ""))
+
+    cond do
+      String.trim(content) == "" ->
+        {:error, 422, "every question needs a text"}
+
+      length(opts) < 2 ->
+        {:error, 422, "every question needs at least two answers"}
+
+      not Enum.any?(opts, & &1["is_correct"]) ->
+        {:error, 422, "every question needs at least one correct answer"}
+
+      true ->
+        {:ok, %{"content" => String.trim(content), "type" => "qcm", "quiz_question_opts" => opts}}
+    end
+  end
+
+  defp parse_question(_), do: {:error, 422, "every question needs a text and answers"}
+
+  # The sidebar sends JSON booleans, but a hand-written call may send the string
+  # a form would. Anything else is false rather than an error: a wrong value here
+  # can only ever mark an answer as not correct, which the changeset then catches.
+  defp truthy?(value), do: value in [true, "true", "on", 1, "1"]
 
   defp presentation_file(%{presentation_file: nil}),
     do: {:error, 409, "this event has no presentation yet"}
@@ -173,6 +357,32 @@ defmodule ClaperWeb.AddinController do
       options:
         Enum.map(poll.poll_opts || [], fn opt ->
           %{id: opt.id, content: opt.content, votes: opt.vote_count}
+        end)
+    }
+  end
+
+  defp quiz_json(quiz) do
+    %{
+      id: quiz.id,
+      title: quiz.title,
+      position: quiz.position,
+      enabled: quiz.enabled,
+      show_results: quiz.show_results,
+      questions:
+        Enum.map(quiz.quiz_questions || [], fn question ->
+          %{
+            id: question.id,
+            content: question.content,
+            options:
+              Enum.map(question.quiz_question_opts || [], fn opt ->
+                %{
+                  id: opt.id,
+                  content: opt.content,
+                  correct: opt.is_correct,
+                  responses: opt.response_count
+                }
+              end)
+          }
         end)
     }
   end

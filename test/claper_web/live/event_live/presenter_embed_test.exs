@@ -793,4 +793,186 @@ defmodule ClaperWeb.EventLive.PresenterEmbedTest do
       assert get_resp_header(conn, "content-security-policy") == []
     end
   end
+
+  describe "the joining block" do
+    # A deck that keeps its own slides never projects Claper's joining screen,
+    # so without this block the room is looking at a question it has no way to
+    # answer.
+    test "carries the code and a QR code when the link asks for it", %{
+      conn: conn,
+      token: token,
+      event: event
+    } do
+      html = get(conn, ~p"/embed/interaction/#{token}?show=join") |> html_response(200)
+
+      assert html =~ String.upcase(event.code)
+      assert html =~ ~s(phx-hook="QRCode")
+      assert html =~ ~s(data-code="#{event.code}")
+    end
+
+    # The code is what lets someone post and vote. It belongs on the joining
+    # block, which the owner put on a slide on purpose, and nowhere else.
+    test "the code stays out of every other embedded view", %{
+      conn: conn,
+      token: token,
+      event: event
+    } do
+      for path <- [
+            ~p"/embed/interaction/#{token}",
+            ~p"/embed/interaction/#{token}?show=messages",
+            ~p"/embed/presenter/#{token}"
+          ] do
+        refute get(conn, path) |> html_response(200) =~ String.upcase(event.code)
+      end
+    end
+
+    test "an unknown show falls back to the interaction", %{
+      conn: conn,
+      token: token,
+      event: event
+    } do
+      html = get(conn, ~p"/embed/interaction/#{token}?show=nonsense") |> html_response(200)
+
+      refute html =~ String.upcase(event.code)
+    end
+  end
+
+  describe "the messages block" do
+    test "shows the audience's messages when the link asks for them", %{
+      conn: conn,
+      token: token,
+      event: event,
+      presentation_file: presentation_file
+    } do
+      Claper.PostsFixtures.post_fixture(%{event: event, body: "a question from the room"})
+
+      {:ok, _state} =
+        Claper.Presentations.update_presentation_state(
+          Claper.Repo.get_by!(Claper.Presentations.PresentationState,
+            presentation_file_id: presentation_file.id
+          ),
+          %{chat_visible: true}
+        )
+
+      html = get(conn, ~p"/embed/interaction/#{token}?show=messages") |> html_response(200)
+
+      assert html =~ "a question from the room"
+    end
+
+    # Hiding the chat is the owner's decision about the room, and a block on a
+    # slide is one more screen in that room.
+    test "hiding the chat empties the block", %{
+      conn: conn,
+      token: token,
+      event: event,
+      presentation_file: presentation_file
+    } do
+      Claper.PostsFixtures.post_fixture(%{event: event, body: "a hidden message"})
+
+      {:ok, _state} =
+        Claper.Presentations.update_presentation_state(
+          Claper.Repo.get_by!(Claper.Presentations.PresentationState,
+            presentation_file_id: presentation_file.id
+          ),
+          %{chat_visible: false}
+        )
+
+      html = get(conn, ~p"/embed/interaction/#{token}?show=messages") |> html_response(200)
+
+      refute html =~ "a hidden message"
+    end
+  end
+
+  describe "a quiz on an embedded slide" do
+    setup %{presentation_file: presentation_file} do
+      quiz =
+        Claper.QuizzesFixtures.quiz_fixture(%{
+          presentation_file: presentation_file,
+          presentation_file_id: presentation_file.id,
+          title: "pinned quiz",
+          show_results: false,
+          quiz_questions: [
+            %{
+              content: "Capital of France?",
+              type: "qcm",
+              quiz_question_opts: [
+                %{content: "Paris", is_correct: true},
+                %{content: "Lyon", is_correct: false}
+              ]
+            }
+          ]
+        })
+
+      %{quiz: quiz}
+    end
+
+    test "shows the question and its answers", %{conn: conn, token: token, quiz: quiz} do
+      html = get(conn, ~p"/embed/interaction/#{token}?quiz=#{quiz.id}") |> html_response(200)
+
+      assert html =~ "Capital of France?"
+      assert html =~ "Paris"
+      assert html =~ "Lyon"
+    end
+
+    # The reason this block does not reuse ManageableQuizComponent: that one puts
+    # bg-green-600 on the correct option and only fades the whole thing out, so
+    # through a link the answer is readable while the room is still answering.
+    test "does not mark the right answer before the results are released", %{
+      conn: conn,
+      token: token,
+      quiz: quiz
+    } do
+      html = get(conn, ~p"/embed/interaction/#{token}?quiz=#{quiz.id}") |> html_response(200)
+
+      refute html =~ "bg-green-600"
+      refute html =~ "response_count"
+      refute html =~ "% ("
+    end
+
+    test "marks it once they are", %{conn: conn, token: token, quiz: quiz, event: event} do
+      {:ok, _quiz} = Claper.Quizzes.update_quiz(event.uuid, quiz, %{show_results: true})
+
+      html = get(conn, ~p"/embed/interaction/#{token}?quiz=#{quiz.id}") |> html_response(200)
+
+      assert html =~ "bg-green-600"
+    end
+
+    test "a quiz of another event is not shown", %{conn: conn, token: token} do
+      other_user = user_fixture()
+      other_file = presentation_file_fixture(%{user: other_user}, [:event])
+
+      foreign =
+        Claper.QuizzesFixtures.quiz_fixture(%{
+          presentation_file: other_file,
+          presentation_file_id: other_file.id,
+          title: "someone else's quiz"
+        })
+
+      html = get(conn, ~p"/embed/interaction/#{token}?quiz=#{foreign.id}") |> html_response(200)
+
+      refute html =~ "someone else's quiz"
+    end
+
+    # An embed that names a quiz must not also start showing whatever poll the
+    # presenter happens to be standing on in Claper.
+    test "pinning a quiz does not let the deck's poll through", %{
+      conn: conn,
+      token: token,
+      quiz: quiz,
+      presentation_file: presentation_file
+    } do
+      Claper.PollsFixtures.poll_fixture(%{
+        presentation_file_id: presentation_file.id,
+        position: 0,
+        title: "the deck's own poll",
+        show_results: true
+      })
+
+      show_poll(presentation_file)
+
+      html = get(conn, ~p"/embed/interaction/#{token}?quiz=#{quiz.id}") |> html_response(200)
+
+      refute html =~ "the deck's own poll"
+    end
+  end
 end

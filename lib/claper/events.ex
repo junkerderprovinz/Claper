@@ -379,6 +379,23 @@ defmodule Claper.Events do
     end
   end
 
+  @doc """
+  Creates an embeddable presenter link on behalf of the PowerPoint sidebar.
+
+  The sidebar has already been authenticated by its own event scoped token, so
+  there is no user session to check here and no user to attribute it to. It is
+  recorded against the event's owner, who is the one whose event the link
+  exposes, and who can revoke it from the manage screen like any other.
+
+  It rotates like every other embed link: an event has one at a time.
+  """
+  def create_presenter_embed_token_for_addin(%Event{} = event) do
+    case Repo.preload(event, :user) do
+      %Event{user: %Accounts.User{} = owner} -> do_create_presenter_embed_token(event, owner)
+      _ -> {:error, :no_owner}
+    end
+  end
+
   defp do_create_presenter_embed_token(%Event{} = event, %Accounts.User{} = user) do
     {encoded_token, event_token} = EventToken.build_presenter_embed_token(event, user)
 

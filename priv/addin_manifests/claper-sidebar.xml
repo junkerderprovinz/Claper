@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  The PowerPoint sidebar. Replace every https://claper.example.com below with
+  your own Claper address, then follow priv/addin_manifests/README.md.
+
+  A manifest holds one add-in, and this one is a task pane, so the block that
+  sits on a slide has its own manifest next to this file. Both are needed.
+-->
+<OfficeApp
+  xmlns="http://schemas.microsoft.com/office/appforoffice/1.1"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:type="TaskPaneApp">
+
+  <Id>6f2b1c14-5a8e-4a3f-9c2d-71b0e4a9d310</Id>
+  <Version>1.0.0.0</Version>
+  <ProviderName>Claper</ProviderName>
+  <DefaultLocale>en-US</DefaultLocale>
+  <DisplayName DefaultValue="Claper" />
+  <Description DefaultValue="Write polls and quizzes for your event without leaving PowerPoint, and put them on your own slides." />
+  <IconUrl DefaultValue="https://claper.example.com/images/favicon.png" />
+  <SupportUrl DefaultValue="https://github.com/ClaperCo/Claper" />
+
+  <AppDomains>
+    <AppDomain>https://claper.example.com</AppDomain>
+  </AppDomains>
+
+  <Hosts>
+    <Host Name="Presentation" />
+  </Hosts>
+
+  <DefaultSettings>
+    <SourceLocation DefaultValue="https://claper.example.com/addin/sidebar.html" />
+  </DefaultSettings>
+
+  <Permissions>ReadWriteDocument</Permissions>
+</OfficeApp>

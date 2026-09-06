@@ -14,6 +14,7 @@
         --brand: #140553;
         --brand-soft: #f3f1fb;
         --danger: #b3261e;
+        --ok: #146c43;
       }
       * { box-sizing: border-box; }
       body {
@@ -23,7 +24,6 @@
       }
       .pad { padding: 1rem 1.05rem; }
 
-      /* Welcome */
       .hero { background: var(--brand); color: #fff; padding: 1.6rem 1.15rem 1.4rem; }
       .hero h1 { margin: 0 0 .45rem; font-size: 1.22rem; line-height: 1.25; letter-spacing: -.01em; }
       .hero p { margin: 0; font-size: .86rem; color: #cfc9ea; }
@@ -57,6 +57,13 @@
       button:disabled { opacity: .55; cursor: default; }
       button:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
 
+      .tabs { display: flex; gap: .15rem; border-bottom: 1px solid var(--line); margin-bottom: .8rem; }
+      .tabs button {
+        background: none; color: var(--muted); border: 0; border-bottom: 2px solid transparent;
+        border-radius: 0; padding: .45rem .55rem; font-size: .82rem;
+      }
+      .tabs button[aria-selected="true"] { color: var(--brand); border-bottom-color: var(--brand); }
+
       .card { border: 1px solid var(--line); border-radius: .65rem; padding: .65rem .7rem; margin-bottom: .55rem; }
       .card .top { display: flex; align-items: start; gap: .5rem; }
       .card .title { font-weight: 600; font-size: .9rem; flex: 1; }
@@ -64,13 +71,22 @@
       .tag.deck { background: #fff4e5; color: #8a4b00; }
       .tag.own { background: var(--brand-soft); color: var(--brand); }
       .opts { color: var(--muted); font-size: .78rem; margin: .25rem 0 .5rem; }
+      .opts .right { color: var(--ok); font-weight: 700; }
       .actions { display: flex; gap: .1rem; flex-wrap: wrap; align-items: center; }
       .linkrow { display: flex; gap: .35rem; margin-top: .5rem; }
       .linkrow input { font-size: .72rem; padding: .35rem .45rem; }
 
+      .qbox { border: 1px solid var(--line); border-radius: .55rem; padding: .55rem .6rem; margin-bottom: .5rem; }
+      .qbox .qhead { display: flex; align-items: center; gap: .4rem; }
+      .qbox .qhead input { flex: 1; }
+      .answer { display: flex; align-items: center; gap: .4rem; margin-top: .35rem; }
+      .answer input[type="text"] { flex: 1; }
+      .answer label { margin: 0; font-weight: 500; font-size: .76rem; color: var(--muted); display: flex; align-items: center; gap: .25rem; white-space: nowrap; }
+      .answer input[type="checkbox"] { width: auto; }
+
       .msg { font-size: .8rem; margin-top: .55rem; min-height: 1.15rem; }
       .msg.err { color: var(--danger); }
-      .msg.ok { color: #146c43; }
+      .msg.ok { color: var(--ok); }
       hr { border: 0; border-top: 1px solid var(--line); margin: 1rem 0; }
       details summary { cursor: pointer; font-weight: 600; font-size: .82rem; padding: .2rem 0; }
       .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
@@ -86,9 +102,9 @@
       </div>
       <div class="pad">
         <ol class="steps">
-          <li><span class="n">1</span><span><b>Connect once</b><span>Your Claper address and the two keys from your event.</span></span></li>
-          <li><span class="n">2</span><span><b>Write a question</b><span>It is created on your event straight away.</span></span></li>
-          <li><span class="n">3</span><span><b>Put it on a slide</b><span>Copy its link into the Claper object on that slide.</span></span></li>
+          <li><span class="n">1</span><span><b>Connect once</b><span>Your Claper address and the sidebar key from your event.</span></span></li>
+          <li><span class="n">2</span><span><b>Write questions</b><span>Polls and quizzes, created on your event straight away.</span></span></li>
+          <li><span class="n">3</span><span><b>Put them on slides</b><span>One link for the whole deck. Each slide then picks what it shows.</span></span></li>
         </ol>
         <div style="margin-top:1rem"><button id="start" type="button">Get started</button></div>
       </div>
@@ -104,10 +120,6 @@
       <input id="token" type="password" placeholder="Event settings, PowerPoint sidebar" />
       <p class="help">Can create and delete questions, so it stays on this computer and never inside a presentation.</p>
 
-      <label for="embed">Slide link</label>
-      <input id="embed" type="url" placeholder="https://claper.example.com/embed/interaction/KEY" />
-      <p class="help">Read only. This is the one that travels inside the file.</p>
-
       <div style="margin-top:.9rem; display:flex; gap:.4rem">
         <button id="save" type="button">Connect</button>
         <button id="backToWelcome" class="secondary" type="button">Back</button>
@@ -117,74 +129,100 @@
 
     <!-- WORK -->
     <div id="work" class="pad" hidden>
-      <div style="display:flex; align-items:center; gap:.5rem">
-        <h2 style="flex:1; margin:0">New question</h2>
+      <div style="display:flex; align-items:center; gap:.5rem; margin-bottom:.6rem">
+        <h2 style="flex:1; margin:0" id="eventName">Your event</h2>
         <button class="link" id="settings" type="button">Connection</button>
       </div>
 
-      <label for="title">Question</label>
-      <input id="title" type="text" placeholder="How was it?" />
-      <label for="options">Answers, one per line</label>
-      <textarea id="options" placeholder="Good&#10;Bad"></textarea>
-      <div style="margin-top:.65rem"><button id="create" type="button">Create question</button></div>
-      <div class="msg" id="createMsg"></div>
-
-      <hr />
-
-      <details id="look">
-        <summary>How it looks on the slide</summary>
-        <div class="grid2" style="margin-top:.5rem">
-          <div>
-            <label for="styleTheme">Text</label>
-            <select id="styleTheme">
-              <option value="light">Dark text</option>
-              <option value="dark">Light text</option>
-            </select>
-          </div>
-          <div>
-            <label for="stylePanel">Background</label>
-            <select id="stylePanel">
-              <option value="on">Card</option>
-              <option value="off">Transparent</option>
-            </select>
-          </div>
-          <div>
-            <label for="styleRadius">Bars</label>
-            <select id="styleRadius">
-              <option value="soft">Slightly rounded</option>
-              <option value="sharp">Square</option>
-              <option value="round">Fully rounded</option>
-            </select>
-          </div>
-          <div>
-            <label for="styleShadow">Shadow</label>
-            <select id="styleShadow">
-              <option value="off">None</option>
-              <option value="on">Soft shadow</option>
-            </select>
-          </div>
-        </div>
-        <p class="help">Applies to the links below. Copy a link again after changing this.</p>
-      </details>
-
-      <hr />
-
-      <div style="display:flex; align-items:center; gap:.5rem">
-        <h2 style="flex:1; margin:0">Questions</h2>
-        <button class="link" id="reload" type="button">Reload</button>
+      <div class="tabs" role="tablist">
+        <button id="tabPolls" type="button" role="tab" aria-selected="true">Polls</button>
+        <button id="tabQuizzes" type="button" role="tab" aria-selected="false">Quizzes</button>
+        <button id="tabSlides" type="button" role="tab" aria-selected="false">On slides</button>
       </div>
-      <div id="polls"></div>
-      <div class="msg" id="listMsg"></div>
+
+      <!-- POLLS -->
+      <div id="panePolls">
+        <label for="title">Question</label>
+        <input id="title" type="text" placeholder="How was it?" />
+        <label for="options">Answers, one per line</label>
+        <textarea id="options" placeholder="Good&#10;Bad"></textarea>
+        <div style="margin-top:.65rem"><button id="create" type="button">Create poll</button></div>
+        <div class="msg" id="createMsg"></div>
+
+        <hr />
+
+        <div style="display:flex; align-items:center; gap:.5rem">
+          <h2 style="flex:1; margin:0">Polls</h2>
+          <button class="link" id="reload" type="button">Reload</button>
+        </div>
+        <div id="polls"></div>
+        <div class="msg" id="listMsg"></div>
+      </div>
+
+      <!-- QUIZZES -->
+      <div id="paneQuizzes" hidden>
+        <label for="quizTitle">Quiz name</label>
+        <input id="quizTitle" type="text" placeholder="Round one" />
+
+        <div id="questions" style="margin-top:.7rem"></div>
+        <button class="link" id="addQuestion" type="button">Add another question</button>
+
+        <div style="margin-top:.65rem"><button id="createQuiz" type="button">Create quiz</button></div>
+        <p class="help">Right answers stay hidden on the slide until you release the results in Claper.</p>
+        <div class="msg" id="quizCreateMsg"></div>
+
+        <hr />
+
+        <div style="display:flex; align-items:center; gap:.5rem">
+          <h2 style="flex:1; margin:0">Quizzes</h2>
+          <button class="link" id="reloadQuizzes" type="button">Reload</button>
+        </div>
+        <div id="quizzes"></div>
+        <div class="msg" id="quizListMsg"></div>
+      </div>
+
+      <!-- SLIDES -->
+      <div id="paneSlides" hidden>
+        <h2>One link for the whole deck</h2>
+        <p class="help" style="margin-bottom:.6rem">
+          Insert the Claper object on a slide, paste this link into it once, then pick there what that slide shows.
+          The link only reads, so it is safe inside the file.
+        </p>
+
+        <div class="linkrow">
+          <input id="slideLink" type="text" readonly placeholder="No link yet" />
+          <button id="copyLink" class="secondary" type="button">Copy</button>
+        </div>
+        <div style="margin-top:.6rem" class="actions">
+          <button id="makeLink" type="button">Create link</button>
+          <button id="replaceLink" class="link danger" type="button" hidden>Replace</button>
+        </div>
+        <div class="msg" id="linkMsg"></div>
+
+        <hr />
+
+        <h2>Insert the object</h2>
+        <ol class="steps">
+          <li><span class="n">1</span><span><b>Insert &gt; Add-ins &gt; My Add-ins</b><span>Pick "Claper on a slide".</span></span></li>
+          <li><span class="n">2</span><span><b>Paste the link</b><span>Once per object, then choose what it shows.</span></span></li>
+          <li><span class="n">3</span><span><b>Copy the object</b><span>Onto the next slide, and change only what it shows.</span></span></li>
+        </ol>
+        <p class="help">
+          PowerPoint does not let a sidebar drop an object onto a slide for you, so this step stays manual.
+        </p>
+      </div>
     </div>
 
     <script>
       // The writing key is kept in this machine's storage, never in
       // Office.context.document.settings: those are saved into the .pptx, and a
       // key that can create and delete questions must not travel with a shared
-      // file. The read-only slide link is the opposite and belongs in it.
-      var LS = { base: "claper.base", token: "claper.token", embed: "claper.embed", style: "claper.style", seen: "claper.seen" };
+      // file. The read-only slide link is the opposite and belongs in the
+      // document, so every machine that opens the deck finds the same one.
+      var LS = { base: "claper.base", token: "claper.token", seen: "claper.seen" };
+      var DOC_EMBED = "claper.embed";
+
       var cfg = { base: "", token: "", embed: "" };
-      var style = { theme: "light", panel: "on", radius: "soft", shadow: "off" };
       var deckLength = 0;
 
       function $(id) { return document.getElementById(id); }
@@ -194,6 +232,21 @@
       }
       function store(key, value) { try { localStorage.setItem(key, value); } catch (e) {} }
       function read(key) { try { return localStorage.getItem(key) || ""; } catch (e) { return ""; } }
+
+      // The document's own settings, which are written into the .pptx. Every
+      // call is guarded: an unsaved or read-only document can refuse, and the
+      // sidebar has to keep working when it does.
+      function docGet(key) {
+        try { return Office.context.document.settings.get(key) || ""; } catch (e) { return ""; }
+      }
+      function docSet(key, value, done) {
+        try {
+          Office.context.document.settings.set(key, value);
+          Office.context.document.settings.saveAsync(function (r) {
+            done(r && r.status === Office.AsyncResultStatus.Succeeded);
+          });
+        } catch (e) { done(false); }
+      }
 
       function api(path, options) {
         options = options || {};
@@ -210,12 +263,12 @@
         });
       }
 
-      function slideLink(pollId) {
-        var base = cfg.embed.replace(/\/+$/, "").split("?")[0];
-        return base + "?poll=" + pollId +
-          "&theme=" + style.theme + "&panel=" + style.panel +
-          "&radius=" + style.radius + "&shadow=" + style.shadow;
+      function embedUrl() {
+        if (!cfg.base || !cfg.embed) return "";
+        return cfg.base.replace(/\/+$/, "") + "/embed/interaction/" + cfg.embed;
       }
+
+      /* ---------- polls ---------- */
 
       function pollCard(poll) {
         var wrap = document.createElement("div");
@@ -262,34 +315,13 @@
           if (!window.confirm('Delete "' + poll.title + '"? Answers already given are deleted with it.')) return;
           delBtn.disabled = true;
           api("/api/addin/polls/" + poll.id, { method: "DELETE" })
-            .then(load)
+            .then(loadPolls)
             .catch(function (e) { say($("listMsg"), e.message, "err"); delBtn.disabled = false; });
         });
 
         actions.appendChild(editBtn);
         actions.appendChild(delBtn);
         wrap.appendChild(actions);
-
-        var row = document.createElement("div");
-        row.className = "linkrow";
-        var field = document.createElement("input");
-        field.readOnly = true;
-        field.value = slideLink(poll.id);
-        field.addEventListener("focus", function () { field.select(); });
-        var copy = document.createElement("button");
-        copy.className = "secondary";
-        copy.type = "button";
-        copy.textContent = "Copy link";
-        copy.addEventListener("click", function () {
-          field.select();
-          navigator.clipboard.writeText(field.value).then(function () {
-            copy.textContent = "Copied";
-            setTimeout(function () { copy.textContent = "Copy link"; }, 1500);
-          });
-        });
-        row.appendChild(field);
-        row.appendChild(copy);
-        wrap.appendChild(row);
 
         return wrap;
       }
@@ -320,7 +352,7 @@
         cancel.className = "secondary";
         cancel.type = "button";
         cancel.textContent = "Cancel";
-        cancel.addEventListener("click", load);
+        cancel.addEventListener("click", loadPolls);
 
         save.addEventListener("click", function () {
           var options = o.value.split("\n").map(function (l) { return l.trim(); }).filter(Boolean);
@@ -332,7 +364,7 @@
           var body = changed ? { title: t.value.trim(), options: options } : { title: t.value.trim() };
 
           api("/api/addin/polls/" + poll.id, { method: "PATCH", body: JSON.stringify(body) })
-            .then(load)
+            .then(loadPolls)
             .catch(function (e) { say($("listMsg"), e.message, "err"); save.disabled = false; });
         });
 
@@ -345,56 +377,337 @@
         t.focus();
       }
 
-      function load() {
+      function loadPolls() {
         say($("listMsg"), "Loading…");
         return api("/api/addin/polls")
           .then(function (body) {
             deckLength = (body.event && body.event.deck_length) || 0;
+            $("eventName").textContent = body.event.name;
+
             var box = $("polls");
             box.innerHTML = "";
-
             var polls = body.polls || [];
             if (!polls.length) {
-              box.innerHTML = '<p class="help">No questions yet.</p>';
+              box.innerHTML = '<p class="help">No polls yet.</p>';
             } else {
               polls.forEach(function (p) { box.appendChild(pollCard(p)); });
             }
-            say($("listMsg"), body.event.name, "ok");
+            say($("listMsg"), "");
           })
           .catch(function (e) { say($("listMsg"), e.message, "err"); });
       }
 
-      function applyStyleInputs() {
-        ["Theme", "Panel", "Radius", "Shadow"].forEach(function (name) {
-          var key = name.toLowerCase();
-          var el = $("style" + name);
-          el.value = style[key];
-          el.addEventListener("change", function () {
-            style[key] = el.value;
-            store(LS.style, JSON.stringify(style));
-            load();
+      /* ---------- quizzes ---------- */
+
+      // One question editor: its text, its answers, and which of them are right.
+      // Used both for a new quiz and for editing an existing one, so the two can
+      // never drift apart.
+      function questionEditor(question) {
+        var box = document.createElement("div");
+        box.className = "qbox";
+
+        var head = document.createElement("div");
+        head.className = "qhead";
+
+        var text = document.createElement("input");
+        text.type = "text";
+        text.placeholder = "What is the capital of France?";
+        text.value = question ? question.content : "";
+        head.appendChild(text);
+
+        var drop = document.createElement("button");
+        drop.className = "link danger";
+        drop.type = "button";
+        drop.textContent = "Remove";
+        drop.addEventListener("click", function () { box.remove(); });
+        head.appendChild(drop);
+        box.appendChild(head);
+
+        var answers = document.createElement("div");
+        box.appendChild(answers);
+
+        function addAnswer(option) {
+          var row = document.createElement("div");
+          row.className = "answer";
+
+          var value = document.createElement("input");
+          value.type = "text";
+          value.placeholder = "Answer";
+          value.value = option ? option.content : "";
+
+          var mark = document.createElement("label");
+          var check = document.createElement("input");
+          check.type = "checkbox";
+          check.checked = !!(option && option.correct);
+          mark.appendChild(check);
+          mark.appendChild(document.createTextNode("Right"));
+
+          var remove = document.createElement("button");
+          remove.className = "link danger";
+          remove.type = "button";
+          remove.textContent = "×";
+          remove.addEventListener("click", function () { row.remove(); });
+
+          row.appendChild(value);
+          row.appendChild(mark);
+          row.appendChild(remove);
+          answers.appendChild(row);
+        }
+
+        var existing = (question && question.options) || [];
+        if (existing.length) {
+          existing.forEach(addAnswer);
+        } else {
+          addAnswer(null);
+          addAnswer(null);
+        }
+
+        var more = document.createElement("button");
+        more.className = "link";
+        more.type = "button";
+        more.textContent = "Add answer";
+        more.addEventListener("click", function () { addAnswer(null); });
+        box.appendChild(more);
+
+        box.readQuestion = function () {
+          var options = [];
+          answers.querySelectorAll(".answer").forEach(function (row) {
+            var content = row.querySelector('input[type="text"]').value.trim();
+            if (content) options.push({ content: content, correct: row.querySelector('input[type="checkbox"]').checked });
           });
+          return { content: text.value.trim(), options: options };
+        };
+
+        return box;
+      }
+
+      function readQuestions(container) {
+        var out = [];
+        container.querySelectorAll(".qbox").forEach(function (box) { out.push(box.readQuestion()); });
+        return out;
+      }
+
+      function questionsValid(questions, target) {
+        if (!questions.length) { say(target, "A quiz needs at least one question.", "err"); return false; }
+        for (var i = 0; i < questions.length; i++) {
+          var q = questions[i];
+          if (!q.content) { say(target, "Question " + (i + 1) + " has no text.", "err"); return false; }
+          if (q.options.length < 2) { say(target, "Question " + (i + 1) + " needs at least two answers.", "err"); return false; }
+          if (!q.options.some(function (o) { return o.correct; })) {
+            say(target, "Question " + (i + 1) + " has no right answer ticked.", "err");
+            return false;
+          }
+        }
+        return true;
+      }
+
+      function quizCard(quiz) {
+        var wrap = document.createElement("div");
+        wrap.className = "card";
+
+        var top = document.createElement("div");
+        top.className = "top";
+
+        var title = document.createElement("div");
+        title.className = "title";
+        title.textContent = quiz.title;
+        top.appendChild(title);
+
+        var tag = document.createElement("span");
+        var onDeck = deckLength > 0 && quiz.position <= deckLength;
+        tag.className = "tag " + (onDeck ? "deck" : "own");
+        tag.textContent = onDeck ? "Claper slide " + quiz.position : "For PowerPoint";
+        top.appendChild(tag);
+        wrap.appendChild(top);
+
+        (quiz.questions || []).forEach(function (question) {
+          var line = document.createElement("div");
+          line.className = "opts";
+          var parts = question.options.map(function (o) {
+            var span = document.createElement("span");
+            if (o.correct) span.className = "right";
+            span.textContent = o.content;
+            return span;
+          });
+          line.appendChild(document.createTextNode(question.content + " — "));
+          parts.forEach(function (span, i) {
+            if (i) line.appendChild(document.createTextNode("  ·  "));
+            line.appendChild(span);
+          });
+          wrap.appendChild(line);
         });
+
+        var actions = document.createElement("div");
+        actions.className = "actions";
+
+        var editBtn = document.createElement("button");
+        editBtn.className = "link";
+        editBtn.type = "button";
+        editBtn.textContent = "Edit";
+        editBtn.addEventListener("click", function () { editQuiz(quiz, wrap); });
+
+        var delBtn = document.createElement("button");
+        delBtn.className = "link danger";
+        delBtn.type = "button";
+        delBtn.textContent = "Delete";
+        delBtn.addEventListener("click", function () {
+          if (!window.confirm('Delete "' + quiz.title + '"? Answers already given are deleted with it.')) return;
+          delBtn.disabled = true;
+          api("/api/addin/quizzes/" + quiz.id, { method: "DELETE" })
+            .then(loadQuizzes)
+            .catch(function (e) { say($("quizListMsg"), e.message, "err"); delBtn.disabled = false; });
+        });
+
+        actions.appendChild(editBtn);
+        actions.appendChild(delBtn);
+        wrap.appendChild(actions);
+
+        return wrap;
+      }
+
+      function editQuiz(quiz, card) {
+        card.innerHTML = "";
+
+        var t = document.createElement("input");
+        t.type = "text";
+        t.value = quiz.title;
+        card.appendChild(t);
+
+        var holder = document.createElement("div");
+        holder.style.marginTop = ".55rem";
+        (quiz.questions || []).forEach(function (q) { holder.appendChild(questionEditor(q)); });
+        card.appendChild(holder);
+
+        var more = document.createElement("button");
+        more.className = "link";
+        more.type = "button";
+        more.textContent = "Add another question";
+        more.addEventListener("click", function () { holder.appendChild(questionEditor(null)); });
+        card.appendChild(more);
+
+        var note = document.createElement("p");
+        note.className = "help";
+        note.textContent = "Saving rebuilds the questions, which clears the answers already given for this quiz.";
+        card.appendChild(note);
+
+        var bar = document.createElement("div");
+        bar.className = "actions";
+        bar.style.marginTop = ".5rem";
+
+        var save = document.createElement("button");
+        save.type = "button";
+        save.textContent = "Save";
+
+        var cancel = document.createElement("button");
+        cancel.className = "secondary";
+        cancel.type = "button";
+        cancel.textContent = "Cancel";
+        cancel.addEventListener("click", loadQuizzes);
+
+        save.addEventListener("click", function () {
+          if (!t.value.trim()) { say($("quizListMsg"), "The quiz needs a name.", "err"); return; }
+          var questions = readQuestions(holder);
+          if (!questionsValid(questions, $("quizListMsg"))) return;
+
+          save.disabled = true;
+          api("/api/addin/quizzes/" + quiz.id, {
+            method: "PATCH",
+            body: JSON.stringify({ title: t.value.trim(), questions: questions })
+          })
+            .then(loadQuizzes)
+            .catch(function (e) { say($("quizListMsg"), e.message, "err"); save.disabled = false; });
+        });
+
+        bar.appendChild(save);
+        bar.appendChild(cancel);
+        card.appendChild(bar);
+        t.focus();
+      }
+
+      function loadQuizzes() {
+        say($("quizListMsg"), "Loading…");
+        return api("/api/addin/quizzes")
+          .then(function (body) {
+            var box = $("quizzes");
+            box.innerHTML = "";
+            var quizzes = body.quizzes || [];
+            if (!quizzes.length) {
+              box.innerHTML = '<p class="help">No quizzes yet.</p>';
+            } else {
+              quizzes.forEach(function (q) { box.appendChild(quizCard(q)); });
+            }
+            say($("quizListMsg"), "");
+          })
+          .catch(function (e) { say($("quizListMsg"), e.message, "err"); });
+      }
+
+      /* ---------- the slide link ---------- */
+
+      function showLink() {
+        var url = embedUrl();
+        $("slideLink").value = url;
+        $("makeLink").textContent = url ? "Create a new link" : "Create link";
+        $("makeLink").hidden = !!url;
+        $("replaceLink").hidden = !url;
+      }
+
+      function makeLink(replacing) {
+        if (replacing && !window.confirm(
+          "Replace the slide link?\n\nEvery Claper object that already uses the old link stops working, " +
+          "in this deck and in any other file using this event."
+        )) return;
+
+        $("makeLink").disabled = true;
+        $("replaceLink").disabled = true;
+        say($("linkMsg"), "Asking Claper…");
+
+        api("/api/addin/embed_token", { method: "POST" })
+          .then(function (body) {
+            cfg.embed = body.token;
+            docSet(DOC_EMBED, body.token, function (saved) {
+              showLink();
+              say(
+                $("linkMsg"),
+                saved
+                  ? "Ready. Paste it into the Claper object on a slide."
+                  : "Ready, but it could not be saved into this file. Save the presentation, then create it again.",
+                saved ? "ok" : "err"
+              );
+            });
+          })
+          .catch(function (e) { say($("linkMsg"), e.message, "err"); })
+          .then(function () {
+            $("makeLink").disabled = false;
+            $("replaceLink").disabled = false;
+          });
+      }
+
+      /* ---------- tabs ---------- */
+
+      function selectTab(which) {
+        var tabs = { polls: "tabPolls", quizzes: "tabQuizzes", slides: "tabSlides" };
+        var panes = { polls: "panePolls", quizzes: "paneQuizzes", slides: "paneSlides" };
+        Object.keys(tabs).forEach(function (key) {
+          $(tabs[key]).setAttribute("aria-selected", String(key === which));
+          $(panes[key]).hidden = key !== which;
+        });
+        if (which === "quizzes") loadQuizzes();
+        if (which === "slides") showLink();
       }
 
       Office.onReady(function () {
         cfg.base = read(LS.base);
         cfg.token = read(LS.token);
-        cfg.embed = read(LS.embed);
-
-        try {
-          var saved = read(LS.style);
-          if (saved) style = Object.assign(style, JSON.parse(saved));
-        } catch (e) {}
+        cfg.embed = docGet(DOC_EMBED);
 
         $("base").value = cfg.base;
         $("token").value = cfg.token;
-        $("embed").value = cfg.embed;
-        applyStyleInputs();
 
-        if (cfg.base && cfg.token && cfg.embed) {
+        $("questions").appendChild(questionEditor(null));
+
+        if (cfg.base && cfg.token) {
           show("work");
-          load();
+          loadPolls();
         } else if (read(LS.seen)) {
           show("connect");
         } else {
@@ -407,26 +720,41 @@
         });
         $("backToWelcome").addEventListener("click", function () { show("welcome"); });
         $("settings").addEventListener("click", function () { show("connect"); });
-        $("reload").addEventListener("click", load);
+        $("reload").addEventListener("click", loadPolls);
+        $("reloadQuizzes").addEventListener("click", loadQuizzes);
+
+        $("tabPolls").addEventListener("click", function () { selectTab("polls"); });
+        $("tabQuizzes").addEventListener("click", function () { selectTab("quizzes"); });
+        $("tabSlides").addEventListener("click", function () { selectTab("slides"); });
+
+        $("makeLink").addEventListener("click", function () { makeLink(false); });
+        $("replaceLink").addEventListener("click", function () { makeLink(true); });
+        $("copyLink").addEventListener("click", function () {
+          var field = $("slideLink");
+          if (!field.value) return;
+          field.select();
+          navigator.clipboard.writeText(field.value).then(function () {
+            $("copyLink").textContent = "Copied";
+            setTimeout(function () { $("copyLink").textContent = "Copy"; }, 1500);
+          });
+        });
 
         $("save").addEventListener("click", function () {
           cfg.base = $("base").value.trim();
           cfg.token = $("token").value.trim();
-          cfg.embed = $("embed").value.trim();
 
-          if (!cfg.base || !cfg.token || !cfg.embed) {
-            say($("connectMsg"), "All three are needed.", "err");
+          if (!cfg.base || !cfg.token) {
+            say($("connectMsg"), "Both are needed.", "err");
             return;
           }
 
           store(LS.base, cfg.base);
           store(LS.token, cfg.token);
-          store(LS.embed, cfg.embed);
           store(LS.seen, "1");
 
           say($("connectMsg"), "");
           show("work");
-          load();
+          loadPolls();
         });
 
         $("create").addEventListener("click", function () {
@@ -445,11 +773,37 @@
             .then(function () {
               $("title").value = "";
               $("options").value = "";
-              say($("createMsg"), "Created. Copy its link onto a slide.", "ok");
-              return load();
+              say($("createMsg"), "Created. Pick it on a slide.", "ok");
+              return loadPolls();
             })
             .catch(function (e) { say($("createMsg"), e.message, "err"); })
             .then(function () { $("create").disabled = false; });
+        });
+
+        $("addQuestion").addEventListener("click", function () {
+          $("questions").appendChild(questionEditor(null));
+        });
+
+        $("createQuiz").addEventListener("click", function () {
+          var title = $("quizTitle").value.trim();
+          if (!title) { say($("quizCreateMsg"), "The quiz needs a name.", "err"); return; }
+
+          var questions = readQuestions($("questions"));
+          if (!questionsValid(questions, $("quizCreateMsg"))) return;
+
+          $("createQuiz").disabled = true;
+          say($("quizCreateMsg"), "Creating…");
+
+          api("/api/addin/quizzes", { method: "POST", body: JSON.stringify({ title: title, questions: questions }) })
+            .then(function () {
+              $("quizTitle").value = "";
+              $("questions").innerHTML = "";
+              $("questions").appendChild(questionEditor(null));
+              say($("quizCreateMsg"), "Created. Pick it on a slide.", "ok");
+              return loadQuizzes();
+            })
+            .catch(function (e) { say($("quizCreateMsg"), e.message, "err"); })
+            .then(function () { $("createQuiz").disabled = false; });
         });
       });
     </script>
