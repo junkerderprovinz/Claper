@@ -71,6 +71,11 @@ defmodule ClaperWeb.EventLive.Presenter do
       )
       |> assign(:event, event)
       |> assign(:iframe, iframe)
+      # The interaction route drops the deck and the black ground, so the block
+      # can sit on a slide of the document that embeds it.
+      |> assign_new(:interaction_only, fn ->
+        socket.assigns[:live_action] == :interaction
+      end)
       # False on the regular presenter route. The template uses it to leave the
       # join screen out entirely rather than only hiding it, because the join
       # screen carries the event code and the embeddable link is meant to be
@@ -455,6 +460,10 @@ defmodule ClaperWeb.EventLive.Presenter do
   end
 
   defp apply_action(socket, :embed, _params) do
+    socket
+  end
+
+  defp apply_action(socket, :interaction, _params) do
     socket
   end
 

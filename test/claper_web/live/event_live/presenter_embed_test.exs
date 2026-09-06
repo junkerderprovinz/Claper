@@ -414,6 +414,58 @@ defmodule ClaperWeb.EventLive.PresenterEmbedTest do
     end
   end
 
+  describe "interaction only view" do
+    test "carries the released poll but no slide at all", %{
+      conn: conn,
+      token: token,
+      presentation_file: presentation_file
+    } do
+      Claper.PollsFixtures.poll_fixture(%{
+        presentation_file_id: presentation_file.id,
+        position: 0,
+        title: "counted poll",
+        show_results: true,
+        poll_opts: [
+          %{content: "leading option", vote_count: 3},
+          %{content: "trailing option", vote_count: 1}
+        ]
+      })
+
+      show_poll(presentation_file)
+
+      html = get(conn, ~p"/embed/interaction/#{token}") |> html_response(200)
+
+      assert html =~ "counted poll"
+      assert html =~ "75% (3)"
+      refute html =~ "/uploads/123456/"
+      refute html =~ ~s(id="slider-wrapper")
+    end
+
+    test "sits on a transparent ground rather than a black one", %{conn: conn, token: token} do
+      interaction = get(conn, ~p"/embed/interaction/#{token}") |> html_response(200)
+      presenter = get(conn, ~p"/embed/presenter/#{token}") |> html_response(200)
+
+      assert interaction =~ "background: transparent"
+      assert presenter =~ "background: black"
+    end
+
+    test "the same token opens both views", %{conn: conn, token: token} do
+      assert {:ok, _view, _html} = live(conn, ~p"/embed/interaction/#{token}")
+      assert {:ok, _view, _html} = live(conn, ~p"/embed/presenter/#{token}")
+    end
+
+    test "a revoked token closes the interaction view too", %{
+      conn: conn,
+      user: user,
+      event: event,
+      token: token
+    } do
+      {:ok, 1} = Claper.Events.revoke_presenter_embed_tokens(event, user)
+
+      assert response(get(conn, ~p"/embed/interaction/#{token}"), 404)
+    end
+  end
+
   describe "identity" do
     # The embed must be the same page for everyone holding the link. A visitor
     # who happens to be logged in must not get their own session on it, or the

@@ -1,6 +1,6 @@
 <style>
   body {
-    background: black;
+    background: <%= if @interaction_only, do: "transparent", else: "black" %>;
   }
 
   iframe {
@@ -53,9 +53,16 @@
   <%= if @current_poll && (!@presenter_embed || @state.poll_visible) do %>
     <div
       id="poll"
-      class={"#{if @state.poll_visible, do: "opacity-100", else: "opacity-0 pointer-events-none"} h-full w-full flex flex-col justify-center bg-black/90 absolute z-30 left-1/2 top-1/2 transform -translate-y-1/2 -translate-x-1/2 p-10 transition-opacity"}
+      class={
+        if @interaction_only,
+          do: "w-full flex flex-col justify-center p-4",
+          else:
+            "#{if @state.poll_visible, do: "opacity-100", else: "opacity-0 pointer-events-none"} h-full w-full flex flex-col justify-center bg-black/90 absolute z-30 left-1/2 top-1/2 transform -translate-y-1/2 -translate-x-1/2 p-10 transition-opacity"
+      }
     >
-      <div class="w-full md:w-1/2 mx-auto h-full">
+      <div class={
+        if @interaction_only, do: "w-full mx-auto", else: "w-full md:w-1/2 mx-auto h-full"
+      }>
         <p class={"#{if @iframe, do: "text-xl mb-12", else: "text-5xl mb-24"} text-white font-bold  text-center"}>
           {@current_poll.title}
         </p>
@@ -105,6 +112,7 @@
   <% end %>
   <!-- MESSAGES -->
   <div
+    :if={!@interaction_only}
     id="slider-wrapper"
     class={"w-full min-h-screen grid #{if (@state.chat_visible && (@event.presentation_file.length || 0) > 0) || (@current_embed && (@event.presentation_file.length || 0) == 0), do: "grid-cols-[1fr_10px_1fr]", else: "grid-cols-[1fr]"} items-center justify-center relative bg-black"}
     phx-hook="Split"

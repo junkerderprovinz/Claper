@@ -119,6 +119,12 @@ defmodule ClaperWeb.Router do
       ])
 
       live("/embed/presenter/:token", EventLive.Presenter, :embed)
+
+      # The same live view without the deck. A slide deck already shows the
+      # slides, so an embed placed on one of its slides wants the interaction
+      # alone: the released poll, quiz or web content, on a transparent ground
+      # so it sits on the host document rather than on a black rectangle.
+      live("/embed/interaction/:token", EventLive.Presenter, :interaction)
     end
   end
 
