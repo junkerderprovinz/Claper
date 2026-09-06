@@ -9,6 +9,17 @@ defmodule ClaperWeb.EventLive.Presenter do
   alias Claper.Presentations
   alias Claper.Transcriptions
 
+  # Embeddable entry point. `ClaperWeb.PresenterEmbedAuth` has already verified
+  # the token and loaded the event, so there is nothing left to authorize here.
+  @impl true
+  def mount(
+        _params,
+        _session,
+        %{assigns: %{presenter_embed: true, embed_event: event}} = socket
+      ) do
+    mount_event(socket, event, true)
+  end
+
   @impl true
   def mount(%{"code" => code} = params, session, socket) do
     with %{"locale" => locale} <- session do
@@ -27,48 +38,57 @@ defmodule ClaperWeb.EventLive.Presenter do
        |> put_flash(:error, gettext("Event doesn't exist"))
        |> redirect(to: "/")}
     else
-      if connected?(socket) do
-        Claper.Events.Event.subscribe(event.uuid)
-        Claper.Presentations.subscribe(event.presentation_file.id)
-      end
-
-      endpoint_config = Application.get_env(:claper, ClaperWeb.Endpoint)[:url]
-      port = endpoint_config[:port]
-      scheme = endpoint_config[:scheme]
-      host = endpoint_config[:host]
-      path = endpoint_config[:path]
-
-      default_ports = [80, 443]
-      port_suffix = if port in default_ports, do: "", else: ":" <> Integer.to_string(port)
-
-      host = "#{scheme}://#{host}#{port_suffix}/#{path}"
-
-      transcription_config =
-        Transcriptions.get_transcription_config(event.presentation_file.id)
-
-      socket =
-        socket
-        |> assign(:attendees_nb, 1)
-        |> assign(
-          :host,
-          host
-        )
-        |> assign(:event, event)
-        |> assign(:iframe, !is_nil(params["iframe"]))
-        |> assign(:state, event.presentation_file.presentation_state)
-        |> assign(:posts, list_posts(socket, event.uuid))
-        |> assign(:pinned_posts, list_pinned_posts(socket, event.uuid))
-        |> assign(:show_only_pinned, event.presentation_file.presentation_state.show_only_pinned)
-        |> assign(:reacts, [])
-        |> assign(:transcription_text, "")
-        |> assign(:transcription_config, transcription_config)
-        |> poll_at_position
-        |> form_at_position
-        |> embed_at_position
-        |> quiz_at_position
-
-      {:ok, socket, temporary_assigns: []}
+      mount_event(socket, event, !is_nil(params["iframe"]))
     end
+  end
+
+  defp mount_event(socket, event, iframe) do
+    if connected?(socket) do
+      Claper.Events.Event.subscribe(event.uuid)
+      Claper.Presentations.subscribe(event.presentation_file.id)
+    end
+
+    endpoint_config = Application.get_env(:claper, ClaperWeb.Endpoint)[:url]
+    port = endpoint_config[:port]
+    scheme = endpoint_config[:scheme]
+    host = endpoint_config[:host]
+    path = endpoint_config[:path]
+
+    default_ports = [80, 443]
+    port_suffix = if port in default_ports, do: "", else: ":" <> Integer.to_string(port)
+
+    host = "#{scheme}://#{host}#{port_suffix}/#{path}"
+
+    transcription_config =
+      Transcriptions.get_transcription_config(event.presentation_file.id)
+
+    socket =
+      socket
+      |> assign(:attendees_nb, 1)
+      |> assign(
+        :host,
+        host
+      )
+      |> assign(:event, event)
+      |> assign(:iframe, iframe)
+      # False on the regular presenter route. The template uses it to leave the
+      # join screen out entirely rather than only hiding it, because the join
+      # screen carries the event code and the embeddable link is meant to be
+      # read only.
+      |> assign_new(:presenter_embed, fn -> false end)
+      |> assign(:state, event.presentation_file.presentation_state)
+      |> assign(:posts, list_posts(socket, event.uuid))
+      |> assign(:pinned_posts, list_pinned_posts(socket, event.uuid))
+      |> assign(:show_only_pinned, event.presentation_file.presentation_state.show_only_pinned)
+      |> assign(:reacts, [])
+      |> assign(:transcription_text, "")
+      |> assign(:transcription_config, transcription_config)
+      |> poll_at_position
+      |> form_at_position
+      |> embed_at_position
+      |> quiz_at_position
+
+    {:ok, socket, temporary_assigns: []}
   end
 
   defp update_post_in_list(posts, updated_post) do
@@ -394,6 +414,32 @@ defmodule ClaperWeb.EventLive.Presenter do
     {:noreply, socket |> assign(:transcription_config, nil)}
   end
 
+  # Revoking a link, and ending the event, both have to reach the frames that
+  # are already open, not just the next visitor. Navigating to a path the token
+  # check cannot accept lets `ClaperWeb.Plugs.PresenterEmbedToken` answer with
+  # its 404, and that response carries the frame headers, so the frame shows it
+  # instead of going blank.
+  #
+  # A constant is used rather than the link that was just invalidated: the raw
+  # token would otherwise have to sit in the assigns of a view anyone holding
+  # the link can reach, where a crash report writes it to the log in clear
+  # text. Any value that is not 32 base64 encoded bytes is rejected, so this one
+  # can never name a real link.
+  #
+  # Both clauses sit before the catch-all below, which would otherwise swallow
+  # the messages.
+  @ended_embed_path "/embed/presenter/ended"
+
+  @impl true
+  def handle_info({:presenter_embed_revoked}, %{assigns: %{presenter_embed: true}} = socket) do
+    {:noreply, redirect(socket, to: @ended_embed_path)}
+  end
+
+  @impl true
+  def handle_info({:event_terminated, _uuid}, %{assigns: %{presenter_embed: true}} = socket) do
+    {:noreply, redirect(socket, to: @ended_embed_path)}
+  end
+
   @impl true
   def handle_info(_, socket) do
     {:noreply, socket}
@@ -405,6 +451,10 @@ defmodule ClaperWeb.EventLive.Presenter do
   end
 
   defp apply_action(socket, :show, _params) do
+    socket
+  end
+
+  defp apply_action(socket, :embed, _params) do
     socket
   end
 

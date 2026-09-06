@@ -19,6 +19,7 @@
 >
   <!-- JOIN SCREEN -->
   <div
+    :if={!@presenter_embed}
     id="joinScreen"
     class={"#{if @state.join_screen_visible, do: "opacity-100 z-40", else: "opacity-0 pointer-events-none"} h-full w-full flex flex-col justify-center bg-black absolute transition-opacity"}
   >
@@ -44,7 +45,12 @@
     </div>
   </div>
   <!-- POLL -->
-  <%= if @current_poll do %>
+  <%!-- The embed leaves a hidden poll out entirely rather than fading it to
+  opacity-0. On the projected view the only reader is the logged in owner, so
+  hiding is enough. Behind an embed link the markup is readable by anyone who
+  holds the link, and poll_visible defaults to false, so the title, the options
+  and the running vote counts would ship with every response. --%>
+  <%= if @current_poll && (!@presenter_embed || @state.poll_visible) do %>
     <div
       id="poll"
       class={"#{if @state.poll_visible, do: "opacity-100", else: "opacity-0 pointer-events-none"} h-full w-full flex flex-col justify-center bg-black/90 absolute z-30 left-1/2 top-1/2 transform -translate-y-1/2 -translate-x-1/2 p-10 transition-opacity"}
@@ -58,8 +64,11 @@
           <%= if (length @current_poll.poll_opts) > 0 do %>
             <%= for opt <- @current_poll.poll_opts do %>
               <div class={"#{if @iframe, do: "py-1", else: "py-4"} bg-gray-500 px-6 rounded-3xl flex justify-between items-center relative text-white"}>
+                <%!-- show_results is the owner's choice about other devices,
+                and the attendee view honours it for both the bar and the
+                numbers. The embed is another device. --%>
                 <div
-                  style={"width: #{opt.percentage}%;"}
+                  style={"width: #{if !@presenter_embed || @current_poll.show_results, do: opt.percentage, else: 0}%;"}
                   class="bg-primary rounded-3xl h-full absolute left-0 transition-all"
                 >
                 </div>
@@ -68,7 +77,10 @@
                     {opt.content}
                   </span>
                 </div>
-                <span class={"#{if @iframe, do: "text-base", else: "text-2xl"} z-10 font-bold"}>
+                <span
+                  :if={!@presenter_embed || @current_poll.show_results}
+                  class={"#{if @iframe, do: "text-base", else: "text-2xl"} z-10 font-bold"}
+                >
                   {opt.percentage}% ({opt.vote_count})
                 </span>
               </div>
@@ -79,7 +91,11 @@
     </div>
   <% end %>
   <!-- QUIZ -->
-  <%= if @current_quiz do %>
+  <%!-- Same reason as the poll above, and it matters more here: with
+  show_results false the component renders the question, every option and the
+  correct one marked with bg-green-600, all of it only faded out. Through an
+  embed link that is the answer key, readable while the quiz runs. --%>
+  <%= if @current_quiz && (!@presenter_embed || @current_quiz.show_results) do %>
     <.live_component
       module={ClaperWeb.EventLive.ManageableQuizComponent}
       id={"#{@current_quiz.id}-quiz"}
@@ -205,7 +221,11 @@
     </div>
     <!-- SLIDES -->
     <div id="slides">
-      <%= if @current_embed do %>
+      <%!-- Web content is only released to other devices when the owner ticks
+      "Attendees can view the web content on their device", and that box starts
+      unticked. An embed link is another device, so it follows the same rule the
+      attendee view follows. --%>
+      <%= if @current_embed && (!@presenter_embed || @current_embed.attendee_visibility) do %>
         <!-- EMBED -->
         <div id="embed" class="max-h-screen w-full h-screen">
           <.live_component
@@ -258,10 +278,17 @@
   id="transcription-subtitles"
   class="fixed z-50 bottom-16 left-1/2 transform -translate-x-1/2 max-w-3xl w-full px-4"
 >
+  <%!-- "presenter" means the screen in the room, which the speaker controls.
+  An embed link leaves the room, so it only carries captions the operator
+  already meant for other devices. --%>
   <div
     :if={
       @transcription_config && @transcription_config.enabled &&
-        @transcription_config.visibility in ["both", "presenter"] && @transcription_text != ""
+        @transcription_config.visibility in if(@presenter_embed,
+          do: ["both"],
+          else: ["both", "presenter"]
+        ) &&
+        @transcription_text != ""
     }
     class="bg-black/80 rounded-lg px-6 py-3 text-center"
   >

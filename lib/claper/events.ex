@@ -8,7 +8,7 @@ defmodule Claper.Events do
   import Ecto.Query, warn: false
 
   alias Claper.{Accounts, Presentations, Repo}
-  alias Claper.Events.{Event, ActivityLeader}
+  alias Claper.Events.{Event, ActivityLeader, EventToken}
 
   @default_page_size 5
 
@@ -346,6 +346,96 @@ defmodule Claper.Events do
     |> Repo.one()
     |> Repo.preload(preload)
   end
+
+  @doc """
+  Creates an embeddable presenter link for an event and returns its raw token.
+
+  Only one link is valid at a time: any token previously issued for the same
+  event is deleted first, so calling this again rotates the link. The returned
+  value is the only copy of the secret, the database stores its hash.
+
+  Rotating disconnects frames that are still open on the previous link, the
+  same way `revoke_presenter_embed_tokens/2` does. Without that a replaced link
+  keeps rendering the live presentation, which is the opposite of what
+  "replace" means to whoever pressed the button.
+
+  Both statements run in one transaction, so a failed insert cannot leave the
+  event without any link at all.
+
+  ## Examples
+
+      iex> create_presenter_embed_token(event, user)
+      {:ok, "TfEAFDU-..."}
+
+  """
+  def create_presenter_embed_token(%Event{} = event, %Accounts.User{} = user) do
+    {encoded_token, event_token} = EventToken.build_presenter_embed_token(event, user)
+
+    result =
+      Repo.transaction(fn ->
+        {replaced, _} =
+          Repo.delete_all(
+            EventToken.event_and_contexts_query(event, [EventToken.presenter_embed_context()])
+          )
+
+        case Repo.insert(event_token) do
+          {:ok, _event_token} -> replaced
+          {:error, changeset} -> Repo.rollback(changeset)
+        end
+      end)
+
+    with {:ok, replaced} <- result do
+      Claper.Audit.log_resource_action(user, "event.embed_token.create", "event", event.id)
+      if replaced > 0, do: broadcast_event(event.uuid, {:presenter_embed_revoked})
+      {:ok, encoded_token}
+    end
+  end
+
+  @doc """
+  Revokes every embeddable presenter link of an event.
+
+  New requests fail immediately because the row is gone. Frames that are
+  already open are disconnected through the event topic, so a revocation is not
+  limited to future visitors.
+  """
+  def revoke_presenter_embed_tokens(%Event{} = event, %Accounts.User{} = user) do
+    {count, _} =
+      Repo.delete_all(
+        EventToken.event_and_contexts_query(event, [EventToken.presenter_embed_context()])
+      )
+
+    if count > 0 do
+      Claper.Audit.log_resource_action(user, "event.embed_token.revoke", "event", event.id)
+      broadcast_event(event.uuid, {:presenter_embed_revoked})
+    end
+
+    {:ok, count}
+  end
+
+  @doc """
+  Returns true when an event has an embeddable presenter link.
+  """
+  def presenter_embed_token?(%Event{} = event) do
+    EventToken.event_and_contexts_query(event, [EventToken.presenter_embed_context()])
+    |> Repo.exists?()
+  end
+
+  @doc """
+  Gets the event an embeddable presenter token was issued for.
+
+  Returns `nil` for an unknown, malformed or revoked token, and for a token
+  whose event has expired.
+  """
+  def get_event_by_presenter_embed_token(token, preload \\ [])
+
+  def get_event_by_presenter_embed_token(token, preload) when is_binary(token) do
+    case EventToken.verify_presenter_embed_token_query(token) do
+      {:ok, query} -> query |> Repo.one() |> Repo.preload(preload)
+      :error -> nil
+    end
+  end
+
+  def get_event_by_presenter_embed_token(_token, _preload), do: nil
 
   @doc """
   Check if a user is a facilitator of a specific event.

@@ -589,6 +589,120 @@ defmodule Claper.EventsTest do
     end
   end
 
+  describe "presenter embed tokens" do
+    setup do
+      user = user_fixture()
+      %{user: user, event: event_fixture(%{user: user})}
+    end
+
+    test "a created token resolves to its event", %{user: user, event: event} do
+      assert {:ok, token} = Events.create_presenter_embed_token(event, user)
+      assert %Event{id: id} = Events.get_event_by_presenter_embed_token(token)
+      assert id == event.id
+      assert Events.presenter_embed_token?(event)
+    end
+
+    test "the raw token is not stored", %{user: user, event: event} do
+      {:ok, token} = Events.create_presenter_embed_token(event, user)
+
+      stored =
+        Claper.Events.EventToken
+        |> Claper.Repo.all()
+        |> Enum.map(& &1.token)
+
+      refute Base.url_decode64!(token, padding: false) in stored
+    end
+
+    test "only the newest token stays valid", %{user: user, event: event} do
+      {:ok, first} = Events.create_presenter_embed_token(event, user)
+      {:ok, second} = Events.create_presenter_embed_token(event, user)
+
+      refute Events.get_event_by_presenter_embed_token(first)
+      assert Events.get_event_by_presenter_embed_token(second)
+    end
+
+    test "revoking invalidates the token", %{user: user, event: event} do
+      {:ok, token} = Events.create_presenter_embed_token(event, user)
+
+      assert {:ok, 1} = Events.revoke_presenter_embed_tokens(event, user)
+      refute Events.get_event_by_presenter_embed_token(token)
+      refute Events.presenter_embed_token?(event)
+    end
+
+    test "revoking notifies the event topic", %{user: user, event: event} do
+      {:ok, _token} = Events.create_presenter_embed_token(event, user)
+      Event.subscribe(event.uuid)
+
+      Events.revoke_presenter_embed_tokens(event, user)
+
+      assert_receive {:presenter_embed_revoked}
+    end
+
+    test "a token does not unlock another event", %{user: user, event: event} do
+      other_event = event_fixture(%{user: user})
+      {:ok, token} = Events.create_presenter_embed_token(event, user)
+
+      assert %Event{id: id} = Events.get_event_by_presenter_embed_token(token)
+      assert id == event.id
+      refute id == other_event.id
+    end
+
+    test "rotating a link disconnects frames that are still on the old one", %{
+      user: user,
+      event: event
+    } do
+      {:ok, _first} = Events.create_presenter_embed_token(event, user)
+
+      Claper.Events.Event.subscribe(event.uuid)
+
+      {:ok, _second} = Events.create_presenter_embed_token(event, user)
+
+      # Deleting the row only stops new requests. An open frame keeps rendering
+      # the live presentation until it is told, and the manage screen presents
+      # rotation as a replacement, so it has to broadcast like a revocation.
+      assert_receive {:presenter_embed_revoked}
+    end
+
+    test "the first link of an event does not broadcast a revocation", %{
+      user: user,
+      event: event
+    } do
+      Claper.Events.Event.subscribe(event.uuid)
+
+      {:ok, _token} = Events.create_presenter_embed_token(event, user)
+
+      refute_receive {:presenter_embed_revoked}, 100
+    end
+
+    test "a token of an expired event is rejected", %{user: user, event: event} do
+      {:ok, token} = Events.create_presenter_embed_token(event, user)
+
+      {:ok, _event} =
+        event
+        |> Ecto.Changeset.change(
+          expired_at:
+            NaiveDateTime.utc_now()
+            |> NaiveDateTime.truncate(:second)
+            |> NaiveDateTime.add(-60, :second)
+        )
+        |> Claper.Repo.update()
+
+      refute Events.get_event_by_presenter_embed_token(token)
+    end
+
+    test "malformed tokens are rejected without touching the database", %{
+      user: user,
+      event: event
+    } do
+      {:ok, token} = Events.create_presenter_embed_token(event, user)
+
+      refute Events.get_event_by_presenter_embed_token("not base64 !!")
+      refute Events.get_event_by_presenter_embed_token("")
+      refute Events.get_event_by_presenter_embed_token(nil)
+      refute Events.get_event_by_presenter_embed_token(String.slice(token, 0..9))
+    end
+  end
+
   defp list(events), do: Enum.reverse(events)
 
   defp paginate(events, params \\ %{}) do

@@ -99,6 +99,8 @@ defmodule ClaperWeb.EventLive.Manage do
       )
       |> assign(:thumbnail_cache_bust, thumbnail_cache_bust())
       |> assign(:thumbnail_regeneration_in_progress, false)
+      |> assign(:presenter_embed_exists, Events.presenter_embed_token?(event))
+      |> assign(:presenter_embed_url, nil)
       |> push_event("page-manage", %{
         current_page: event.presentation_file.presentation_state.position,
         timeout: 500
@@ -529,6 +531,40 @@ defmodule ClaperWeb.EventLive.Manage do
       {:error, _changeset} ->
         {:noreply, socket |> put_flash(:error, gettext("Could not start thumbnail regeneration"))}
     end
+  end
+
+  # `mount/3` already redirects anyone who is not a leader of this event, so
+  # both handlers below run for an authorized user only.
+  @impl true
+  def handle_event(
+        "create-presenter-embed-token",
+        _params,
+        %{assigns: %{event: event, current_user: current_user}} = socket
+      ) do
+    case Events.create_presenter_embed_token(event, current_user) do
+      {:ok, token} ->
+        {:noreply,
+         socket
+         |> assign(:presenter_embed_exists, true)
+         |> assign(:presenter_embed_url, url(~p"/embed/presenter/#{token}"))}
+
+      {:error, _changeset} ->
+        {:noreply, socket |> put_flash(:error, gettext("Could not create the embed link"))}
+    end
+  end
+
+  @impl true
+  def handle_event(
+        "revoke-presenter-embed-token",
+        _params,
+        %{assigns: %{event: event, current_user: current_user}} = socket
+      ) do
+    {:ok, _count} = Events.revoke_presenter_embed_tokens(event, current_user)
+
+    {:noreply,
+     socket
+     |> assign(:presenter_embed_exists, false)
+     |> assign(:presenter_embed_url, nil)}
   end
 
   def handle_event("poll-set-active", %{"id" => id}, socket) do

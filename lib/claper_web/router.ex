@@ -102,6 +102,22 @@ defmodule ClaperWeb.Router do
     end
   end
 
+  # Read-only presenter view, authorized by a revocable per event token instead
+  # of a session, so it can be framed by a third party such as a slide deck.
+  # The event code is deliberately absent from the path: the link travels inside
+  # a shared file, and the code is what lets someone join and post.
+  live_session :presenter_embed, on_mount: ClaperWeb.PresenterEmbedAuth do
+    scope "/", ClaperWeb do
+      # EmbedFrame runs before the token check on purpose. The token plug halts
+      # on a bad or revoked link, so a later frame plug would never reach the
+      # 404 and the browser would refuse to display it cross origin, leaving an
+      # empty frame instead of the page that explains itself.
+      pipe_through([:browser, ClaperWeb.Plugs.EmbedFrame, ClaperWeb.Plugs.PresenterEmbedToken])
+
+      live("/embed/presenter/:token", EventLive.Presenter, :embed)
+    end
+  end
+
   # Enables LiveDashboard only for development
   #
   # If you want to use the LiveDashboard in production, you should put
