@@ -534,7 +534,9 @@ defmodule ClaperWeb.EventLive.Manage do
   end
 
   # `mount/3` already redirects anyone who is not a leader of this event, so
-  # both handlers below run for an authorized user only.
+  # both handlers below run for an authorized user only. The context checks the
+  # user a second time and answers `{:error, :unauthorized}`, because what these
+  # two mint and destroy is access without a login.
   @impl true
   def handle_event(
         "create-presenter-embed-token",
@@ -548,7 +550,7 @@ defmodule ClaperWeb.EventLive.Manage do
          |> assign(:presenter_embed_exists, true)
          |> assign(:presenter_embed_url, url(~p"/embed/presenter/#{token}"))}
 
-      {:error, _changeset} ->
+      {:error, _reason} ->
         {:noreply, socket |> put_flash(:error, gettext("Could not create the embed link"))}
     end
   end
@@ -559,12 +561,16 @@ defmodule ClaperWeb.EventLive.Manage do
         _params,
         %{assigns: %{event: event, current_user: current_user}} = socket
       ) do
-    {:ok, _count} = Events.revoke_presenter_embed_tokens(event, current_user)
+    case Events.revoke_presenter_embed_tokens(event, current_user) do
+      {:ok, _count} ->
+        {:noreply,
+         socket
+         |> assign(:presenter_embed_exists, false)
+         |> assign(:presenter_embed_url, nil)}
 
-    {:noreply,
-     socket
-     |> assign(:presenter_embed_exists, false)
-     |> assign(:presenter_embed_url, nil)}
+      {:error, _reason} ->
+        {:noreply, socket |> put_flash(:error, gettext("Could not revoke the embed link"))}
+    end
   end
 
   def handle_event("poll-set-active", %{"id" => id}, socket) do

@@ -638,6 +638,54 @@ defmodule Claper.EventsTest do
       assert_receive {:presenter_embed_revoked}
     end
 
+    test "a user who does not lead the event cannot mint a link", %{event: event} do
+      stranger = user_fixture()
+
+      assert {:error, :unauthorized} = Events.create_presenter_embed_token(event, stranger)
+      refute Events.presenter_embed_token?(event)
+    end
+
+    test "a user who does not lead the event cannot revoke one", %{user: user, event: event} do
+      {:ok, token} = Events.create_presenter_embed_token(event, user)
+      stranger = user_fixture()
+
+      assert {:error, :unauthorized} = Events.revoke_presenter_embed_tokens(event, stranger)
+      assert Events.get_event_by_presenter_embed_token(token)
+    end
+
+    test "an activity leader may mint and revoke", %{event: event} do
+      leader = user_fixture()
+
+      {:ok, _} =
+        %Claper.Events.ActivityLeader{event_id: event.id, email: leader.email}
+        |> Claper.Repo.insert()
+
+      assert {:ok, token} = Events.create_presenter_embed_token(event, leader)
+      assert Events.get_event_by_presenter_embed_token(token)
+      assert {:ok, 1} = Events.revoke_presenter_embed_tokens(event, leader)
+    end
+
+    test "ending the event deletes the link instead of suspending it", %{
+      user: user,
+      event: event
+    } do
+      {:ok, token} = Events.create_presenter_embed_token(event, user)
+
+      {:ok, _event} = Events.terminate_event(event)
+
+      refute Events.get_event_by_presenter_embed_token(token)
+      refute Events.presenter_embed_token?(event)
+    end
+
+    test "ending the event disconnects open frames", %{user: user, event: event} do
+      {:ok, _token} = Events.create_presenter_embed_token(event, user)
+      Event.subscribe(event.uuid)
+
+      {:ok, _event} = Events.terminate_event(event)
+
+      assert_receive {:presenter_embed_revoked}
+    end
+
     test "a token does not unlock another event", %{user: user, event: event} do
       other_event = event_fixture(%{user: user})
       {:ok, token} = Events.create_presenter_embed_token(event, user)

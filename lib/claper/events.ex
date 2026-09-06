@@ -367,8 +367,19 @@ defmodule Claper.Events do
       iex> create_presenter_embed_token(event, user)
       {:ok, "TfEAFDU-..."}
 
+      iex> create_presenter_embed_token(event, someone_else)
+      {:error, :unauthorized}
+
   """
   def create_presenter_embed_token(%Event{} = event, %Accounts.User{} = user) do
+    if leads_event?(event, user) do
+      do_create_presenter_embed_token(event, user)
+    else
+      {:error, :unauthorized}
+    end
+  end
+
+  defp do_create_presenter_embed_token(%Event{} = event, %Accounts.User{} = user) do
     {encoded_token, event_token} = EventToken.build_presenter_embed_token(event, user)
 
     result =
@@ -399,17 +410,45 @@ defmodule Claper.Events do
   limited to future visitors.
   """
   def revoke_presenter_embed_tokens(%Event{} = event, %Accounts.User{} = user) do
+    if leads_event?(event, user) do
+      {:ok, delete_presenter_embed_tokens(event, user)}
+    else
+      {:error, :unauthorized}
+    end
+  end
+
+  # Deletes the rows and disconnects open frames, without asking who is calling.
+  # Every caller that reaches it has either checked the user or has no user to
+  # check, as when an event ends on its own.
+  defp delete_presenter_embed_tokens(%Event{} = event, user) do
     {count, _} =
       Repo.delete_all(
         EventToken.event_and_contexts_query(event, [EventToken.presenter_embed_context()])
       )
 
     if count > 0 do
-      Claper.Audit.log_resource_action(user, "event.embed_token.revoke", "event", event.id)
+      if user,
+        do: Claper.Audit.log_resource_action(user, "event.embed_token.revoke", "event", event.id)
+
       broadcast_event(event.uuid, {:presenter_embed_revoked})
     end
 
-    {:ok, count}
+    count
+  end
+
+  # Whether the user may manage this event: its owner, or an activity leader
+  # invited by email. Same condition as `get_managed_event!/3`, asked about an
+  # event that is already loaded.
+  defp leads_event?(%Event{} = event, %Accounts.User{} = user) do
+    from(e in Event,
+      left_join: a in ActivityLeader,
+      on: e.id == a.event_id,
+      where: e.id == ^event.id and (e.user_id == ^user.id or a.email == ^user.email),
+      select: 1,
+      limit: 1
+    )
+    |> Repo.one()
+    |> is_integer()
   end
 
   @doc """
@@ -558,6 +597,10 @@ defmodule Claper.Events do
   @doc """
   Terminates an event.
 
+  Any embeddable presenter link is deleted as well, not merely suspended by the
+  expiry stamp. Otherwise clearing `expired_at` later would re-arm every link
+  ever issued for this event, without anyone asking for a new one.
+
   ## Examples
 
       iex> terminate_event(event)
@@ -570,6 +613,7 @@ defmodule Claper.Events do
     |> Repo.update()
     |> case do
       {:ok, event} ->
+        delete_presenter_embed_tokens(event, nil)
         broadcast_all_users({:updated, event})
         broadcast_event(event.uuid, {:event_terminated, event.uuid})
         {:ok, event}

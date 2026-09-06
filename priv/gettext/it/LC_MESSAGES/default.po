@@ -20,7 +20,7 @@ msgstr "Impostazioni"
 #: lib/claper_web/live/admin_live/user_live.html.heex:41
 #: lib/claper_web/live/admin_live/user_live.html.heex:116
 #: lib/claper_web/live/admin_live/user_live/form_component.ex:42
-#: lib/claper_web/live/event_live/manage.ex:1197
+#: lib/claper_web/live/event_live/manage.ex:1203
 #: lib/claper_web/live/form_live/form_component.html.heex:39
 #: lib/claper_web/live/user_settings_live/show.html.heex:68
 #: lib/claper_web/templates/user_registration/new.html.heex:86
@@ -581,7 +581,7 @@ msgstr "Modulo"
 #: lib/claper_web/live/admin_live/oidc_provider_live.html.heex:74
 #: lib/claper_web/live/admin_live/oidc_provider_live.html.heex:234
 #: lib/claper_web/live/admin_live/oidc_provider_live/form_component.ex:24
-#: lib/claper_web/live/event_live/manage.ex:1196
+#: lib/claper_web/live/event_live/manage.ex:1202
 #, elixir-autogen, elixir-format
 msgid "Name"
 msgstr "Nome"
@@ -1171,12 +1171,12 @@ msgstr "Ricarica la pagina che stai cercando di accedere (non reinviare i dati)"
 msgid "Try logging in again"
 msgstr "Prova ad accedere di nuovo"
 
-#: lib/claper_web/live/event_live/manage.ex:1169
+#: lib/claper_web/live/event_live/manage.ex:1175
 #, elixir-autogen, elixir-format
 msgid "No"
 msgstr "No"
 
-#: lib/claper_web/live/event_live/manage.ex:1169
+#: lib/claper_web/live/event_live/manage.ex:1175
 #, elixir-autogen, elixir-format
 msgid "Yes"
 msgstr "Sì"
@@ -2423,10 +2423,10 @@ msgstr "ID risorsa"
 msgid "Resource Type"
 msgstr "Tipo di risorsa"
 
-#: lib/claper_web/live/event_live/manage.ex:1177
-#: lib/claper_web/live/event_live/manage.ex:1220
-#: lib/claper_web/live/event_live/manage.ex:1236
-#: lib/claper_web/live/event_live/manage.ex:1278
+#: lib/claper_web/live/event_live/manage.ex:1183
+#: lib/claper_web/live/event_live/manage.ex:1226
+#: lib/claper_web/live/event_live/manage.ex:1242
+#: lib/claper_web/live/event_live/manage.ex:1284
 #, elixir-autogen, elixir-format
 msgid "Resource not found"
 msgstr "Risorsa non trovata"
@@ -2999,7 +2999,7 @@ msgstr "Impostazioni di trascrizione"
 msgid "Transcription deleted"
 msgstr "Trascrizione eliminata"
 
-#: lib/claper_web/live/event_live/manage.ex:931
+#: lib/claper_web/live/event_live/manage.ex:937
 #, elixir-autogen, elixir-format
 msgid "Transcription has been disabled by the administrator"
 msgstr "La trascrizione è stata disabilitata dall'amministratore"
@@ -3614,7 +3614,7 @@ msgstr ""
 msgid "Copy the link now. It is stored hashed and cannot be shown again."
 msgstr ""
 
-#: lib/claper_web/live/event_live/manage.ex:552
+#: lib/claper_web/live/event_live/manage.ex:554
 #, elixir-autogen, elixir-format
 msgid "Could not create the embed link"
 msgstr ""
@@ -3667,4 +3667,9 @@ msgstr ""
 #: lib/claper_web/live/event_live/manage_embed_options_component.ex:115
 #, elixir-autogen, elixir-format
 msgid "Revoking or replacing the link disconnects embeds that are already open, and so does ending the event. Letting the event expire or deleting it only stops new visitors. Slide images stay reachable either way, because this server publishes them at a fixed address whether or not a link exists."
+msgstr ""
+
+#: lib/claper_web/live/event_live/manage.ex:572
+#, elixir-autogen, elixir-format
+msgid "Could not revoke the embed link"
 msgstr ""
