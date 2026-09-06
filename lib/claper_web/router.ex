@@ -148,16 +148,36 @@ defmodule ClaperWeb.Router do
     post("/embed_token", AddinController, :embed_token)
   end
 
-  # This server's own PowerPoint manifests, and the page explaining them. Public
-  # on purpose: the Microsoft 365 admin center fetches a manifest URL itself and
-  # is not logged in, and the files carry no secret. Off with the rest of the
-  # feature, because the pages they name answer 404 without an allow list.
+  # The manifest files themselves. Their whole point is being fetched by a
+  # machine: the Microsoft 365 admin center takes a URL instead of an upload, and
+  # it is not logged in, so these are public and carry no secret.
+  #
+  # A pipeline of their own because `:browser` accepts "html" and nothing else,
+  # and Phoenix decides the format from the Accept header rather than from the
+  # ".xml" in the path. A client that asks for application/xml would get 406,
+  # which is the one caller this route exists for.
+  #
+  # Nothing may ever be placed at priv/static/addin/manifest/: "addin" is in
+  # `ClaperWeb.static_paths/0`, so `Plug.Static` would answer from there before
+  # the router is reached and serve an unpersonalised file with no error.
+  pipeline :addin_manifest do
+    plug(:accepts, ["xml", "html"])
+    plug(:put_secure_browser_headers)
+  end
+
+  scope "/addin", ClaperWeb do
+    pipe_through([:addin_manifest, ClaperWeb.Plugs.PresenterEmbedEnabled])
+
+    get("/manifest/sidebar.xml", AddinManifestController, :sidebar)
+    get("/manifest/slide.xml", AddinManifestController, :slide)
+  end
+
+  # The page that hands those two out and says what to do with them. A person
+  # opens this one, so it takes the browser pipeline.
   scope "/addin", ClaperWeb do
     pipe_through([:browser, ClaperWeb.Plugs.PresenterEmbedEnabled])
 
     get("/", AddinManifestController, :show)
-    get("/manifest/sidebar.xml", AddinManifestController, :sidebar)
-    get("/manifest/slide.xml", AddinManifestController, :slide)
   end
 
   # What a block already sitting on a slide may show. Reached with the read-only

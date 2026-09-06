@@ -72,20 +72,60 @@ defmodule ClaperWeb.AddinManifestControllerTest do
       ClaperWeb.Endpoint.config_change([{ClaperWeb.Endpoint, prefixed}], [])
 
       host = ClaperWeb.Endpoint.url()
-      xml = conn |> get("/addin/manifest/sidebar.xml") |> response(200)
+      sidebar = conn |> get("/addin/manifest/sidebar.xml") |> response(200)
+      slide = conn |> get("/addin/manifest/slide.xml") |> response(200)
+      page = conn |> get("/addin") |> html_response(200)
 
-      assert xml =~ "#{host}/claper/addin/sidebar.html"
-      refute xml =~ "#{host}/addin/sidebar.html"
+      # Every address that names a page has to move under the prefix, and each
+      # is a separate substitution, so each is checked.
+      assert sidebar =~ "#{host}/claper/addin/sidebar.html"
+      assert sidebar =~ "#{host}/claper/images/favicon.png"
+      assert slide =~ "#{host}/claper/addin/slide.html"
+      assert page =~ "#{host}/claper/addin/manifest/sidebar.xml"
+
+      refute sidebar =~ "#{host}/addin/sidebar.html"
+      refute slide =~ "#{host}/addin/slide.html"
 
       # AppDomains still wants the bare origin, without the prefix.
-      assert xml =~ "<AppDomain>#{host}</AppDomain>"
+      assert sidebar =~ "<AppDomain>#{host}</AppDomain>"
     end
 
-    test "are served as xml", %{conn: conn} do
-      conn = get(conn, ~p"/addin/manifest/sidebar.xml")
+    test "are served as xml, both of them", %{conn: conn} do
+      for {path, filename} <- [
+            {~p"/addin/manifest/sidebar.xml", "claper-sidebar.xml"},
+            {~p"/addin/manifest/slide.xml", "claper-on-a-slide.xml"}
+          ] do
+        conn = get(conn, path)
 
-      assert conn |> get_resp_header("content-type") |> hd() =~ "application/xml"
-      assert conn |> get_resp_header("content-disposition") |> hd() =~ "claper-sidebar.xml"
+        assert conn |> get_resp_header("content-type") |> hd() =~ "application/xml"
+        assert conn |> get_resp_header("content-disposition") |> hd() =~ filename
+      end
+    end
+
+    # The one caller this route exists for is the Microsoft 365 admin center,
+    # which fetches the URL itself. Phoenix picks the format from the Accept
+    # header rather than from the ".xml" in the path, so a pipeline accepting
+    # only "html" would answer 406 to exactly that client.
+    test "are served to a client that asks for xml", %{conn: conn} do
+      xml =
+        conn
+        |> put_req_header("accept", "application/xml")
+        |> get(~p"/addin/manifest/sidebar.xml")
+        |> response(200)
+
+      assert xml =~ "<OfficeApp"
+    end
+
+    # They are downloaded and handed to Office, not read by a person, and the
+    # comments in the templates address whoever edits them in the repository.
+    test "carry none of the repository's editing notes", %{conn: conn} do
+      for path <- [~p"/addin/manifest/sidebar.xml", ~p"/addin/manifest/slide.xml"] do
+        xml = conn |> get(path) |> response(200)
+
+        refute xml =~ "<!--"
+        refute xml =~ "Replace every"
+        refute xml =~ "README"
+      end
     end
 
     # The Microsoft 365 admin center fetches this URL itself and is not logged
@@ -110,13 +150,22 @@ defmodule ClaperWeb.AddinManifestControllerTest do
       assert html =~ "#{host}/addin/manifest/slide.xml"
     end
 
+    # It is a public page. An earlier version of this test only refused the word
+    # "Bearer", which appears nowhere in any rendered page and so could never
+    # fail. This one puts a real key into the database first.
     test "does not hand out any key", %{conn: conn} do
+      user = Claper.AccountsFixtures.user_fixture()
+      file = Claper.PresentationsFixtures.presentation_file_fixture(%{user: user}, [:event])
+      event = Claper.Events.get_event_with_code(file.event.code)
+
+      {:ok, addin_token} = Claper.Events.create_addin_token(event, user)
+      {:ok, embed_token} = Claper.Events.create_presenter_embed_token(event, user)
+
       html = conn |> get(~p"/addin") |> html_response(200)
 
-      # It is a public page. The writing key is created in the event's settings
-      # and must never be printed somewhere unauthenticated.
-      refute html =~ "Bearer"
-      assert html =~ "settings"
+      refute html =~ addin_token
+      refute html =~ embed_token
+      refute html =~ event.code
     end
 
     test "is gone when the feature is switched off, as a page rather than json", %{conn: conn} do

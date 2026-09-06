@@ -3,9 +3,14 @@ defmodule ClaperWeb.Plugs.PresenterEmbedEnabled do
   Refuses everything when the presenter embed feature is switched off.
 
   The switch is the same one the embed routes use, so a server that never opted
-  in has neither the views nor the API. It asks
+  in serves neither the embeddable views nor the API behind them. It asks
   `ClaperWeb.Plugs.PresenterEmbedFrame` rather than reading the setting again,
   because a value that plug rejects as a whole must count as off here too.
+
+  It does not reach the add-in's own two pages. `/addin/sidebar.html` and
+  `/addin/slide.html` are static files under `ClaperWeb.static_paths/0`, so
+  `Plug.Static` answers them in the endpoint, before any router pipeline runs.
+  They stay reachable with the feature off and simply have nothing to talk to.
   """
 
   import Plug.Conn

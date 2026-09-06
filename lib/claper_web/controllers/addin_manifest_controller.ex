@@ -12,8 +12,15 @@ defmodule ClaperWeb.AddinManifestController do
   Deliberately public. The Microsoft 365 admin center fetches a manifest URL
   itself, unauthenticated, so a login here would break the one route that makes
   installing this a single paste. Nothing here is secret: the files name the
-  public add-in pages and carry no token. The feature switch still applies,
-  because without an allow list the pages they point at answer 404 anyway.
+  public add-in pages and carry no token.
+
+  The feature switch is applied for tidiness rather than as a boundary. It does
+  not reach the add-in pages themselves: `/addin/sidebar.html` and
+  `/addin/slide.html` are static files under `ClaperWeb.static_paths/0`, so
+  `Plug.Static` answers them before the router is consulted, switch or no
+  switch. What the switch does close is everything those pages need, the embed
+  routes and the API, so an add-in installed against a server with it off loads
+  and then cannot do anything.
   """
 
   use ClaperWeb, :controller
@@ -27,8 +34,15 @@ defmodule ClaperWeb.AddinManifestController do
   @external_resource @sidebar_path
   @external_resource @slide_path
 
-  @sidebar_manifest File.read!(@sidebar_path)
-  @slide_manifest File.read!(@slide_path)
+  # The comments in the templates address whoever edits them in the repository:
+  # they say to replace the placeholder by hand and point at a path inside the
+  # source tree. Served as-is they would tell a stranger to replace an address
+  # that is already correct, and the substitution below would rewrite the
+  # instruction itself into nonsense. A manifest needs no comments, so they go.
+  @strip_comments ~r/\s*<!--.*?-->/s
+
+  @sidebar_manifest Regex.replace(@strip_comments, File.read!(@sidebar_path), "")
+  @slide_manifest Regex.replace(@strip_comments, File.read!(@slide_path), "")
 
   @placeholder "https://claper.example.com"
 
@@ -36,7 +50,6 @@ defmodule ClaperWeb.AddinManifestController do
     conn
     |> assign(:sidebar_manifest_url, absolute("/addin/manifest/sidebar.xml"))
     |> assign(:slide_manifest_url, absolute("/addin/manifest/slide.xml"))
-    |> assign(:instance, ClaperWeb.Endpoint.url())
     |> render("show.html")
   end
 

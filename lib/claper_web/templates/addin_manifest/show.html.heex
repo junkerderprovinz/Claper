@@ -55,17 +55,22 @@
           <a href={file.url} download={file.filename} class="btn btn-primary btn-sm">
             {gettext("Download")}
           </a>
-          <button
-            type="button"
-            class="btn btn-sm btn-soft"
-            x-on:click={"navigator.clipboard.writeText('#{file.url}'); copied = true; setTimeout(() => copied = false, 1500)"}
-          >
+          <%!-- Says "copied" only once it was. navigator.clipboard does not
+          exist outside a secure context, which a self-hosted Claper reached over
+          plain http is, so the call is guarded rather than left to throw. Either
+          way the address is printed below in full and can be selected by hand.
+          The URL comes from this server's own configuration, and its quotes are
+          escaped so it cannot end the string it sits in. --%>
+          <button type="button" class="btn btn-sm btn-soft" x-on:click={copy_script(file.url)}>
             <span x-show="!copied">{gettext("Copy link")}</span>
             <span x-show="copied" x-cloak>{gettext("Copied")}</span>
           </button>
         </div>
 
-        <p class="mt-3 text-xs text-white/40 break-all">{file.url}</p>
+        <%!-- Not fainter than this: measured against the painted ground, /40 at
+        this size comes out at 3.7:1, and this is an address somebody may have to
+        read off the screen and type somewhere else. --%>
+        <p class="mt-3 text-xs text-white/60 break-all">{file.url}</p>
       </div>
     </div>
 

@@ -138,8 +138,11 @@ defmodule ClaperWeb.EventLive.ManagePresenterEmbedComponent do
           <%!-- The token is useless without the add-in, and the add-in is not in
           any store: a self-hosted server has to hand out its own manifests. So
           the way to get it sits next to the key it needs. --%>
+          <%!-- Built through the endpoint rather than written flat, so it still
+          points at the page on a Claper published under a path prefix. This
+          module is a plain Phoenix.Component and has no ~p sigil. --%>
           <.link
-            href="/addin"
+            href={ClaperWeb.Endpoint.path("/addin")}
             target="_blank"
             class="text-xs text-primary-600 underline mt-1 inline-block"
           >
