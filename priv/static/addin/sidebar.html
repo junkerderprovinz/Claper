@@ -813,10 +813,22 @@
       // renders that screen from the same origin as this page. So the picture is
       // read out of a hidden frame rather than encoded a second time here: one
       // encoder, one look, and no third-party script in a task pane.
+      // Claper only draws its joining screen behind the read-only link, so the
+      // picture needs one. Making it is no longer destructive, so it is made
+      // here rather than sending the author to another button first.
+      function ensureLink() {
+        if (cfg.embed) return Promise.resolve();
+        return api("/api/addin/embed_token", { method: "POST" }).then(function (body) {
+          cfg.embed = body.token;
+          docSet(DOC_EMBED, body.token, function () {});
+          return writeDeckLink(embedUrl()).then(function () { showLink(); });
+        });
+      }
+
       function readQrCanvas() {
         return new Promise(function (resolve, reject) {
           var url = embedUrl();
-          if (!url) { reject(new Error("Create the slide link first, just below.")); return; }
+          if (!url) { reject(new Error("Claper did not give out a link.")); return; }
 
           var frame = document.createElement("iframe");
           frame.setAttribute("aria-hidden", "true");
@@ -897,8 +909,18 @@
       function putOnSlide(dataUrl) {
         return new Promise(function (resolve, reject) {
           Office.context.document.setSelectedDataAsync(
+            // Raw base64, without the data: prefix, which is what this call
+            // wants. The placement is in points, and only the width is given so
+            // the height follows the picture's own proportions. A corner rather
+            // than the middle, because the slide size is not known here and 60
+            // by 60 is on the slide whatever its shape.
             dataUrl.split(",")[1],
-            { coercionType: Office.CoercionType.Image },
+            {
+              coercionType: Office.CoercionType.Image,
+              imageLeft: 60,
+              imageTop: 60,
+              imageWidth: 220
+            },
             function (result) {
               if (result.status === Office.AsyncResultStatus.Succeeded) resolve();
               else reject(new Error((result.error && result.error.message) || "PowerPoint refused it."));
@@ -911,7 +933,8 @@
         $("insertQr").disabled = true;
         say($("qrMsg"), "Drawing the code…");
 
-        readQrCanvas()
+        ensureLink()
+          .then(readQrCanvas)
           .then(joinPicture)
           .then(function (picture) {
             say($("qrMsg"), "Putting it on the slide…");
