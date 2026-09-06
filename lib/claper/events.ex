@@ -372,12 +372,10 @@ defmodule Claper.Events do
 
   """
   def create_presenter_embed_token(%Event{} = event, %Accounts.User{} = user) do
-    with true <- leads_event?(event, user),
-         {:ok, token, _replaced} <- do_create_presenter_embed_token(event, user) do
-      {:ok, token}
+    if leads_event?(event, user) do
+      do_create_presenter_embed_token(event, user)
     else
-      false -> {:error, :unauthorized}
-      error -> error
+      {:error, :unauthorized}
     end
   end
 
@@ -389,14 +387,23 @@ defmodule Claper.Events do
   recorded against the event's owner, who is the one whose event the link
   exposes, and who can revoke it from the manage screen like any other.
 
-  It rotates like every other embed link: an event has one at a time. Returns
-  `{:ok, token, replaced?}`, because the sidebar has to be able to say that the
-  deck's previous link has just stopped working rather than leave the author to
-  discover it on a slide.
+  Unlike the button on the manage screen this one does **not** rotate. One event
+  can be used by several presentations, and a deck can hold many blocks, so a
+  link made for a second deck must not blank the first one. That happened in
+  testing within minutes of the rotating version existing.
+
+  Revocation is unaffected: `revoke_presenter_embed_tokens/2` and the end of the
+  event still delete every link of the event at once, which is what makes them a
+  usable off switch.
   """
   def create_presenter_embed_token_for_addin(%Event{} = event) do
-    case Repo.preload(event, :user) do
-      %Event{user: %Accounts.User{} = owner} -> do_create_presenter_embed_token(event, owner)
+    with %Event{user: %Accounts.User{} = owner} <- Repo.preload(event, :user),
+         {encoded_token, event_token} <- EventToken.build_presenter_embed_token(event, owner),
+         {:ok, _} <- Repo.insert(event_token) do
+      Claper.Audit.log_resource_action(owner, "event.embed_token.create", "event", event.id)
+      {:ok, encoded_token}
+    else
+      {:error, changeset} -> {:error, changeset}
       _ -> {:error, :no_owner}
     end
   end
@@ -420,7 +427,7 @@ defmodule Claper.Events do
     with {:ok, replaced} <- result do
       Claper.Audit.log_resource_action(user, "event.embed_token.create", "event", event.id)
       if replaced > 0, do: broadcast_event(event.uuid, {:presenter_embed_revoked})
-      {:ok, encoded_token, replaced > 0}
+      {:ok, encoded_token}
     end
   end
 

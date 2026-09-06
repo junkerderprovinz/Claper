@@ -835,6 +835,24 @@ defmodule ClaperWeb.EventLive.PresenterEmbedTest do
 
       refute html =~ String.upcase(event.code)
     end
+
+    # Measured in a browser: the QR container came out empty. The Presenter hook
+    # hands #slider to tiny-slider, an interaction block has no deck and so no
+    # #slider, tiny-slider throws on mount, and the thrown exception stops every
+    # hook after it from mounting. The QR is drawn by one of those.
+    test "does not mount the deck hook, which would stop the QR being drawn", %{
+      conn: conn,
+      token: token
+    } do
+      interaction = get(conn, ~p"/embed/interaction/#{token}?show=join") |> html_response(200)
+      deck = get(conn, ~p"/embed/presenter/#{token}") |> html_response(200)
+
+      refute interaction =~ ~s(phx-hook="Presenter")
+      assert interaction =~ ~s(phx-hook="QRCode")
+
+      # The deck view still has both, and still has the slider the hook needs.
+      assert deck =~ ~s(phx-hook="Presenter")
+    end
   end
 
   describe "the messages block" do

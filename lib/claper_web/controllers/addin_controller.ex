@@ -32,9 +32,10 @@ defmodule ClaperWeb.AddinController do
         code: event.code,
         # How many slides Claper itself holds. A poll positioned inside that
         # range belongs to the deck uploaded to Claper; one beyond it was made
-        # for a slide of someone else's document, and the sidebar says so
-        # instead of showing one flat list.
-        deck_length: (event.presentation_file && event.presentation_file.length) || 0
+        # for a slide of someone else's document. The sidebar shows the second
+        # kind by default, because an event that has been used before otherwise
+        # opens on a list of questions from a different talk.
+        deck_length: deck_length(event)
       },
       polls: polls
     })
@@ -112,7 +113,10 @@ defmodule ClaperWeb.AddinController do
         file -> Quizzes.list_quizzes(file.id)
       end
 
-    json(conn, %{quizzes: Enum.map(quizzes, &quiz_json/1)})
+    json(conn, %{
+      quizzes: Enum.map(quizzes, &quiz_json/1),
+      event: %{deck_length: deck_length(event)}
+    })
   end
 
   @doc """
@@ -186,18 +190,18 @@ defmodule ClaperWeb.AddinController do
   call: that one writes and stays on this machine, this one only reads and is
   meant to travel inside the file.
 
-  It replaces any embed link the event already had, the same way the button on
-  the manage screen does, so the response says so and the sidebar asks first.
+  It leaves links the event already has alone, so a second presentation using
+  the same event does not blank the blocks in the first one. Revoking from the
+  manage screen still closes all of them at once.
   """
   def embed_token(%{assigns: %{addin_event: event}} = conn, _params) do
     case Claper.Events.create_presenter_embed_token_for_addin(event) do
-      {:ok, token, replaced} ->
-        conn |> put_status(:created) |> json(%{token: token, replaced: replaced})
-
-      {:error, _} ->
-        error(conn, 422, "link could not be created")
+      {:ok, token} -> conn |> put_status(:created) |> json(%{token: token})
+      {:error, _} -> error(conn, 422, "link could not be created")
     end
   end
+
+  defp deck_length(event), do: (event.presentation_file && event.presentation_file.length) || 0
 
   defp find_poll(event, id) do
     with {parsed, ""} <- Integer.parse(to_string(id)),

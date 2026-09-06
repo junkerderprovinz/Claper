@@ -386,18 +386,46 @@ defmodule ClaperWeb.AddinControllerTest do
              |> json_response(401)
     end
 
-    # An event holds one link at a time, and the one being replaced may live in
-    # a different deck. The sidebar can only warn about that if the answer says
-    # it happened.
-    test "asking again replaces the previous link, and says so", %{conn: conn, token: token} do
+    # One event can be used by several presentations, and a deck can hold many
+    # blocks. A link made for a second deck must not blank the first one: that
+    # happened in testing within minutes of the rotating version existing.
+    test "asking again leaves the previous link working", %{conn: conn, token: token} do
       first = conn |> auth(token) |> post(~p"/api/addin/embed_token") |> json_response(201)
       second = conn |> auth(token) |> post(~p"/api/addin/embed_token") |> json_response(201)
 
-      assert first["replaced"] == false
-      assert second["replaced"] == true
       refute first["token"] == second["token"]
+      assert build_conn() |> get(~p"/embed/interaction/#{first["token"]}") |> html_response(200)
       assert build_conn() |> get(~p"/embed/interaction/#{second["token"]}") |> html_response(200)
+    end
+
+    # The off switch has to stay one action, or it is not an off switch.
+    test "revoking closes every link the sidebar made", %{
+      conn: conn,
+      user: user,
+      event: event,
+      token: token
+    } do
+      first = conn |> auth(token) |> post(~p"/api/addin/embed_token") |> json_response(201)
+      second = conn |> auth(token) |> post(~p"/api/addin/embed_token") |> json_response(201)
+
+      {:ok, _count} = Claper.Events.revoke_presenter_embed_tokens(event, user)
+
       assert build_conn() |> get(~p"/embed/interaction/#{first["token"]}") |> html_response(404)
+      assert build_conn() |> get(~p"/embed/interaction/#{second["token"]}") |> html_response(404)
+    end
+
+    # Same for the event simply ending, which is the case nobody presses a
+    # button for.
+    test "ending the event closes every link the sidebar made", %{
+      conn: conn,
+      event: event,
+      token: token
+    } do
+      made = conn |> auth(token) |> post(~p"/api/addin/embed_token") |> json_response(201)
+
+      {:ok, _event} = Claper.Events.terminate_event(event)
+
+      assert build_conn() |> get(~p"/embed/interaction/#{made["token"]}") |> html_response(404)
     end
   end
 

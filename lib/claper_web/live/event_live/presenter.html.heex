@@ -9,9 +9,15 @@
   }
 </style>
 
+<%!-- The Presenter hook drives the deck: it hands #slider to tiny-slider and
+animates the message column. An interaction block has neither, so tiny-slider
+gets no container and throws on mount. That is not a cosmetic failure: the
+exception aborts the hook loop, so every hook after it stays unmounted, which is
+why the joining block rendered its QR container empty. Measured in the browser,
+not reasoned about. --%>
 <div
   id="presenter"
-  phx-hook="Presenter"
+  phx-hook={!@interaction_only && "Presenter"}
   data-max-page={@event.presentation_file.length || 0}
   data-hash={@event.presentation_file.hash}
   data-current-page={@state.position}

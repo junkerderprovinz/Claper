@@ -52,6 +52,7 @@
         font: inherit; font-weight: 600; cursor: pointer; background: var(--brand); color: #fff;
       }
       button.secondary { background: #fff; color: var(--ink); border-color: var(--line); }
+      button.danger-solid { background: var(--danger); color: #fff; }
       button.link { background: none; border: 0; padding: .2rem .3rem; color: var(--brand); font-weight: 600; font-size: .8rem; }
       button.link.danger { color: var(--danger); }
       button:disabled { opacity: .55; cursor: default; }
@@ -84,6 +85,14 @@
       .answer label { margin: 0; font-weight: 500; font-size: .76rem; color: var(--muted); display: flex; align-items: center; gap: .25rem; white-space: nowrap; }
       .answer input[type="checkbox"] { width: auto; }
 
+      /* PowerPoint ignores window.confirm, so a question has to be part of the
+         page or the answer never arrives. */
+      .confirm { border-top: 1px solid var(--line); margin-top: .5rem; padding-top: .5rem; }
+      .confirm p { margin: 0 0 .45rem; }
+
+      .more { margin-top: .8rem; }
+      .more summary { color: var(--muted); font-weight: 600; font-size: .78rem; }
+
       .msg { font-size: .8rem; margin-top: .55rem; min-height: 1.15rem; }
       .msg.err { color: var(--danger); }
       .msg.ok { color: var(--ok); }
@@ -104,7 +113,8 @@
         <ol class="steps">
           <li><span class="n">1</span><span><b>Connect once</b><span>Your Claper address and the sidebar key from your event.</span></span></li>
           <li><span class="n">2</span><span><b>Write questions</b><span>Polls and quizzes, created on your event straight away.</span></span></li>
-          <li><span class="n">3</span><span><b>Put them on slides</b><span>One link for the whole deck. Each slide then picks what it shows.</span></span></li>
+          <li><span class="n">3</span><span><b>Put the join code on a slide</b><span>One button. Without it nobody in the room can answer.</span></span></li>
+          <li><span class="n">4</span><span><b>Put the answers on slides</b><span>One link for the whole deck. Each block then picks what it shows.</span></span></li>
         </ol>
         <div style="margin-top:1rem"><button id="start" type="button">Get started</button></div>
       </div>
@@ -131,6 +141,7 @@
     <div id="work" class="pad" hidden>
       <div style="display:flex; align-items:center; gap:.5rem; margin-bottom:.6rem">
         <h2 style="flex:1; margin:0" id="eventName">Your event</h2>
+        <button class="link" id="home" type="button">Start</button>
         <button class="link" id="settings" type="button">Connection</button>
       </div>
 
@@ -183,10 +194,23 @@
 
       <!-- SLIDES -->
       <div id="paneSlides" hidden>
+        <h2>How people join</h2>
+        <p class="help" style="margin-bottom:.6rem">
+          Put this on an early slide, otherwise nobody in the room knows how to answer.
+          It is a picture, so it goes straight onto the slide you have open.
+        </p>
+        <div class="actions">
+          <button id="insertQr" type="button">Put the code on this slide</button>
+        </div>
+        <div class="msg" id="qrMsg"></div>
+
+        <hr />
+
         <h2>One link for the whole deck</h2>
         <p class="help" style="margin-bottom:.6rem">
-          Insert the Claper object on a slide, paste this link into it once, then pick there what that slide shows.
-          The link only reads, so it is safe inside the file.
+          The live blocks are a different thing: insert the Claper object on a slide, paste this link
+          into it once, then pick there what that slide shows. The link only reads, so it is safe
+          inside the file.
         </p>
 
         <div class="linkrow">
@@ -195,20 +219,20 @@
         </div>
         <div style="margin-top:.6rem" class="actions">
           <button id="makeLink" type="button">Create link</button>
-          <button id="replaceLink" class="link danger" type="button" hidden>Replace</button>
         </div>
         <div class="msg" id="linkMsg"></div>
 
         <hr />
 
-        <h2>Insert the object</h2>
+        <h2>Insert a live block</h2>
         <ol class="steps">
           <li><span class="n">1</span><span><b>Insert &gt; Add-ins &gt; My Add-ins</b><span>Pick "Claper on a slide".</span></span></li>
           <li><span class="n">2</span><span><b>Paste the link</b><span>Once per object, then choose what it shows.</span></span></li>
           <li><span class="n">3</span><span><b>Copy the object</b><span>Onto the next slide, and change only what it shows.</span></span></li>
         </ol>
         <p class="help">
-          PowerPoint does not let a sidebar drop an object onto a slide for you, so this step stays manual.
+          A picture can be placed for you, a live object cannot: PowerPoint does not let a sidebar
+          drop one onto a slide.
         </p>
       </div>
     </div>
@@ -224,6 +248,7 @@
 
       var cfg = { base: "", token: "", embed: "" };
       var deckLength = 0;
+      var eventCode = "";
 
       function $(id) { return document.getElementById(id); }
       function say(el, text, kind) { el.className = "msg " + (kind || ""); el.textContent = text || ""; }
@@ -266,6 +291,49 @@
       function embedUrl() {
         if (!cfg.base || !cfg.embed) return "";
         return cfg.base.replace(/\/+$/, "") + "/embed/interaction/" + cfg.embed;
+      }
+
+      // PowerPoint's task pane ignores window.confirm: the dialog never appears
+      // and the call returns a falsy value, so a handler that starts with
+      // "if (!confirm(...)) return" simply does nothing when clicked. That is
+      // exactly what happened to Delete. The question has to be part of the page.
+      function askInCard(card, message, confirmLabel, onYes) {
+        var existing = card.querySelector(".confirm");
+        if (existing) existing.remove();
+
+        var box = document.createElement("div");
+        box.className = "confirm";
+
+        var text = document.createElement("p");
+        text.className = "help";
+        text.textContent = message;
+
+        var row = document.createElement("div");
+        row.className = "actions";
+
+        var yes = document.createElement("button");
+        yes.type = "button";
+        yes.className = "danger-solid";
+        yes.textContent = confirmLabel;
+
+        var no = document.createElement("button");
+        no.type = "button";
+        no.className = "secondary";
+        no.textContent = "Keep it";
+        no.addEventListener("click", function () { box.remove(); });
+
+        yes.addEventListener("click", function () {
+          yes.disabled = true;
+          no.disabled = true;
+          onYes();
+        });
+
+        row.appendChild(yes);
+        row.appendChild(no);
+        box.appendChild(text);
+        box.appendChild(row);
+        card.appendChild(box);
+        yes.focus();
       }
 
       /* ---------- polls ---------- */
@@ -320,11 +388,16 @@
         delBtn.type = "button";
         delBtn.textContent = "Delete";
         delBtn.addEventListener("click", function () {
-          if (!window.confirm('Delete "' + poll.title + '"? Answers already given are deleted with it.')) return;
-          delBtn.disabled = true;
-          api("/api/addin/polls/" + poll.id, { method: "DELETE" })
-            .then(loadPolls)
-            .catch(function (e) { say($("listMsg"), e.message, "err"); delBtn.disabled = false; });
+          askInCard(
+            wrap,
+            'Delete "' + poll.title + '"? The answers already given go with it.',
+            "Delete",
+            function () {
+              api("/api/addin/polls/" + poll.id, { method: "DELETE" })
+                .then(loadPolls)
+                .catch(function (e) { say($("listMsg"), e.message, "err"); loadPolls(); });
+            }
+          );
         });
 
         actions.appendChild(editBtn);
@@ -385,21 +458,56 @@
         t.focus();
       }
 
+      // An event that has been used before is full of questions from that talk,
+      // sitting on the slides of the deck uploaded to Claper. Opening the
+      // sidebar on a list of somebody else's questions is what this splits up:
+      // what you made here comes first, the rest is one click away.
+      function onClaperDeck(item) { return deckLength > 0 && item.position <= deckLength; }
+
+      function renderList(box, items, card, emptyText, otherLabel) {
+        box.innerHTML = "";
+
+        var mine = items.filter(function (i) { return !onClaperDeck(i); });
+        var theirs = items.filter(onClaperDeck);
+
+        if (!mine.length) {
+          var empty = document.createElement("p");
+          empty.className = "help";
+          empty.textContent = emptyText;
+          box.appendChild(empty);
+        } else {
+          mine.forEach(function (i) { box.appendChild(card(i)); });
+        }
+
+        if (theirs.length) {
+          var more = document.createElement("details");
+          more.className = "more";
+          var summary = document.createElement("summary");
+          summary.textContent = theirs.length + " " + otherLabel;
+          more.appendChild(summary);
+          var inner = document.createElement("div");
+          inner.style.marginTop = ".5rem";
+          theirs.forEach(function (i) { inner.appendChild(card(i)); });
+          more.appendChild(inner);
+          box.appendChild(more);
+        }
+      }
+
       function loadPolls() {
         say($("listMsg"), "Loading…");
         return api("/api/addin/polls")
           .then(function (body) {
             deckLength = (body.event && body.event.deck_length) || 0;
+            eventCode = (body.event && body.event.code) || "";
             $("eventName").textContent = body.event.name;
 
-            var box = $("polls");
-            box.innerHTML = "";
-            var polls = body.polls || [];
-            if (!polls.length) {
-              box.innerHTML = '<p class="help">No polls yet.</p>';
-            } else {
-              polls.forEach(function (p) { box.appendChild(pollCard(p)); });
-            }
+            renderList(
+              $("polls"),
+              body.polls || [],
+              pollCard,
+              "No polls for this presentation yet.",
+              "already on the deck inside Claper"
+            );
             say($("listMsg"), "");
           })
           .catch(function (e) { say($("listMsg"), e.message, "err"); });
@@ -567,11 +675,16 @@
         delBtn.type = "button";
         delBtn.textContent = "Delete";
         delBtn.addEventListener("click", function () {
-          if (!window.confirm('Delete "' + quiz.title + '"? Answers already given are deleted with it.')) return;
-          delBtn.disabled = true;
-          api("/api/addin/quizzes/" + quiz.id, { method: "DELETE" })
-            .then(loadQuizzes)
-            .catch(function (e) { say($("quizListMsg"), e.message, "err"); delBtn.disabled = false; });
+          askInCard(
+            wrap,
+            'Delete "' + quiz.title + '"? The answers already given go with it.',
+            "Delete",
+            function () {
+              api("/api/addin/quizzes/" + quiz.id, { method: "DELETE" })
+                .then(loadQuizzes)
+                .catch(function (e) { say($("quizListMsg"), e.message, "err"); loadQuizzes(); });
+            }
+          );
         });
 
         actions.appendChild(editBtn);
@@ -644,17 +757,136 @@
         say($("quizListMsg"), "Loading…");
         return api("/api/addin/quizzes")
           .then(function (body) {
-            var box = $("quizzes");
-            box.innerHTML = "";
-            var quizzes = body.quizzes || [];
-            if (!quizzes.length) {
-              box.innerHTML = '<p class="help">No quizzes yet.</p>';
-            } else {
-              quizzes.forEach(function (q) { box.appendChild(quizCard(q)); });
+            if (body.event && typeof body.event.deck_length === "number") {
+              deckLength = body.event.deck_length;
             }
+            renderList(
+              $("quizzes"),
+              body.quizzes || [],
+              quizCard,
+              "No quizzes for this presentation yet.",
+              "already on the deck inside Claper"
+            );
             say($("quizListMsg"), "");
           })
           .catch(function (e) { say($("quizListMsg"), e.message, "err"); });
+      }
+
+      /* ---------- the joining picture ---------- */
+
+      // Claper already draws this code on its own joining screen, and the embed
+      // renders that screen from the same origin as this page. So the picture is
+      // read out of a hidden frame rather than encoded a second time here: one
+      // encoder, one look, and no third-party script in a task pane.
+      function readQrCanvas() {
+        return new Promise(function (resolve, reject) {
+          var url = embedUrl();
+          if (!url) { reject(new Error("Create the slide link first, just below.")); return; }
+
+          var frame = document.createElement("iframe");
+          frame.setAttribute("aria-hidden", "true");
+          frame.style.cssText = "position:absolute;left:-10000px;top:0;width:520px;height:460px;border:0";
+          frame.src = url + "?show=join";
+
+          var settled = false;
+          var tries = 0;
+
+          function finish(error, value) {
+            if (settled) return;
+            settled = true;
+            frame.remove();
+            error ? reject(error) : resolve(value);
+          }
+
+          // The code is drawn by a LiveView hook after the socket connects, so
+          // there is nothing to read at load time. Poll for the canvas instead
+          // of guessing a delay, and give up rather than hang.
+          var timer = setInterval(function () {
+            tries++;
+            try {
+              var canvas = frame.contentDocument &&
+                frame.contentDocument.querySelector("#embed-qr canvas");
+              if (canvas && canvas.width > 0) {
+                clearInterval(timer);
+                finish(null, canvas.toDataURL("image/png"));
+                return;
+              }
+            } catch (e) {
+              clearInterval(timer);
+              finish(new Error("Claper did not let this page read the code."));
+              return;
+            }
+            if (tries > 60) {
+              clearInterval(timer);
+              finish(new Error("Claper did not draw the code in time."));
+            }
+          }, 250);
+
+          document.body.appendChild(frame);
+        });
+      }
+
+      // The bare code would be a riddle on a slide, so the picture carries the
+      // address and the code as well, the same three things the joining screen
+      // shows.
+      function joinPicture(qrUrl) {
+        return new Promise(function (resolve, reject) {
+          var img = new Image();
+          img.onerror = function () { reject(new Error("The code could not be drawn.")); };
+          img.onload = function () {
+            var pad = 60, size = 780, W = size + pad * 2, H = size + pad * 2 + 210;
+            var canvas = document.createElement("canvas");
+            canvas.width = W;
+            canvas.height = H;
+
+            var g = canvas.getContext("2d");
+            g.fillStyle = "#ffffff";
+            g.fillRect(0, 0, W, H);
+            g.drawImage(img, pad, pad, size, size);
+
+            g.textAlign = "center";
+            g.fillStyle = "#5b6472";
+            g.font = "500 40px 'Segoe UI', system-ui, sans-serif";
+            g.fillText(cfg.base.replace(/^https?:\/\//, "").replace(/\/+$/, ""), W / 2, pad + size + 78);
+
+            g.fillStyle = "#111827";
+            g.font = "700 104px 'Segoe UI', system-ui, sans-serif";
+            g.fillText("#" + eventCode.toUpperCase(), W / 2, pad + size + 184);
+
+            resolve(canvas.toDataURL("image/png"));
+          };
+          img.src = qrUrl;
+        });
+      }
+
+      function putOnSlide(dataUrl) {
+        return new Promise(function (resolve, reject) {
+          Office.context.document.setSelectedDataAsync(
+            dataUrl.split(",")[1],
+            { coercionType: Office.CoercionType.Image },
+            function (result) {
+              if (result.status === Office.AsyncResultStatus.Succeeded) resolve();
+              else reject(new Error((result.error && result.error.message) || "PowerPoint refused it."));
+            }
+          );
+        });
+      }
+
+      function insertJoinPicture() {
+        $("insertQr").disabled = true;
+        say($("qrMsg"), "Drawing the code…");
+
+        readQrCanvas()
+          .then(joinPicture)
+          .then(function (picture) {
+            say($("qrMsg"), "Putting it on the slide…");
+            return putOnSlide(picture);
+          })
+          .then(function () {
+            say($("qrMsg"), "Done. It landed on the slide you have open.", "ok");
+          })
+          .catch(function (e) { say($("qrMsg"), e.message, "err"); })
+          .then(function () { $("insertQr").disabled = false; });
       }
 
       /* ---------- the slide link ---------- */
@@ -662,19 +894,14 @@
       function showLink() {
         var url = embedUrl();
         $("slideLink").value = url;
-        $("makeLink").textContent = url ? "Create a new link" : "Create link";
         $("makeLink").hidden = !!url;
-        $("replaceLink").hidden = !url;
       }
 
-      function makeLink(replacing) {
-        if (replacing && !window.confirm(
-          "Replace the slide link?\n\nEvery Claper object that already uses the old link stops working, " +
-          "in this deck and in any other file using this event."
-        )) return;
-
+      // Only ever called when this presentation has no link yet, and the button
+      // hides once it has one. Making another is harmless now, because a new
+      // link no longer closes the ones already sitting on slides.
+      function makeLink() {
         $("makeLink").disabled = true;
-        $("replaceLink").disabled = true;
         say($("linkMsg"), "Asking Claper…");
 
         api("/api/addin/embed_token", { method: "POST" })
@@ -682,24 +909,17 @@
             cfg.embed = body.token;
             docSet(DOC_EMBED, body.token, function (saved) {
               showLink();
-
-              if (!saved) {
-                say($("linkMsg"), "Made, but it could not be saved into this file. Save the presentation, then create it again.", "err");
-              } else if (body.replaced) {
-                // The event holds one link at a time, and it may have been in
-                // another deck. Saying so beats letting the author find out on
-                // a slide that has quietly gone blank.
-                say($("linkMsg"), "Ready. This replaced the event's previous link, so any object still using the old one has stopped working.", "err");
-              } else {
-                say($("linkMsg"), "Ready. Paste it into the Claper object on a slide.", "ok");
-              }
+              say(
+                $("linkMsg"),
+                saved
+                  ? "Ready. Paste it into the Claper object on a slide."
+                  : "Made, but it could not be saved into this file. Save the presentation, then create it again.",
+                saved ? "ok" : "err"
+              );
             });
           })
           .catch(function (e) { say($("linkMsg"), e.message, "err"); })
-          .then(function () {
-            $("makeLink").disabled = false;
-            $("replaceLink").disabled = false;
-          });
+          .then(function () { $("makeLink").disabled = false; });
       }
 
       /* ---------- tabs ---------- */
@@ -736,9 +956,12 @@
 
         $("start").addEventListener("click", function () {
           store(LS.seen, "1");
-          show("connect");
+          show(cfg.base && cfg.token ? "work" : "connect");
         });
-        $("backToWelcome").addEventListener("click", function () { show("welcome"); });
+        $("backToWelcome").addEventListener("click", function () {
+          show(cfg.base && cfg.token ? "work" : "welcome");
+        });
+        $("home").addEventListener("click", function () { show("welcome"); });
         $("settings").addEventListener("click", function () { show("connect"); });
         $("reload").addEventListener("click", loadPolls);
         $("reloadQuizzes").addEventListener("click", loadQuizzes);
@@ -747,8 +970,8 @@
         $("tabQuizzes").addEventListener("click", function () { selectTab("quizzes"); });
         $("tabSlides").addEventListener("click", function () { selectTab("slides"); });
 
-        $("makeLink").addEventListener("click", function () { makeLink(false); });
-        $("replaceLink").addEventListener("click", function () { makeLink(true); });
+        $("makeLink").addEventListener("click", makeLink);
+        $("insertQr").addEventListener("click", insertJoinPicture);
         $("copyLink").addEventListener("click", function () {
           var field = $("slideLink");
           if (!field.value) return;
