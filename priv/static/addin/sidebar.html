@@ -298,6 +298,14 @@
         opts.textContent = poll.options.map(function (o) { return o.content; }).join("  ·  ");
         wrap.appendChild(opts);
 
+        // The counts come back with the list anyway, and during a talk knowing
+        // whether anyone has answered is the one thing worth glancing at.
+        var votes = poll.options.reduce(function (sum, o) { return sum + (o.votes || 0); }, 0);
+        var count = document.createElement("div");
+        count.className = "opts";
+        count.textContent = votes === 1 ? "1 answer so far" : votes + " answers so far";
+        wrap.appendChild(count);
+
         var actions = document.createElement("div");
         actions.className = "actions";
 
@@ -536,6 +544,14 @@
           });
           wrap.appendChild(line);
         });
+
+        var answered = (quiz.questions || []).reduce(function (sum, question) {
+          return sum + question.options.reduce(function (n, o) { return n + (o.responses || 0); }, 0);
+        }, 0);
+        var count = document.createElement("div");
+        count.className = "opts";
+        count.textContent = answered === 1 ? "1 answer so far" : answered + " answers so far";
+        wrap.appendChild(count);
 
         var actions = document.createElement("div");
         actions.className = "actions";
