@@ -237,7 +237,13 @@
           />
         </div>
       <% end %>
+      <!-- The slider holds every page of the deck so the presenter can move through
+    it without a round trip, and hides the others with CSS. That is the owner's
+    own screen. An embed is read by an audience that may open the page source,
+    so it gets the projected page only, re-rendered when the position changes.
+    Slides the presenter has not reached never reach the browser. -->
       <div
+        :if={!@presenter_embed}
         class={"#{if @current_embed, do: "hidden", else: ""} text-center"}
         id="slider"
         phx-update="ignore"
@@ -245,6 +251,17 @@
         <img
           :for={src <- Presentations.get_slide_urls(@event.presentation_file)}
           src={src}
+          class="max-h-screen w-auto!"
+        />
+      </div>
+      <div
+        :if={@presenter_embed}
+        class={"#{if @current_embed, do: "hidden", else: ""} text-center"}
+        id="slide"
+      >
+        <img
+          :if={current_slide_url(@event.presentation_file, @state.position)}
+          src={current_slide_url(@event.presentation_file, @state.position)}
           class="max-h-screen w-auto!"
         />
       </div>

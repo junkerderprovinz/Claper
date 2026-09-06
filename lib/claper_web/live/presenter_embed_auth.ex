@@ -28,7 +28,7 @@ defmodule ClaperWeb.PresenterEmbedAuth do
     end
 
     event =
-      if ClaperWeb.Plugs.EmbedFrame.framing_allowed?() do
+      if ClaperWeb.Plugs.PresenterEmbedFrame.framing_allowed?() do
         Claper.Events.get_event_by_presenter_embed_token(token, @event_preload)
       end
 

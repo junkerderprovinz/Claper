@@ -1,4 +1,4 @@
-defmodule ClaperWeb.Plugs.EmbedFrame do
+defmodule ClaperWeb.Plugs.PresenterEmbedFrame do
   @moduledoc """
   Allows a single route to be framed by the origins an operator opted in to.
 
@@ -11,11 +11,11 @@ defmodule ClaperWeb.Plugs.EmbedFrame do
   `frame-ancestors` is used rather than `x-frame-options: ALLOWALL` because
   `ALLOWALL` is not a value the specification defines and cannot express an
   allow list. The default is `'none'`, so an upgrade alone changes nothing:
-  framing only becomes possible once `EMBED_FRAME_ANCESTORS` is set.
+  framing only becomes possible once `PRESENTER_EMBED_FRAME_ANCESTORS` is set.
 
   ## Configuration
 
-      config :claper, embed_frame_ancestors: "https://*.officeapps.live.com"
+      config :claper, presenter_embed_frame_ancestors: "https://*.officeapps.live.com"
   """
 
   import Plug.Conn
@@ -39,7 +39,7 @@ defmodule ClaperWeb.Plugs.EmbedFrame do
   rather than from a second, slightly different check.
   """
   def frame_ancestors do
-    Application.get_env(:claper, :embed_frame_ancestors, @default_ancestors)
+    Application.get_env(:claper, :presenter_embed_frame_ancestors, @default_ancestors)
     |> sanitize()
   end
 

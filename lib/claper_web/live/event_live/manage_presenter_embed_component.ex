@@ -1,4 +1,4 @@
-defmodule ClaperWeb.EventLive.ManageEmbedOptionsComponent do
+defmodule ClaperWeb.EventLive.ManagePresenterEmbedComponent do
   @moduledoc false
   use Phoenix.Component
   use Gettext, backend: ClaperWeb.Gettext
@@ -7,9 +7,9 @@ defmodule ClaperWeb.EventLive.ManageEmbedOptionsComponent do
   attr :embed_url, :string, default: nil
 
   def render(assigns) do
-    # Without an allow list the browser refuses to display the link anywhere,
-    # so the card says whether this server has one rather than letting someone
-    # create a link and wonder why the frame stays empty.
+    # Without an allow list the feature is off: the route answers 404 and the
+    # browser would refuse to frame the page anyway. The card says so and hides
+    # the buttons rather than handing out a link that cannot be opened.
     assigns = assign_new(assigns, :frame_ancestors_configured, &frame_ancestors_configured?/0)
 
     ~H"""
@@ -73,7 +73,10 @@ defmodule ClaperWeb.EventLive.ManageEmbedOptionsComponent do
           )}
         </p>
 
-        <div class="flex flex-wrap gap-2">
+        <%!-- Without an allow list the route answers 404 for every token, so a link
+        created here could not be opened at all. The buttons go with it rather
+        than handing out something that cannot work. --%>
+        <div :if={@frame_ancestors_configured} class="flex flex-wrap gap-2">
           <button
             type="button"
             phx-click="create-presenter-embed-token"
@@ -101,13 +104,13 @@ defmodule ClaperWeb.EventLive.ManageEmbedOptionsComponent do
 
         <p class="text-xs text-gray-500">
           {gettext(
-            "The link shows the same slides and interactions as the projected view, in a compact layout and without the joining instructions. Use the presentation settings above to hide the messages before you embed it."
+            "The link shows the page you are projecting and the interactions you have released, in a compact layout and without the joining instructions. Pages you have not reached are not sent. Use the presentation settings above to hide the messages before you embed it."
           )}
         </p>
 
         <p :if={!@frame_ancestors_configured} class="text-xs text-orange-700">
           {gettext(
-            "This server does not allow any site to embed it yet. Set EMBED_FRAME_ANCESTORS to the origins that may frame the link, otherwise the browser refuses to display it."
+            "This server does not allow any site to embed it yet. Set PRESENTER_EMBED_FRAME_ANCESTORS to the origins that may frame the link, otherwise the browser refuses to display it."
           )}
         </p>
 
@@ -125,5 +128,5 @@ defmodule ClaperWeb.EventLive.ManageEmbedOptionsComponent do
   # the plug rejects as a whole, a bare wildcard or a quoted string all end up
   # as 'none', and the card has to say so instead of reporting the variable as
   # set.
-  defp frame_ancestors_configured?, do: ClaperWeb.Plugs.EmbedFrame.framing_allowed?()
+  defp frame_ancestors_configured?, do: ClaperWeb.Plugs.PresenterEmbedFrame.framing_allowed?()
 end

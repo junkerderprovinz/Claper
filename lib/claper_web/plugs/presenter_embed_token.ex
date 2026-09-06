@@ -14,7 +14,7 @@ defmodule ClaperWeb.Plugs.PresenterEmbedToken do
   A server without an allow list answers 404 for every token. `frame-ancestors
   'none'` already stops a browser from framing the page, but the link stays
   openable in a tab of its own, so the header alone is not an off switch.
-  `EMBED_FRAME_ANCESTORS` is therefore what turns the whole feature on, and it
+  `PRESENTER_EMBED_FRAME_ANCESTORS` is therefore what turns the whole feature on, and it
   is unset by default.
   """
 
@@ -24,7 +24,7 @@ defmodule ClaperWeb.Plugs.PresenterEmbedToken do
   def init(opts), do: opts
 
   def call(%Plug.Conn{path_params: %{"token" => token}} = conn, _opts) do
-    if ClaperWeb.Plugs.EmbedFrame.framing_allowed?() and
+    if ClaperWeb.Plugs.PresenterEmbedFrame.framing_allowed?() and
          Claper.Events.get_event_by_presenter_embed_token(token) do
       conn
     else

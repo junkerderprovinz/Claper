@@ -7,30 +7,36 @@ defmodule ClaperWeb.EventLive.PresenterEmbedTest do
   setup do
     # The feature is off until an operator names the origins that may frame it,
     # so every test here has to switch it on the way a server would.
-    previous = Application.get_env(:claper, :embed_frame_ancestors)
-    Application.put_env(:claper, :embed_frame_ancestors, "https://slides.example.com")
+    previous = Application.get_env(:claper, :presenter_embed_frame_ancestors)
+    Application.put_env(:claper, :presenter_embed_frame_ancestors, "https://slides.example.com")
 
     on_exit(fn ->
       if previous do
-        Application.put_env(:claper, :embed_frame_ancestors, previous)
+        Application.put_env(:claper, :presenter_embed_frame_ancestors, previous)
       else
-        Application.delete_env(:claper, :embed_frame_ancestors)
+        Application.delete_env(:claper, :presenter_embed_frame_ancestors)
       end
     end)
 
     user = user_fixture()
     presentation_file = presentation_file_fixture(%{user: user}, [:event])
-    presentation_state_fixture(%{presentation_file: presentation_file})
+    state = presentation_state_fixture(%{presentation_file: presentation_file})
     event = Claper.Events.get_event_with_code(presentation_file.event.code)
 
     {:ok, token} = Claper.Events.create_presenter_embed_token(event, user)
 
-    %{user: user, event: event, token: token, presentation_file: presentation_file}
+    %{
+      user: user,
+      event: event,
+      token: token,
+      presentation_file: presentation_file,
+      state: state
+    }
   end
 
   describe "off switch" do
     test "without an allow list a valid token is answered with 404", %{conn: conn, token: token} do
-      Application.delete_env(:claper, :embed_frame_ancestors)
+      Application.delete_env(:claper, :presenter_embed_frame_ancestors)
 
       conn = get(conn, ~p"/embed/presenter/#{token}")
 
@@ -38,11 +44,58 @@ defmodule ClaperWeb.EventLive.PresenterEmbedTest do
     end
 
     test "a value the sanitiser rejects leaves the feature off", %{conn: conn, token: token} do
-      Application.put_env(:claper, :embed_frame_ancestors, "https://a.com; default-src *")
+      Application.put_env(
+        :claper,
+        :presenter_embed_frame_ancestors,
+        "https://a.com; default-src *"
+      )
 
       conn = get(conn, ~p"/embed/presenter/#{token}")
 
       assert conn.status == 404
+    end
+  end
+
+  # Slide files are numbered from 1 while `position` counts from 0, so position
+  # 0 is `1.jpg`. The fixture deck has 42 pages.
+  describe "slides" do
+    test "only the projected page is in the markup", %{conn: conn, token: token} do
+      {:ok, _view, html} = live(conn, ~p"/embed/presenter/#{token}")
+
+      assert html =~ "/uploads/123456/1.jpg"
+
+      for page <- [2, 8, 42] do
+        refute html =~ "/uploads/123456/#{page}.jpg"
+      end
+    end
+
+    test "moving the presentation moves the page the embed shows", %{
+      conn: conn,
+      token: token,
+      state: state
+    } do
+      {:ok, view, _html} = live(conn, ~p"/embed/presenter/#{token}")
+
+      # This broadcasts :state_updated, which is what an open frame listens for.
+      {:ok, _state} = Claper.Presentations.update_presentation_state(state, %{"position" => 3})
+
+      html = render(view)
+      assert html =~ "/uploads/123456/4.jpg"
+      refute html =~ "/uploads/123456/1.jpg"
+    end
+
+    test "the owner's own presenter view still carries the whole deck", %{
+      conn: conn,
+      user: user,
+      event: event
+    } do
+      {:ok, _view, html} =
+        conn
+        |> log_in_user(user)
+        |> live(~p"/e/#{event.code}/presenter")
+
+      assert html =~ "/uploads/123456/1.jpg"
+      assert html =~ "/uploads/123456/42.jpg"
     end
   end
 
@@ -242,6 +295,26 @@ defmodule ClaperWeb.EventLive.PresenterEmbedTest do
       refute embed =~ "option 1"
     end
 
+    # Without this the test above cannot fail for the right reason: a quiz that
+    # never renders at all would satisfy every refute in it.
+    test "a quiz whose results the owner released is present in the embed", %{
+      conn: conn,
+      token: token,
+      presentation_file: presentation_file
+    } do
+      Claper.QuizzesFixtures.quiz_fixture(%{
+        presentation_file: presentation_file,
+        position: 0,
+        enabled: true,
+        show_results: true,
+        title: "released quiz title"
+      })
+
+      embed = get(conn, ~p"/embed/presenter/#{token}") |> html_response(200)
+
+      assert embed =~ "released quiz title"
+    end
+
     # "Attendees can view the web content on their device" starts unticked. An
     # embed link is another device.
     test "web content the owner did not release is absent from the embed", %{
@@ -287,29 +360,127 @@ defmodule ClaperWeb.EventLive.PresenterEmbedTest do
       token: token,
       presentation_file: presentation_file
     } do
+      # Votes have to differ, or the bar renders the same string with the guard
+      # on and off and only the number span is really under test.
       poll =
         Claper.PollsFixtures.poll_fixture(%{
           presentation_file_id: presentation_file.id,
           position: 0,
           title: "counted poll",
-          show_results: false
+          show_results: false,
+          poll_opts: [
+            %{content: "leading option", vote_count: 3},
+            %{content: "trailing option", vote_count: 1}
+          ]
         })
 
-      {:ok, _state} =
-        Claper.Presentations.update_presentation_state(
-          Claper.Repo.get_by!(Claper.Presentations.PresentationState,
-            presentation_file_id: presentation_file.id
-          ),
-          %{poll_visible: true}
-        )
+      show_poll(presentation_file)
 
       html = get(conn, ~p"/embed/presenter/#{token}") |> html_response(200)
 
       assert html =~ "counted poll"
-      refute html =~ "% (0)"
+      assert html =~ "leading option"
+      refute html =~ "75% (3)"
+      refute html =~ "width: 75%"
+      assert html =~ "width: 0%"
 
       assert poll.show_results == false
     end
+
+    # The counterpart: with the same fixture and the guard released, both the
+    # bar and the numbers do appear, so the refutes above cannot pass vacuously.
+    test "poll results the owner released are present in the embed", %{
+      conn: conn,
+      token: token,
+      presentation_file: presentation_file
+    } do
+      Claper.PollsFixtures.poll_fixture(%{
+        presentation_file_id: presentation_file.id,
+        position: 0,
+        title: "counted poll",
+        show_results: true,
+        poll_opts: [
+          %{content: "leading option", vote_count: 3},
+          %{content: "trailing option", vote_count: 1}
+        ]
+      })
+
+      show_poll(presentation_file)
+
+      html = get(conn, ~p"/embed/presenter/#{token}") |> html_response(200)
+
+      assert html =~ "75% (3)"
+      assert html =~ "width: 75%"
+    end
+  end
+
+  describe "identity" do
+    # The embed must be the same page for everyone holding the link. A visitor
+    # who happens to be logged in must not get their own session on it, or the
+    # view starts answering as a user the link never authorised.
+    test "a logged in visitor is still nobody on the embed", %{
+      conn: conn,
+      user: user,
+      token: token
+    } do
+      {:ok, view, _html} =
+        conn
+        |> log_in_user(user)
+        |> live(~p"/embed/presenter/#{token}")
+
+      assert :sys.get_state(view.pid).socket.assigns.current_user == nil
+    end
+  end
+
+  describe "subtitles" do
+    # "presenter" means the screen in the room. An embed link leaves the room.
+    test "captions meant for the room alone stay out of the embed", %{
+      conn: conn,
+      token: token,
+      presentation_file: presentation_file
+    } do
+      {:ok, _config} =
+        Claper.Transcriptions.create_transcription_config(%{
+          presentation_file_id: presentation_file.id,
+          enabled: true,
+          visibility: "presenter"
+        })
+
+      {:ok, view, _html} = live(conn, ~p"/embed/presenter/#{token}")
+      send(view.pid, {:transcription_delta, "spoken in the room"})
+
+      refute render(view) =~ "spoken in the room"
+    end
+
+    test "captions meant for every device do reach the embed", %{
+      conn: conn,
+      token: token,
+      presentation_file: presentation_file
+    } do
+      {:ok, _config} =
+        Claper.Transcriptions.create_transcription_config(%{
+          presentation_file_id: presentation_file.id,
+          enabled: true,
+          visibility: "both"
+        })
+
+      {:ok, view, _html} = live(conn, ~p"/embed/presenter/#{token}")
+      send(view.pid, {:transcription_delta, "meant for everyone"})
+
+      assert render(view) =~ "meant for everyone"
+    end
+  end
+
+  defp show_poll(presentation_file) do
+    {:ok, state} =
+      Claper.Presentations.update_presentation_state(
+        Claper.Repo.get_by!(Claper.Presentations.PresentationState,
+          presentation_file_id: presentation_file.id
+        ),
+        %{poll_visible: true}
+      )
+
+    state
   end
 
   describe "the link does not outlive the event" do
@@ -368,9 +539,15 @@ defmodule ClaperWeb.EventLive.PresenterEmbedTest do
       conn: conn,
       token: token
     } do
-      previous = Application.get_env(:claper, :embed_frame_ancestors)
-      Application.put_env(:claper, :embed_frame_ancestors, "https://*.officeapps.live.com")
-      on_exit(fn -> Application.put_env(:claper, :embed_frame_ancestors, previous) end)
+      previous = Application.get_env(:claper, :presenter_embed_frame_ancestors)
+
+      Application.put_env(
+        :claper,
+        :presenter_embed_frame_ancestors,
+        "https://*.officeapps.live.com"
+      )
+
+      on_exit(fn -> Application.put_env(:claper, :presenter_embed_frame_ancestors, previous) end)
 
       conn = get(conn, ~p"/embed/presenter/#{token}")
 
@@ -382,9 +559,9 @@ defmodule ClaperWeb.EventLive.PresenterEmbedTest do
     end
 
     test "framing is off by default", %{conn: conn, token: token} do
-      previous = Application.get_env(:claper, :embed_frame_ancestors)
-      Application.delete_env(:claper, :embed_frame_ancestors)
-      on_exit(fn -> Application.put_env(:claper, :embed_frame_ancestors, previous) end)
+      previous = Application.get_env(:claper, :presenter_embed_frame_ancestors)
+      Application.delete_env(:claper, :presenter_embed_frame_ancestors)
+      on_exit(fn -> Application.put_env(:claper, :presenter_embed_frame_ancestors, previous) end)
 
       conn = get(conn, ~p"/embed/presenter/#{token}")
 
@@ -392,15 +569,15 @@ defmodule ClaperWeb.EventLive.PresenterEmbedTest do
     end
 
     test "a configured value cannot append a second CSP directive", %{conn: conn, token: token} do
-      previous = Application.get_env(:claper, :embed_frame_ancestors)
+      previous = Application.get_env(:claper, :presenter_embed_frame_ancestors)
 
       Application.put_env(
         :claper,
-        :embed_frame_ancestors,
+        :presenter_embed_frame_ancestors,
         "https://example.com; default-src *"
       )
 
-      on_exit(fn -> Application.put_env(:claper, :embed_frame_ancestors, previous) end)
+      on_exit(fn -> Application.put_env(:claper, :presenter_embed_frame_ancestors, previous) end)
 
       conn = get(conn, ~p"/embed/presenter/#{token}")
 
@@ -424,9 +601,12 @@ defmodule ClaperWeb.EventLive.PresenterEmbedTest do
           "*:443"
         ] do
       test "a source that names no host falls back: #{value}", %{conn: conn, token: token} do
-        previous = Application.get_env(:claper, :embed_frame_ancestors)
-        Application.put_env(:claper, :embed_frame_ancestors, unquote(value))
-        on_exit(fn -> Application.put_env(:claper, :embed_frame_ancestors, previous) end)
+        previous = Application.get_env(:claper, :presenter_embed_frame_ancestors)
+        Application.put_env(:claper, :presenter_embed_frame_ancestors, unquote(value))
+
+        on_exit(fn ->
+          Application.put_env(:claper, :presenter_embed_frame_ancestors, previous)
+        end)
 
         conn = get(conn, ~p"/embed/presenter/#{token}")
 
@@ -435,9 +615,15 @@ defmodule ClaperWeb.EventLive.PresenterEmbedTest do
     end
 
     test "a subdomain wildcard still names a host and is kept", %{conn: conn, token: token} do
-      previous = Application.get_env(:claper, :embed_frame_ancestors)
-      Application.put_env(:claper, :embed_frame_ancestors, "https://*.officeapps.live.com")
-      on_exit(fn -> Application.put_env(:claper, :embed_frame_ancestors, previous) end)
+      previous = Application.get_env(:claper, :presenter_embed_frame_ancestors)
+
+      Application.put_env(
+        :claper,
+        :presenter_embed_frame_ancestors,
+        "https://*.officeapps.live.com"
+      )
+
+      on_exit(fn -> Application.put_env(:claper, :presenter_embed_frame_ancestors, previous) end)
 
       conn = get(conn, ~p"/embed/presenter/#{token}")
 
@@ -452,9 +638,15 @@ defmodule ClaperWeb.EventLive.PresenterEmbedTest do
       event: event,
       token: token
     } do
-      previous = Application.get_env(:claper, :embed_frame_ancestors)
-      Application.put_env(:claper, :embed_frame_ancestors, "https://*.officeapps.live.com")
-      on_exit(fn -> Application.put_env(:claper, :embed_frame_ancestors, previous) end)
+      previous = Application.get_env(:claper, :presenter_embed_frame_ancestors)
+
+      Application.put_env(
+        :claper,
+        :presenter_embed_frame_ancestors,
+        "https://*.officeapps.live.com"
+      )
+
+      on_exit(fn -> Application.put_env(:claper, :presenter_embed_frame_ancestors, previous) end)
 
       {:ok, _count} = Claper.Events.revoke_presenter_embed_tokens(event, user)
 

@@ -3597,22 +3597,22 @@ msgstr "Jūsu prezentācija ir pievienota un gatava lietošanai."
 msgid "name@example.com"
 msgstr "name@example.com"
 
-#: lib/claper_web/live/event_live/manage_embed_options_component.ex:71
+#: lib/claper_web/live/event_live/manage_presenter_embed_component.ex:71
 #, elixir-autogen, elixir-format
 msgid "An embed link is active. Anyone holding it can watch this event. Create a new one to replace it, or revoke it to switch it off."
 msgstr ""
 
-#: lib/claper_web/live/event_live/manage_embed_options_component.ex:66
+#: lib/claper_web/live/event_live/manage_presenter_embed_component.ex:66
 #, elixir-autogen, elixir-format
 msgid "Copied"
 msgstr ""
 
-#: lib/claper_web/live/event_live/manage_embed_options_component.ex:65
+#: lib/claper_web/live/event_live/manage_presenter_embed_component.ex:65
 #, elixir-autogen, elixir-format
 msgid "Copy link"
 msgstr ""
 
-#: lib/claper_web/live/event_live/manage_embed_options_component.ex:50
+#: lib/claper_web/live/event_live/manage_presenter_embed_component.ex:50
 #, elixir-autogen, elixir-format
 msgid "Copy the link now. It is stored hashed and cannot be shown again."
 msgstr ""
@@ -3622,52 +3622,42 @@ msgstr ""
 msgid "Could not create the embed link"
 msgstr ""
 
-#: lib/claper_web/live/event_live/manage_embed_options_component.ex:89
+#: lib/claper_web/live/event_live/manage_presenter_embed_component.ex:92
 #, elixir-autogen, elixir-format
 msgid "Create a new link"
 msgstr ""
 
-#: lib/claper_web/live/event_live/manage_embed_options_component.ex:89
+#: lib/claper_web/live/event_live/manage_presenter_embed_component.ex:92
 #, elixir-autogen, elixir-format
 msgid "Create embed link"
 msgstr ""
 
-#: lib/claper_web/live/event_live/manage_embed_options_component.ex:38
+#: lib/claper_web/live/event_live/manage_presenter_embed_component.ex:38
 #, elixir-autogen, elixir-format
 msgid "Embed link"
 msgstr ""
 
-#: lib/claper_web/live/event_live/manage_embed_options_component.ex:98
+#: lib/claper_web/live/event_live/manage_presenter_embed_component.ex:101
 #, elixir-autogen, elixir-format
 msgid "Revoke"
 msgstr ""
 
-#: lib/claper_web/live/event_live/manage_embed_options_component.ex:95
+#: lib/claper_web/live/event_live/manage_presenter_embed_component.ex:98
 #, elixir-autogen, elixir-format
 msgid "Revoke the embed link? Open embeds stop working immediately."
 msgstr ""
 
-#: lib/claper_web/live/event_live/manage_embed_options_component.ex:43
+#: lib/claper_web/live/event_live/manage_presenter_embed_component.ex:43
 #, elixir-autogen, elixir-format
 msgid "Show this event's presenter view as a live web page inside another document, for example a slide deck. The link is read-only: it cannot change the presentation and it grants no account access."
 msgstr ""
 
-#: lib/claper_web/live/event_live/manage_embed_options_component.ex:83
+#: lib/claper_web/live/event_live/manage_presenter_embed_component.ex:86
 #, elixir-autogen, elixir-format
 msgid "Replace the embed link? The current one stops working and open embeds are disconnected."
 msgstr ""
 
-#: lib/claper_web/live/event_live/manage_embed_options_component.ex:103
-#, elixir-autogen, elixir-format
-msgid "The link shows the same slides and interactions as the projected view, in a compact layout and without the joining instructions. Use the presentation settings above to hide the messages before you embed it."
-msgstr ""
-
-#: lib/claper_web/live/event_live/manage_embed_options_component.ex:109
-#, elixir-autogen, elixir-format
-msgid "This server does not allow any site to embed it yet. Set EMBED_FRAME_ANCESTORS to the origins that may frame the link, otherwise the browser refuses to display it."
-msgstr ""
-
-#: lib/claper_web/live/event_live/manage_embed_options_component.ex:115
+#: lib/claper_web/live/event_live/manage_presenter_embed_component.ex:118
 #, elixir-autogen, elixir-format
 msgid "Revoking or replacing the link disconnects embeds that are already open, and so does ending the event. Letting the event expire or deleting it only stops new visitors. Slide images stay reachable either way, because this server publishes them at a fixed address whether or not a link exists."
 msgstr ""
@@ -3675,4 +3665,14 @@ msgstr ""
 #: lib/claper_web/live/event_live/manage.ex:572
 #, elixir-autogen, elixir-format
 msgid "Could not revoke the embed link"
+msgstr ""
+
+#: lib/claper_web/live/event_live/manage_presenter_embed_component.ex:112
+#, elixir-autogen, elixir-format
+msgid "This server does not allow any site to embed it yet. Set PRESENTER_EMBED_FRAME_ANCESTORS to the origins that may frame the link, otherwise the browser refuses to display it."
+msgstr ""
+
+#: lib/claper_web/live/event_live/manage_presenter_embed_component.ex:106
+#, elixir-autogen, elixir-format
+msgid "The link shows the page you are projecting and the interactions you have released, in a compact layout and without the joining instructions. Pages you have not reached are not sent. Use the presentation settings above to hide the messages before you embed it."
 msgstr ""

@@ -131,7 +131,8 @@ same_site_cookie = get_var_from_path_or_env(config_dir, "SAME_SITE_COOKIE", "Lax
 # Origins allowed to frame the embeddable presenter view, as a CSP
 # frame-ancestors source list. Defaults to 'none', so framing stays off until
 # an operator opts in.
-embed_frame_ancestors = get_var_from_path_or_env(config_dir, "EMBED_FRAME_ANCESTORS", "'none'")
+presenter_embed_frame_ancestors =
+  get_var_from_path_or_env(config_dir, "PRESENTER_EMBED_FRAME_ANCESTORS", "'none'")
 
 secure_cookie =
   get_var_from_path_or_env(config_dir, "SECURE_COOKIE", "false") |> String.to_existing_atom()
@@ -243,7 +244,7 @@ config :claper,
   remote_ip_headers: remote_ip_headers,
   terms_url: terms_url,
   privacy_url: privacy_url,
-  embed_frame_ancestors: embed_frame_ancestors
+  presenter_embed_frame_ancestors: presenter_embed_frame_ancestors
 
 config :claper, :presentations,
   max_file_size: max_file_size,

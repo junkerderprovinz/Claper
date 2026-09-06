@@ -108,11 +108,15 @@ defmodule ClaperWeb.Router do
   # a shared file, and the code is what lets someone join and post.
   live_session :presenter_embed, on_mount: ClaperWeb.PresenterEmbedAuth do
     scope "/", ClaperWeb do
-      # EmbedFrame runs before the token check on purpose. The token plug halts
+      # PresenterEmbedFrame runs before the token check on purpose. The token plug halts
       # on a bad or revoked link, so a later frame plug would never reach the
       # 404 and the browser would refuse to display it cross origin, leaving an
       # empty frame instead of the page that explains itself.
-      pipe_through([:browser, ClaperWeb.Plugs.EmbedFrame, ClaperWeb.Plugs.PresenterEmbedToken])
+      pipe_through([
+        :browser,
+        ClaperWeb.Plugs.PresenterEmbedFrame,
+        ClaperWeb.Plugs.PresenterEmbedToken
+      ])
 
       live("/embed/presenter/:token", EventLive.Presenter, :embed)
     end

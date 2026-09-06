@@ -22,7 +22,7 @@ defmodule ClaperWeb.EventLive.ManagerSettingsComponent do
         create={@create}
         show_shortcut={@show_shortcut}
       />
-      <ClaperWeb.EventLive.ManageEmbedOptionsComponent.render
+      <ClaperWeb.EventLive.ManagePresenterEmbedComponent.render
         embed_exists={@presenter_embed_exists}
         embed_url={@presenter_embed_url}
       />

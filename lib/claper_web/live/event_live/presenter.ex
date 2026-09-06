@@ -505,4 +505,17 @@ defmodule ClaperWeb.EventLive.Presenter do
   defp list_pinned_posts(_socket, event_id) do
     Claper.Posts.list_pinned_posts(event_id, [:event, :reactions])
   end
+
+  @doc """
+  URL of the page currently projected, or nil when the deck has none.
+
+  The embeddable view renders this one page instead of the whole deck, the same
+  way an attendee's device does, so a page the presenter has not reached is not
+  in the markup an audience can read.
+  """
+  def current_slide_url(presentation_file, position) do
+    presentation_file
+    |> Claper.Presentations.get_slide_urls()
+    |> Enum.at(position)
+  end
 end
