@@ -179,6 +179,62 @@
         shadow: "off"
       };
 
+
+      // ---------- language ----------
+      //
+      // A static file cannot render gettext, so it carries its English and swaps
+      // it once Office has said which language it is set to. The English is the
+      // key, which is why none of the markup had to be marked up.
+      var dict = {};
+
+      function t(text) { return dict[text] || text; }
+
+      function translatePage(root) {
+        var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
+        var nodes = [];
+        while (walker.nextNode()) nodes.push(walker.currentNode);
+        nodes.forEach(function (node) {
+          var key = node.nodeValue.replace(/s+/g, " ").trim();
+          if (!key) return;
+          var hit = dict[key];
+          if (hit && hit !== key) node.nodeValue = node.nodeValue.replace(key, hit);
+        });
+        root.querySelectorAll("[placeholder]").forEach(function (el) {
+          var hit = dict[el.getAttribute("placeholder")];
+          if (hit) el.setAttribute("placeholder", hit);
+        });
+      }
+
+      function pickLocale(all, wanted) {
+        if (!wanted) return null;
+        var lower = String(wanted).toLowerCase();
+        var base = lower.split("-")[0];
+        var keys = Object.keys(all);
+        var exact = keys.filter(function (k) { return k.toLowerCase() === lower; })[0];
+        if (exact) return exact;
+        return keys.filter(function (k) { return k.toLowerCase().split("-")[0] === base; })[0] || null;
+      }
+
+      // The origin comes from the block's own link, which is the only address
+      // this page knows. Without one there is nothing to translate against yet.
+      function loadLanguage() {
+        var parts = parseLink(state.link);
+        var wanted;
+        try { wanted = Office.context.displayLanguage; } catch (e) { wanted = null; }
+        if (!parts || !wanted) return Promise.resolve();
+
+        return fetch(parts.origin + "/addin/strings.json")
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .then(function (all) {
+            if (!all) return;
+            var locale = pickLocale(all, wanted);
+            if (!locale) return;
+            dict = all[locale] || {};
+            translatePage(document.body);
+          })
+          .catch(function () {});
+      }
+
       function $(id) { return document.getElementById(id); }
       function say(text, ok) { var e = $("err"); e.className = "err" + (ok ? " ok" : ""); e.textContent = text || ""; }
 
@@ -235,7 +291,7 @@
             if (e.status !== 404) return;
             $("frame").src = "about:blank";
             openSetup(false);
-            say("This slide link no longer works. Ask the Claper sidebar for the current one.");
+            say(t("This slide link no longer works. Ask the Claper sidebar for the current one."));
           });
         }
       }
@@ -284,18 +340,18 @@
 
         function group(name) {
           var g = document.createElement("optgroup");
-          g.label = name;
+          g.label = t(name);
           what.appendChild(g);
           return g;
         }
 
-        add("join", "How to join (QR code and code)");
-        add("messages", "Messages from the audience");
-        add("interaction", "Whatever Claper is showing right now");
+        add("join", t("How to join (QR code and code)"));
+        add("messages", t("Messages from the audience"));
+        add("interaction", t("Whatever Claper is showing right now"));
 
         var polls = body.polls || [];
         if (polls.length) {
-          var gp = group("Polls");
+          var gp = group(t("Polls"));
           polls.forEach(function (p) {
             var o = document.createElement("option");
             o.value = "poll:" + p.id;
@@ -306,7 +362,7 @@
 
         var quizzes = body.quizzes || [];
         if (quizzes.length) {
-          var gq = group("Quizzes");
+          var gq = group(t("Quizzes"));
           quizzes.forEach(function (q) {
             var o = document.createElement("option");
             o.value = "quiz:" + q.id;
@@ -351,11 +407,11 @@
 
       function goToStep2() {
         var parts = parseLink($("url").value.trim());
-        if (!parts) { say("That does not look like a Claper slide link."); return; }
+        if (!parts) { say(t("That does not look like a Claper slide link.")); return; }
 
         state.link = parts.base;
         $("connect").disabled = true;
-        say("Asking Claper…");
+        say(t("Asking Claper…"));
 
         loadCatalogue(parts)
           .then(function (body) {
@@ -382,6 +438,11 @@
           var fromDeck = deckLink && parseLink(deckLink);
           if (fromDeck) state.link = fromDeck.base;
 
+          // The address is only known now, and it is where the words come from.
+          return loadLanguage().then(function () { decide(saved); });
+        });
+
+        function decide(saved) {
           if (saved && saved.link && state.link) {
             // Configured before: show it, using the deck's current link.
             present();
@@ -392,7 +453,7 @@
           } else {
             openSetup(false);
           }
-        });
+        }
 
         $("change").addEventListener("click", reconfigure);
         $("connect").addEventListener("click", goToStep2);

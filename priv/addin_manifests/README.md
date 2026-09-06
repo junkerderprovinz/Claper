@@ -73,6 +73,19 @@ instance therefore hands out manifests naming itself.
   greyed out on such an object, and neither manifest nor CSS can reach it. A
   block whose content does not need to be live is better inserted as a picture,
   which is why the joining code is one.
+- **Two add-ins, not one, and that is the platform.** An add-in only manifest
+  carries exactly one `xsi:type`, and the unified manifest says outright that
+  `runtimes` "cannot be combined with a content add-in". A task pane and an
+  object on a slide are two kinds and need two files. Mentimeter ships one
+  because it has no task pane at all: you write the questions on its website and
+  the slide object only picks one. Slido ships none, because Slido for PowerPoint
+  is not an Office add-in but an installed Windows program with a COM hook, which
+  is also why it cannot be deployed from the admin centre and does not work in
+  PowerPoint on the web.
+- **The slide add-in is the one that matters.** Only a content add-in renders
+  live to the room during a slideshow. The sidebar is what this integration adds
+  on top: writing the questions without leaving PowerPoint. Install the sidebar
+  alone and you can still author and put the joining code on a slide.
 - **Duplicating a slide** that holds a block: on PowerPoint for the web the copy
   keeps the original's instance id (office-js#2765), so the two can read each
   other's choice. Insert a second block instead of copying one.

@@ -53,6 +53,21 @@ defmodule ClaperWeb.AddinManifestController do
     |> render("show.html")
   end
 
+  @doc """
+  What the two add-in pages say, in every language Claper speaks.
+
+  They are static files and cannot render gettext, so they fetch this and swap
+  their own English against it once Office has told them which language it is
+  set to.
+  """
+  def strings(conn, _params) do
+    conn
+    # A few kilobytes that change only when Claper is redeployed, and both pages
+    # want them before they can paint.
+    |> put_resp_header("cache-control", "public, max-age=300")
+    |> json(ClaperWeb.AddinStrings.all())
+  end
+
   def sidebar(conn, _params), do: send_manifest(conn, @sidebar_manifest, "claper-sidebar.xml")
 
   def slide(conn, _params), do: send_manifest(conn, @slide_manifest, "claper-on-a-slide.xml")

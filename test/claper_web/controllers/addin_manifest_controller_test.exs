@@ -142,6 +142,50 @@ defmodule ClaperWeb.AddinManifestControllerTest do
     end
   end
 
+  describe "the add-in's own words" do
+    # The two add-in pages are static files and cannot render gettext, which is
+    # why they were English whatever Claper was set to. They fetch this instead.
+    test "come in every language Claper speaks", %{conn: conn} do
+      body = conn |> get(~p"/addin/strings.json") |> json_response(200)
+
+      for locale <- Gettext.known_locales(ClaperWeb.Gettext) do
+        assert Map.has_key?(body, locale), "missing #{locale}"
+      end
+    end
+
+    # English is the key as well as the fallback, so a string nobody has
+    # translated yet still reads as a sentence rather than as an identifier.
+    test "are keyed by their own English", %{conn: conn} do
+      body = conn |> get(~p"/addin/strings.json") |> json_response(200)
+
+      assert body["en"]["Create poll"] == "Create poll"
+      assert body["de"]["Create poll"] == "Umfrage anlegen"
+    end
+
+    test "cover what the pages actually say", %{conn: conn} do
+      body = conn |> get(~p"/addin/strings.json") |> json_response(200)
+      english = body["en"]
+
+      # A handful drawn from both pages, including one the script builds rather
+      # than one sitting in the markup.
+      for phrase <- [
+            "Bring Claper into PowerPoint",
+            "Put the code on this slide",
+            "Claper on this slide",
+            "Show on this slide",
+            "answers so far"
+          ] do
+        assert Map.has_key?(english, phrase), "not translatable: #{phrase}"
+      end
+    end
+
+    test "are gone when the feature is switched off", %{conn: conn} do
+      Application.delete_env(:claper, :presenter_embed_frame_ancestors)
+
+      assert conn |> get(~p"/addin/strings.json") |> response(404)
+    end
+  end
+
   describe "the page" do
     test "offers both manifests by their own address", %{conn: conn, host: host} do
       html = conn |> get(~p"/addin") |> html_response(200)

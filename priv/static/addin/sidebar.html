@@ -255,9 +255,9 @@
           <li><span class="n">3</span><span><b>Repeat per slide</b><span>Insert another one wherever you want a live answer.</span></span></li>
         </ol>
         <p class="help">
-          A picture can be placed for you, a live object cannot: PowerPoint does not let a sidebar
-          drop one onto a slide. Its frame and the soft shadow along its top edge are PowerPoint's
-          own, and cannot be turned off from here.
+          The frame around a live block, and the soft shadow along its top edge, are PowerPoint's
+          own and cannot be turned off from here. A picture has neither, which is why the joining
+          code is one.
         </p>
       </div>
     </div>
@@ -318,6 +318,67 @@
       var cfg = { base: "", token: "", embed: "", event: "", kind: "" };
       var deckLength = 0;
       var eventCode = "";
+
+      // ---------- language ----------
+      //
+      // This page is a static file and cannot render gettext, so it carries its
+      // English and swaps it afterwards. The English is the key, which is why
+      // nothing in the markup had to be marked up: the walk below matches whole
+      // text nodes against the map Claper hands out, and anything not in it
+      // simply stays as written.
+      var dict = {};
+
+      function t(text) { return dict[text] || text; }
+
+      function translatePage(root) {
+        var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
+        var nodes = [];
+        while (walker.nextNode()) nodes.push(walker.currentNode);
+
+        nodes.forEach(function (node) {
+          // Whitespace is collapsed first, because the markup wraps sentences
+          // across lines and the key does not.
+          var key = node.nodeValue.replace(/\s+/g, " ").trim();
+          if (!key) return;
+          var hit = dict[key];
+          if (hit && hit !== key) node.nodeValue = node.nodeValue.replace(key, hit);
+        });
+
+        root.querySelectorAll("[placeholder]").forEach(function (el) {
+          var hit = dict[el.getAttribute("placeholder")];
+          if (hit) el.setAttribute("placeholder", hit);
+        });
+      }
+
+      // Office reports something like "de-DE". Claper has "de". The exact
+      // language wins if it exists, then the base one, then English as written.
+      function pickLocale(all, wanted) {
+        if (!wanted) return null;
+        var lower = String(wanted).toLowerCase();
+        var base = lower.split("-")[0];
+        var keys = Object.keys(all);
+        var exact = keys.filter(function (k) { return k.toLowerCase() === lower; })[0];
+        if (exact) return exact;
+        return keys.filter(function (k) { return k.toLowerCase().split("-")[0] === base; })[0] || null;
+      }
+
+      function loadLanguage(base) {
+        var wanted;
+        try { wanted = Office.context.displayLanguage; } catch (e) { wanted = null; }
+        if (!wanted || !base) return Promise.resolve();
+
+        return fetch(base.replace(/\/+$/, "") + "/addin/strings.json")
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .then(function (all) {
+            if (!all) return;
+            var locale = pickLocale(all, wanted);
+            if (!locale) return;
+            dict = all[locale] || {};
+            translatePage(document.body);
+          })
+          // A page in English is worth more than a page that failed to load.
+          .catch(function () {});
+      }
 
       function $(id) { return document.getElementById(id); }
       function say(el, text, kind) { el.className = "msg " + (kind || ""); el.textContent = text || ""; }
@@ -394,7 +455,7 @@
         var no = document.createElement("button");
         no.type = "button";
         no.className = "secondary";
-        no.textContent = "Keep it";
+        no.textContent = t("Keep it");
         no.addEventListener("click", function () { box.remove(); });
 
         yes.addEventListener("click", function () {
@@ -432,7 +493,7 @@
         var tag = document.createElement("span");
         var onDeck = deckLength > 0 && poll.position <= deckLength;
         tag.className = "tag " + (onDeck ? "deck" : "own");
-        tag.textContent = onDeck ? "Claper slide " + poll.position : "For PowerPoint";
+        tag.textContent = onDeck ? t("Claper slide") + " " + poll.position : t("For PowerPoint");
         top.appendChild(tag);
         wrap.appendChild(top);
 
@@ -446,7 +507,7 @@
         var votes = poll.options.reduce(function (sum, o) { return sum + (o.votes || 0); }, 0);
         var count = document.createElement("div");
         count.className = "opts";
-        count.textContent = votes === 1 ? "1 answer so far" : votes + " answers so far";
+        count.textContent = votes + " " + t("answers so far");
         wrap.appendChild(count);
 
         var actions = document.createElement("div");
@@ -455,17 +516,17 @@
         var editBtn = document.createElement("button");
         editBtn.className = "link";
         editBtn.type = "button";
-        editBtn.textContent = "Edit";
+        editBtn.textContent = t("Edit");
         editBtn.addEventListener("click", function () { editPoll(poll, wrap); });
 
         var delBtn = document.createElement("button");
         delBtn.className = "link danger";
         delBtn.type = "button";
-        delBtn.textContent = "Delete";
+        delBtn.textContent = t("Delete");
         delBtn.addEventListener("click", function () {
           askInCard(
             wrap,
-            'Delete "' + poll.title + '"? The answers already given go with it.',
+            t("Delete this question? The answers already given go with it."),
             "Delete",
             function () {
               api("/api/addin/polls/" + poll.id, { method: "DELETE" })
@@ -494,7 +555,7 @@
 
         var note = document.createElement("p");
         note.className = "help";
-        note.textContent = "Changing the answers clears the votes already given for this question.";
+        note.textContent = t("Changing the answers clears the votes already given for this question.");
 
         var bar = document.createElement("div");
         bar.className = "actions";
@@ -502,18 +563,18 @@
 
         var save = document.createElement("button");
         save.type = "button";
-        save.textContent = "Save";
+        save.textContent = t("Save");
 
         var cancel = document.createElement("button");
         cancel.className = "secondary";
         cancel.type = "button";
-        cancel.textContent = "Cancel";
+        cancel.textContent = t("Cancel");
         cancel.addEventListener("click", loadPolls);
 
         save.addEventListener("click", function () {
           var options = o.value.split("\n").map(function (l) { return l.trim(); }).filter(Boolean);
-          if (!t.value.trim()) { say($("listMsg"), "The question is missing.", "err"); return; }
-          if (options.length < 2) { say($("listMsg"), "At least two answers.", "err"); return; }
+          if (!t.value.trim()) { say($("listMsg"), t("The question is missing."), "err"); return; }
+          if (options.length < 2) { say($("listMsg"), t("At least two answers."), "err"); return; }
 
           save.disabled = true;
           var changed = options.join("\n") !== poll.options.map(function (x) { return x.content; }).join("\n");
@@ -569,7 +630,7 @@
       }
 
       function loadPolls() {
-        say($("listMsg"), "Loading…");
+        say($("listMsg"), t("Loading…"));
         return api("/api/addin/polls")
           .then(function (body) {
             deckLength = (body.event && body.event.deck_length) || 0;
@@ -583,8 +644,8 @@
               $("polls"),
               body.polls || [],
               pollCard,
-              "No polls for this presentation yet.",
-              "already on the deck inside Claper"
+              t("No polls for this presentation yet."),
+              t("already on the deck inside Claper")
             );
             say($("listMsg"), "");
           })
@@ -612,7 +673,7 @@
         var drop = document.createElement("button");
         drop.className = "link danger";
         drop.type = "button";
-        drop.textContent = "Remove";
+        drop.textContent = t("Remove");
         drop.addEventListener("click", function () { box.remove(); });
         head.appendChild(drop);
         box.appendChild(head);
@@ -634,7 +695,7 @@
           check.type = "checkbox";
           check.checked = !!(option && option.correct);
           mark.appendChild(check);
-          mark.appendChild(document.createTextNode("Right"));
+          mark.appendChild(document.createTextNode(t("Right")));
 
           var remove = document.createElement("button");
           remove.className = "link danger";
@@ -659,7 +720,7 @@
         var more = document.createElement("button");
         more.className = "link";
         more.type = "button";
-        more.textContent = "Add answer";
+        more.textContent = t("Add answer");
         more.addEventListener("click", function () { addAnswer(null); });
         box.appendChild(more);
 
@@ -682,7 +743,7 @@
       }
 
       function questionsValid(questions, target) {
-        if (!questions.length) { say(target, "A quiz needs at least one question.", "err"); return false; }
+        if (!questions.length) { say(target, t("A quiz needs at least one question."), "err"); return false; }
         for (var i = 0; i < questions.length; i++) {
           var q = questions[i];
           if (!q.content) { say(target, "Question " + (i + 1) + " has no text.", "err"); return false; }
@@ -710,7 +771,7 @@
         var tag = document.createElement("span");
         var onDeck = deckLength > 0 && quiz.position <= deckLength;
         tag.className = "tag " + (onDeck ? "deck" : "own");
-        tag.textContent = onDeck ? "Claper slide " + quiz.position : "For PowerPoint";
+        tag.textContent = onDeck ? t("Claper slide") + " " + quiz.position : t("For PowerPoint");
         top.appendChild(tag);
         wrap.appendChild(top);
 
@@ -736,7 +797,7 @@
         }, 0);
         var count = document.createElement("div");
         count.className = "opts";
-        count.textContent = answered === 1 ? "1 answer so far" : answered + " answers so far";
+        count.textContent = answered + " " + t("answers so far");
         wrap.appendChild(count);
 
         var actions = document.createElement("div");
@@ -745,17 +806,17 @@
         var editBtn = document.createElement("button");
         editBtn.className = "link";
         editBtn.type = "button";
-        editBtn.textContent = "Edit";
+        editBtn.textContent = t("Edit");
         editBtn.addEventListener("click", function () { editQuiz(quiz, wrap); });
 
         var delBtn = document.createElement("button");
         delBtn.className = "link danger";
         delBtn.type = "button";
-        delBtn.textContent = "Delete";
+        delBtn.textContent = t("Delete");
         delBtn.addEventListener("click", function () {
           askInCard(
             wrap,
-            'Delete "' + quiz.title + '"? The answers already given go with it.',
+            t("Delete this quiz? The answers already given go with it."),
             "Delete",
             function () {
               api("/api/addin/quizzes/" + quiz.id, { method: "DELETE" })
@@ -788,13 +849,13 @@
         var more = document.createElement("button");
         more.className = "link";
         more.type = "button";
-        more.textContent = "Add another question";
+        more.textContent = t("Add another question");
         more.addEventListener("click", function () { holder.appendChild(questionEditor(null)); });
         card.appendChild(more);
 
         var note = document.createElement("p");
         note.className = "help";
-        note.textContent = "Saving rebuilds the questions, which clears the answers already given for this quiz.";
+        note.textContent = t("Saving rebuilds the questions, which clears the answers already given for this quiz.");
         card.appendChild(note);
 
         var bar = document.createElement("div");
@@ -803,16 +864,16 @@
 
         var save = document.createElement("button");
         save.type = "button";
-        save.textContent = "Save";
+        save.textContent = t("Save");
 
         var cancel = document.createElement("button");
         cancel.className = "secondary";
         cancel.type = "button";
-        cancel.textContent = "Cancel";
+        cancel.textContent = t("Cancel");
         cancel.addEventListener("click", loadQuizzes);
 
         save.addEventListener("click", function () {
-          if (!t.value.trim()) { say($("quizListMsg"), "The quiz needs a name.", "err"); return; }
+          if (!t.value.trim()) { say($("quizListMsg"), t("The quiz needs a name."), "err"); return; }
           var questions = readQuestions(holder);
           if (!questionsValid(questions, $("quizListMsg"))) return;
 
@@ -832,7 +893,7 @@
       }
 
       function loadQuizzes() {
-        say($("quizListMsg"), "Loading…");
+        say($("quizListMsg"), t("Loading…"));
         return api("/api/addin/quizzes")
           .then(function (body) {
             if (body.event && typeof body.event.deck_length === "number") {
@@ -842,8 +903,8 @@
               $("quizzes"),
               body.quizzes || [],
               quizCard,
-              "No quizzes for this presentation yet.",
-              "already on the deck inside Claper"
+              t("No quizzes for this presentation yet."),
+              t("already on the deck inside Claper")
             );
             say($("quizListMsg"), "");
           })
@@ -857,7 +918,7 @@
       // asks the presentation, and asks the person only if the presentation has
       // no answer yet.
       function begin() {
-        say($("connectMsg"), "Checking…");
+        say($("connectMsg"), t("Checking…"));
 
         return api("/api/addin/me")
           .then(function (me) {
@@ -890,7 +951,7 @@
           show("work");
           return loadPolls().then(function () {
             if (!saved) {
-              say($("listMsg"), "This presentation could not remember its event. Save the file, then reconnect.", "err");
+              say($("listMsg"), t("This presentation could not remember its event. Save the file, then reconnect."), "err");
             }
           });
         });
@@ -911,7 +972,7 @@
             var events = body.events || [];
 
             if (!events.length) {
-              box.innerHTML = '<p class="help">You have no events yet.</p>';
+              box.innerHTML = '<p class="help">' + t("You have no events yet.") + '</p>';
               return;
             }
 
@@ -924,7 +985,7 @@
               var pick = document.createElement("button");
               pick.className = "link";
               pick.type = "button";
-              pick.textContent = "Use this one";
+              pick.textContent = t("Use this one");
               pick.addEventListener("click", function () { useEvent(event.code); });
               row.appendChild(title);
               row.appendChild(pick);
@@ -946,10 +1007,10 @@
 
       function createEvent() {
         var name = $("newEventName").value.trim();
-        if (!name) { say($("pickMsg"), "Give it a name.", "err"); return; }
+        if (!name) { say($("pickMsg"), t("Give it a name."), "err"); return; }
 
         $("createEvent").disabled = true;
-        say($("pickMsg"), "Creating…");
+        say($("pickMsg"), t("Creating…"));
 
         api("/api/addin/events", { method: "POST", body: JSON.stringify({ name: name }) })
           .then(function (body) { return useEvent(body.event.code); })
@@ -1081,17 +1142,17 @@
 
       function insertJoinPicture() {
         $("insertQr").disabled = true;
-        say($("qrMsg"), "Drawing the code…");
+        say($("qrMsg"), t("Drawing the code…"));
 
         ensureLink()
           .then(readQrCanvas)
           .then(joinPicture)
           .then(function (picture) {
-            say($("qrMsg"), "Putting it on the slide…");
+            say($("qrMsg"), t("Putting it on the slide…"));
             return putOnSlide(picture);
           })
           .then(function () {
-            say($("qrMsg"), "Done. It landed on the slide you have open.", "ok");
+            say($("qrMsg"), t("Done. It landed on the slide you have open."), "ok");
           })
           .catch(function (e) { say($("qrMsg"), e.message, "err"); })
           .then(function () { $("insertQr").disabled = false; });
@@ -1110,7 +1171,7 @@
       // link no longer closes the ones already sitting on slides.
       function makeLink() {
         $("makeLink").disabled = true;
-        say($("linkMsg"), "Asking Claper…");
+        say($("linkMsg"), t("Asking Claper…"));
 
         api("/api/addin/embed_token", { method: "POST" })
           .then(function (body) {
@@ -1122,7 +1183,7 @@
               say(
                 $("linkMsg"),
                 shared
-                  ? "Ready. Blocks you put on slides pick it up on their own."
+                  ? t("Ready. Blocks you put on slides pick it up on their own.")
                   : "Ready. This PowerPoint cannot hand it over on its own, so paste it into each Claper object.",
                 "ok"
               );
@@ -1149,6 +1210,13 @@
         cfg.base = read(LS.base);
         cfg.token = read(LS.token);
         cfg.embed = docGet(DOC_EMBED);
+
+        // Before anything is shown, so nothing appears in English and then
+        // changes under the reader.
+        loadLanguage(cfg.base).then(start);
+      });
+
+      function start() {
 
         // The tag is the deck's own copy and outlives this add-in's bag, so it
         // decides when the two disagree.
@@ -1194,8 +1262,8 @@
           if (!field.value) return;
           field.select();
           navigator.clipboard.writeText(field.value).then(function () {
-            $("copyLink").textContent = "Copied";
-            setTimeout(function () { $("copyLink").textContent = "Copy"; }, 1500);
+            $("copyLink").textContent = t("Copied");
+            setTimeout(function () { $("copyLink").textContent = t("Copy"); }, 1500);
           });
         });
 
@@ -1204,7 +1272,7 @@
           cfg.token = $("token").value.trim();
 
           if (!cfg.base || !cfg.token) {
-            say($("connectMsg"), "Both are needed.", "err");
+            say($("connectMsg"), t("Both are needed."), "err");
             return;
           }
 
@@ -1213,7 +1281,9 @@
           store(LS.seen, "1");
 
           say($("connectMsg"), "");
-          begin();
+          // The address was unknown at load, so this is the first chance to ask
+          // which language Claper speaks.
+          loadLanguage(cfg.base).then(begin);
         });
 
         $("changeEvent").addEventListener("click", offerEvents);
@@ -1228,17 +1298,17 @@
             .map(function (l) { return l.trim(); })
             .filter(function (l) { return l.length; });
 
-          if (!title) { say($("createMsg"), "The question is missing.", "err"); return; }
-          if (options.length < 2) { say($("createMsg"), "At least two answers.", "err"); return; }
+          if (!title) { say($("createMsg"), t("The question is missing."), "err"); return; }
+          if (options.length < 2) { say($("createMsg"), t("At least two answers."), "err"); return; }
 
           $("create").disabled = true;
-          say($("createMsg"), "Creating…");
+          say($("createMsg"), t("Creating…"));
 
           api("/api/addin/polls", { method: "POST", body: JSON.stringify({ title: title, options: options }) })
             .then(function () {
               $("title").value = "";
               $("options").value = "";
-              say($("createMsg"), "Created. Pick it on a slide.", "ok");
+              say($("createMsg"), t("Created. Pick it on a slide."), "ok");
               return loadPolls();
             })
             .catch(function (e) { say($("createMsg"), e.message, "err"); })
@@ -1251,26 +1321,26 @@
 
         $("createQuiz").addEventListener("click", function () {
           var title = $("quizTitle").value.trim();
-          if (!title) { say($("quizCreateMsg"), "The quiz needs a name.", "err"); return; }
+          if (!title) { say($("quizCreateMsg"), t("The quiz needs a name."), "err"); return; }
 
           var questions = readQuestions($("questions"));
           if (!questionsValid(questions, $("quizCreateMsg"))) return;
 
           $("createQuiz").disabled = true;
-          say($("quizCreateMsg"), "Creating…");
+          say($("quizCreateMsg"), t("Creating…"));
 
           api("/api/addin/quizzes", { method: "POST", body: JSON.stringify({ title: title, questions: questions }) })
             .then(function () {
               $("quizTitle").value = "";
               $("questions").innerHTML = "";
               $("questions").appendChild(questionEditor(null));
-              say($("quizCreateMsg"), "Created. Pick it on a slide.", "ok");
+              say($("quizCreateMsg"), t("Created. Pick it on a slide."), "ok");
               return loadQuizzes();
             })
             .catch(function (e) { say($("quizCreateMsg"), e.message, "err"); })
             .then(function () { $("createQuiz").disabled = false; });
         });
-      });
+      }
     </script>
   </body>
 </html>

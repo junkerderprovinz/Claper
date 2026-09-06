@@ -190,6 +190,15 @@ defmodule ClaperWeb.Router do
     get("/manifest/slide.xml", AddinManifestController, :slide)
   end
 
+  # What the two static add-in pages say, in every language. They cannot render
+  # gettext themselves, so they fetch it. Public for the same reason the pages
+  # are: there is nothing in it but their own text.
+  scope "/addin", ClaperWeb do
+    pipe_through([:api, ClaperWeb.Plugs.PresenterEmbedEnabled])
+
+    get("/strings.json", AddinManifestController, :strings)
+  end
+
   # The page that hands those two out and says what to do with them. A person
   # opens this one, so it takes the browser pipeline.
   scope "/addin", ClaperWeb do
