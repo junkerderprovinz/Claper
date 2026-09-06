@@ -27,7 +27,12 @@ defmodule ClaperWeb.PresenterEmbedAuth do
       Gettext.put_locale(ClaperWeb.Gettext, locale)
     end
 
-    case Claper.Events.get_event_by_presenter_embed_token(token, @event_preload) do
+    event =
+      if ClaperWeb.Plugs.EmbedFrame.framing_allowed?() do
+        Claper.Events.get_event_by_presenter_embed_token(token, @event_preload)
+      end
+
+    case event do
       nil ->
         # A path the token check cannot accept, so the plug answers with its
         # 404. Sending the frame to "/" would put an unrelated Claper page on

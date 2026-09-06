@@ -5,6 +5,19 @@ defmodule ClaperWeb.EventLive.PresenterEmbedTest do
   import Claper.{AccountsFixtures, PresentationsFixtures}
 
   setup do
+    # The feature is off until an operator names the origins that may frame it,
+    # so every test here has to switch it on the way a server would.
+    previous = Application.get_env(:claper, :embed_frame_ancestors)
+    Application.put_env(:claper, :embed_frame_ancestors, "https://slides.example.com")
+
+    on_exit(fn ->
+      if previous do
+        Application.put_env(:claper, :embed_frame_ancestors, previous)
+      else
+        Application.delete_env(:claper, :embed_frame_ancestors)
+      end
+    end)
+
     user = user_fixture()
     presentation_file = presentation_file_fixture(%{user: user}, [:event])
     presentation_state_fixture(%{presentation_file: presentation_file})
@@ -13,6 +26,24 @@ defmodule ClaperWeb.EventLive.PresenterEmbedTest do
     {:ok, token} = Claper.Events.create_presenter_embed_token(event, user)
 
     %{user: user, event: event, token: token, presentation_file: presentation_file}
+  end
+
+  describe "off switch" do
+    test "without an allow list a valid token is answered with 404", %{conn: conn, token: token} do
+      Application.delete_env(:claper, :embed_frame_ancestors)
+
+      conn = get(conn, ~p"/embed/presenter/#{token}")
+
+      assert conn.status == 404
+    end
+
+    test "a value the sanitiser rejects leaves the feature off", %{conn: conn, token: token} do
+      Application.put_env(:claper, :embed_frame_ancestors, "https://a.com; default-src *")
+
+      conn = get(conn, ~p"/embed/presenter/#{token}")
+
+      assert conn.status == 404
+    end
   end
 
   describe "token authorization" do
