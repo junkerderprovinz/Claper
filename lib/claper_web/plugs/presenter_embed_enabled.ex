@@ -13,13 +13,30 @@ defmodule ClaperWeb.Plugs.PresenterEmbedEnabled do
   def init(opts), do: opts
 
   def call(conn, _opts) do
-    if ClaperWeb.Plugs.PresenterEmbedFrame.framing_allowed?() do
-      conn
-    else
-      conn
-      |> put_resp_content_type("application/json")
-      |> send_resp(404, ~s({"error":"not found"}))
-      |> halt()
+    cond do
+      ClaperWeb.Plugs.PresenterEmbedFrame.framing_allowed?() -> conn
+      html?(conn) -> not_found_page(conn)
+      true -> not_found_json(conn)
     end
+  end
+
+  # The switch also guards a page people open in a browser, and a JSON body is
+  # the wrong thing to show them. The API routes keep the JSON they can parse.
+  defp html?(conn), do: conn.private[:phoenix_format] == "html"
+
+  defp not_found_page(conn) do
+    conn
+    |> put_status(:not_found)
+    |> Phoenix.Controller.put_root_layout(html: false)
+    |> Phoenix.Controller.put_view(ClaperWeb.ErrorView)
+    |> Phoenix.Controller.render("404.html")
+    |> halt()
+  end
+
+  defp not_found_json(conn) do
+    conn
+    |> put_resp_content_type("application/json")
+    |> send_resp(404, ~s({"error":"not found"}))
+    |> halt()
   end
 end

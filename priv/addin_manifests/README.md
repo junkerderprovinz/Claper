@@ -25,18 +25,32 @@ origins separated by spaces if you also embed elsewhere.
 
 ## Installing
 
-1. Copy both `.xml` files somewhere and replace every `https://claper.example.com`
-   with your Claper address.
-2. Put them in a folder Windows can share, and share it (right click, Properties,
-   Sharing).
-3. In PowerPoint: File, Options, Trust Center, Trust Center Settings, Trusted
-   Add-in Catalogs. Paste the folder's network path (`\\MACHINE\folder`), press
-   Add catalog, tick "Show in Menu", then restart PowerPoint.
-4. Insert, Add-ins, My Add-ins, Shared Folder. **Claper** is the sidebar,
-   **Claper on a slide** goes on a slide.
+**Do not edit these files by hand.** A running Claper serves both of them with
+its own address already in place, at `/addin`. The copies here are the templates
+it fills in, and they are also what you would edit if you wanted to change
+something about the add-ins themselves.
 
-On Mac, put the manifests in
+Send people to `https://your-claper/addin`. That page carries the two links and
+both routes below.
+
+**Your administrator, once, for everyone.** In the Microsoft 365 admin center:
+Settings, Integrated apps, Upload custom apps. It takes a **URL** as well as a
+file, so paste `https://your-claper/addin/manifest/sidebar.xml`, choose who gets
+it, and repeat with `.../slide.xml`. Allow up to a day before it appears.
+
+**Or just for yourself.** Download both files into a folder and share it (right
+click, Properties, Sharing). In PowerPoint: File, Options, Trust Center, Trust
+Center Settings, Trusted Add-in Catalogs. Paste the folder's network path
+(`\\MACHINE\folder`), press Add catalog, tick "Show in Menu", restart PowerPoint.
+Then Insert, Add-ins, My Add-ins, Shared Folder.
+
+On Mac, put the files in
 `~/Library/Containers/com.microsoft.Powerpoint/Data/Documents/wef` instead.
+
+**Why there is no single add-in in the store for everyone.** An Office manifest
+carries the add-in's address as a fixed string, and Claper's API sends no CORS
+headers, so a copy hosted centrally could not talk to your server at all. Every
+instance therefore hands out manifests naming itself.
 
 ## Using it
 

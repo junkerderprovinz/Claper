@@ -135,6 +135,17 @@ defmodule ClaperWeb.EventLive.ManagePresenterEmbedComponent do
             )}
           </p>
 
+          <%!-- The token is useless without the add-in, and the add-in is not in
+          any store: a self-hosted server has to hand out its own manifests. So
+          the way to get it sits next to the key it needs. --%>
+          <.link
+            href="/addin"
+            target="_blank"
+            class="text-xs text-primary-600 underline mt-1 inline-block"
+          >
+            {gettext("How to add Claper to PowerPoint")}
+          </.link>
+
           <div :if={@addin_token} class="space-y-2 mt-2">
             <input
               type="text"

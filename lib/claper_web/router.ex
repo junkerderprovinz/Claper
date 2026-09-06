@@ -148,6 +148,18 @@ defmodule ClaperWeb.Router do
     post("/embed_token", AddinController, :embed_token)
   end
 
+  # This server's own PowerPoint manifests, and the page explaining them. Public
+  # on purpose: the Microsoft 365 admin center fetches a manifest URL itself and
+  # is not logged in, and the files carry no secret. Off with the rest of the
+  # feature, because the pages they name answer 404 without an allow list.
+  scope "/addin", ClaperWeb do
+    pipe_through([:browser, ClaperWeb.Plugs.PresenterEmbedEnabled])
+
+    get("/", AddinManifestController, :show)
+    get("/manifest/sidebar.xml", AddinManifestController, :sidebar)
+    get("/manifest/slide.xml", AddinManifestController, :slide)
+  end
+
   # What a block already sitting on a slide may show. Reached with the read-only
   # embed token, so the block can offer a list of the event's interactions
   # instead of needing an id typed into its URL by hand.

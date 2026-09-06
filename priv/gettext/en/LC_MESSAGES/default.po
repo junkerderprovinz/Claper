@@ -142,8 +142,8 @@ msgstr ""
 msgid "Leave"
 msgstr ""
 
-#: lib/claper_web/live/event_live/presenter.html.heex:28
-#: lib/claper_web/live/event_live/presenter.html.heex:71
+#: lib/claper_web/live/event_live/presenter.html.heex:34
+#: lib/claper_web/live/event_live/presenter.html.heex:77
 #: lib/claper_web/live/event_live/show.html.heex:603
 #, elixir-autogen, elixir-format
 msgid "Scan to interact in real-time"
@@ -678,8 +678,8 @@ msgstr ""
 msgid "Enter your name"
 msgstr ""
 
-#: lib/claper_web/live/event_live/presenter.html.heex:40
-#: lib/claper_web/live/event_live/presenter.html.heex:83
+#: lib/claper_web/live/event_live/presenter.html.heex:46
+#: lib/claper_web/live/event_live/presenter.html.heex:89
 #, elixir-autogen, elixir-format
 msgid "Or go to %{url} and use the code:"
 msgstr ""
@@ -3601,11 +3601,13 @@ msgid "An embed link is active. Anyone holding it can watch this event. Create a
 msgstr ""
 
 #: lib/claper_web/live/event_live/manage_presenter_embed_component.ex:68
+#: lib/claper_web/templates/addin_manifest/show.html.heex:64
 #, elixir-autogen, elixir-format
 msgid "Copied"
 msgstr ""
 
 #: lib/claper_web/live/event_live/manage_presenter_embed_component.ex:67
+#: lib/claper_web/templates/addin_manifest/show.html.heex:63
 #, elixir-autogen, elixir-format
 msgid "Copy link"
 msgstr ""
@@ -3636,7 +3638,7 @@ msgid "Embed link"
 msgstr ""
 
 #: lib/claper_web/live/event_live/manage_presenter_embed_component.ex:103
-#: lib/claper_web/live/event_live/manage_presenter_embed_component.ex:172
+#: lib/claper_web/live/event_live/manage_presenter_embed_component.ex:183
 #, elixir-autogen, elixir-format
 msgid "Revoke"
 msgstr ""
@@ -3676,7 +3678,7 @@ msgstr ""
 msgid "The link shows the page you are projecting and the interactions you have released, in a compact layout and without the joining instructions. Pages you have not reached are not sent. Use the presentation settings above to hide the messages before you embed it."
 msgstr ""
 
-#: lib/claper_web/live/event_live/manage_presenter_embed_component.ex:147
+#: lib/claper_web/live/event_live/manage_presenter_embed_component.ex:158
 #, elixir-autogen, elixir-format
 msgid "Copy it now. It is stored hashed and cannot be shown again."
 msgstr ""
@@ -3691,12 +3693,12 @@ msgstr ""
 msgid "Could not revoke the sidebar token"
 msgstr ""
 
-#: lib/claper_web/live/event_live/manage_presenter_embed_component.ex:163
+#: lib/claper_web/live/event_live/manage_presenter_embed_component.ex:174
 #, elixir-autogen, elixir-format
 msgid "Create sidebar token"
 msgstr ""
 
-#: lib/claper_web/live/event_live/manage_presenter_embed_component.ex:162
+#: lib/claper_web/live/event_live/manage_presenter_embed_component.ex:173
 #, elixir-autogen, elixir-format
 msgid "New sidebar token"
 msgstr ""
@@ -3706,12 +3708,12 @@ msgstr ""
 msgid "PowerPoint sidebar"
 msgstr ""
 
-#: lib/claper_web/live/event_live/manage_presenter_embed_component.ex:157
+#: lib/claper_web/live/event_live/manage_presenter_embed_component.ex:168
 #, elixir-autogen, elixir-format
 msgid "Replace the sidebar token? The current one stops working."
 msgstr ""
 
-#: lib/claper_web/live/event_live/manage_presenter_embed_component.ex:169
+#: lib/claper_web/live/event_live/manage_presenter_embed_component.ex:180
 #, elixir-autogen, elixir-format
 msgid "Revoke the sidebar token?"
 msgstr ""
@@ -3721,7 +3723,77 @@ msgstr ""
 msgid "The sidebar creates polls from inside PowerPoint. Its token can write, so keep it on your own computer and never inside a presentation you share."
 msgstr ""
 
-#: lib/claper_web/live/event_live/presenter.html.heex:113
+#: lib/claper_web/live/event_live/presenter.html.heex:119
 #, elixir-autogen, elixir-format
 msgid "Messages are hidden for this event."
+msgstr ""
+
+#: lib/claper_web/templates/addin_manifest/show.html.heex:97
+#, elixir-autogen, elixir-format
+msgid "Both then appear under Insert, Add-ins, and the sidebar explains the rest."
+msgstr ""
+
+#: lib/claper_web/templates/addin_manifest/show.html.heex:14
+#, elixir-autogen, elixir-format
+msgid "Claper in PowerPoint"
+msgstr ""
+
+#: lib/claper_web/templates/addin_manifest/show.html.heex:56
+#, elixir-autogen, elixir-format
+msgid "Download"
+msgstr ""
+
+#: lib/claper_web/templates/addin_manifest/show.html.heex:89
+#, elixir-autogen, elixir-format
+msgid "Download both files into a folder and share that folder. In PowerPoint: File, Options, Trust Center, Trust Center Settings, Trusted Add-in Catalogs. Add the folder's network path, tick Show in Menu, restart. On a Mac put the files in the wef folder instead."
+msgstr ""
+
+#: lib/claper_web/templates/addin_manifest/show.html.heex:108
+#, elixir-autogen, elixir-format
+msgid "Go to my events"
+msgstr ""
+
+#: lib/claper_web/live/event_live/manage_presenter_embed_component.ex:146
+#, elixir-autogen, elixir-format
+msgid "How to add Claper to PowerPoint"
+msgstr ""
+
+#: lib/claper_web/templates/addin_manifest/show.html.heex:80
+#, elixir-autogen, elixir-format
+msgid "In the Microsoft 365 admin center: Settings, Integrated apps, Upload custom apps. Paste one of the links above instead of a file, and choose who gets it. Repeat for the second one. It can take up to a day to appear."
+msgstr ""
+
+#: lib/claper_web/templates/addin_manifest/show.html.heex:17
+#, elixir-autogen, elixir-format
+msgid "Keep your presentation as your own PowerPoint file and let Claper put the questions, the answers and the joining code on its slides."
+msgstr ""
+
+#: lib/claper_web/templates/addin_manifest/show.html.heex:87
+#, elixir-autogen, elixir-format
+msgid "Or just for yourself"
+msgstr ""
+
+#: lib/claper_web/templates/addin_manifest/show.html.heex:42
+#, elixir-autogen, elixir-format
+msgid "The block you place on a slide. Shows one poll, quiz or the messages."
+msgstr ""
+
+#: lib/claper_web/templates/addin_manifest/show.html.heex:104
+#, elixir-autogen, elixir-format
+msgid "The sidebar asks for a key when you first open it. You create that in your event's settings, it can create and delete questions, and it belongs on your own computer rather than inside a presentation you send around."
+msgstr ""
+
+#: lib/claper_web/templates/addin_manifest/show.html.heex:35
+#, elixir-autogen, elixir-format
+msgid "The sidebar. Write polls and quizzes without leaving PowerPoint."
+msgstr ""
+
+#: lib/claper_web/templates/addin_manifest/show.html.heex:72
+#, elixir-autogen, elixir-format
+msgid "Two ways to install them"
+msgstr ""
+
+#: lib/claper_web/templates/addin_manifest/show.html.heex:78
+#, elixir-autogen, elixir-format
+msgid "Your administrator does it once"
 msgstr ""

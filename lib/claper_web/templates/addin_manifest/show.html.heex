@@ -1,0 +1,111 @@
+<style>
+  body {
+    background:
+      radial-gradient(circle at top, rgba(134, 17, 237, 0.18), transparent 35%),
+      radial-gradient(circle at bottom left, rgba(6, 182, 212, 0.1), transparent 30%),
+      linear-gradient(180deg, #120641 0%, #0c0332 100%);
+    min-height: 100vh;
+  }
+</style>
+
+<div class="min-h-screen px-5 py-12 md:py-20">
+  <div class="mx-auto w-full max-w-2xl text-white">
+    <h1 class="text-3xl md:text-4xl font-bold tracking-tight">
+      {gettext("Claper in PowerPoint")}
+    </h1>
+    <p class="mt-3 text-white/70">
+      {gettext(
+        "Keep your presentation as your own PowerPoint file and let Claper put the questions, the answers and the joining code on its slides."
+      )}
+    </p>
+
+    <%!-- The two files carry this server's own address already, which is the
+    whole point of serving them from here: the alternative is telling people to
+    edit four places in each file by hand. --%>
+    <div class="mt-10 space-y-3">
+      <div
+        :for={
+          file <- [
+            # The names are what Office shows in its add-in list, and they are
+            # fixed English strings in the manifests. Translating them here would
+            # name a thing that is not in the menu, and gettext had already
+            # matched "Claper" to an existing German translation of the word.
+            %{
+              name: "Claper",
+              what: gettext("The sidebar. Write polls and quizzes without leaving PowerPoint."),
+              url: @sidebar_manifest_url,
+              filename: "claper-sidebar.xml"
+            },
+            %{
+              name: "Claper on a slide",
+              what:
+                gettext("The block you place on a slide. Shows one poll, quiz or the messages."),
+              url: @slide_manifest_url,
+              filename: "claper-on-a-slide.xml"
+            }
+          ]
+        }
+        x-data="{ copied: false }"
+        class="rounded-2xl bg-white/5 border border-white/10 p-5"
+      >
+        <p class="font-semibold">{file.name}</p>
+        <p class="mt-1 text-sm text-white/60">{file.what}</p>
+
+        <div class="mt-4 flex flex-wrap items-center gap-2">
+          <a href={file.url} download={file.filename} class="btn btn-primary btn-sm">
+            {gettext("Download")}
+          </a>
+          <button
+            type="button"
+            class="btn btn-sm btn-soft"
+            x-on:click={"navigator.clipboard.writeText('#{file.url}'); copied = true; setTimeout(() => copied = false, 1500)"}
+          >
+            <span x-show="!copied">{gettext("Copy link")}</span>
+            <span x-show="copied" x-cloak>{gettext("Copied")}</span>
+          </button>
+        </div>
+
+        <p class="mt-3 text-xs text-white/40 break-all">{file.url}</p>
+      </div>
+    </div>
+
+    <h2 class="mt-12 text-lg font-semibold">{gettext("Two ways to install them")}</h2>
+
+    <div class="mt-4 grid gap-3 md:grid-cols-2">
+      <%!-- The admin route is first because it is the one that scales: nobody
+      shares a folder, and it reaches everyone at once. --%>
+      <div class="rounded-2xl bg-white/5 border border-white/10 p-5">
+        <p class="font-semibold">{gettext("Your administrator does it once")}</p>
+        <p class="mt-2 text-sm text-white/60">
+          {gettext(
+            "In the Microsoft 365 admin center: Settings, Integrated apps, Upload custom apps. Paste one of the links above instead of a file, and choose who gets it. Repeat for the second one. It can take up to a day to appear."
+          )}
+        </p>
+      </div>
+
+      <div class="rounded-2xl bg-white/5 border border-white/10 p-5">
+        <p class="font-semibold">{gettext("Or just for yourself")}</p>
+        <p class="mt-2 text-sm text-white/60">
+          {gettext(
+            "Download both files into a folder and share that folder. In PowerPoint: File, Options, Trust Center, Trust Center Settings, Trusted Add-in Catalogs. Add the folder's network path, tick Show in Menu, restart. On a Mac put the files in the wef folder instead."
+          )}
+        </p>
+      </div>
+    </div>
+
+    <p class="mt-6 text-sm text-white/60">
+      {gettext("Both then appear under Insert, Add-ins, and the sidebar explains the rest.")}
+    </p>
+
+    <%!-- Said plainly rather than left to be discovered: the sidebar key is the
+    one thing here that must not travel, and this page is public. --%>
+    <div class="mt-10 rounded-2xl border border-white/10 p-5">
+      <p class="text-sm text-white/60">
+        {gettext(
+          "The sidebar asks for a key when you first open it. You create that in your event's settings, it can create and delete questions, and it belongs on your own computer rather than inside a presentation you send around."
+        )}
+      </p>
+      <a href={~p"/events"} class="btn btn-sm btn-soft mt-4">{gettext("Go to my events")}</a>
+    </div>
+  </div>
+</div>
