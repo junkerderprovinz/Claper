@@ -168,11 +168,15 @@ defmodule ClaperWeb.AddinManifestControllerTest do
       refute html =~ event.code
     end
 
+    # Asserting what the body is not would pass on an empty one, so this names
+    # what it has to be: Claper's own 404 page, not the JSON the API routes get.
     test "is gone when the feature is switched off, as a page rather than json", %{conn: conn} do
       Application.delete_env(:claper, :presenter_embed_frame_ancestors)
 
-      body = conn |> get(~p"/addin") |> response(404)
+      conn = get(conn, ~p"/addin")
+      body = html_response(conn, 404)
 
+      assert body =~ "<title>Not found - Claper</title>"
       refute body =~ ~s({"error")
     end
   end
