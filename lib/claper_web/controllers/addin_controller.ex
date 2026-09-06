@@ -14,6 +14,63 @@ defmodule ClaperWeb.AddinController do
   alias Claper.Quizzes
 
   @doc """
+  What kind of key the caller holds.
+
+  The sidebar asks for one key and does not make the person say which sort it
+  is. This is how it finds out: an event key can only ever work on its own
+  event, a personal key can pick among the events its owner leads and make new
+  ones.
+  """
+  def me(%{assigns: %{addin_event: event}} = conn, _params) do
+    json(conn, %{kind: "event", event: %{name: event.name, code: event.code}})
+  end
+
+  def me(%{assigns: %{addin_user: user}} = conn, _params) do
+    json(conn, %{kind: "account", user: %{email: user.email}})
+  end
+
+  @doc """
+  The events this person leads, newest first, so a presentation can be pointed
+  at one of them.
+
+  Only for a personal key: an event key has exactly one event and already said
+  so through `me/2`.
+  """
+  def event_index(%{assigns: %{addin_user: user}} = conn, _params) do
+    events =
+      user.id
+      |> Claper.Events.list_events()
+      |> Enum.reject(&expired?/1)
+      |> Enum.map(&%{name: &1.name, code: &1.code})
+
+    json(conn, %{events: events})
+  end
+
+  def event_index(conn, _params),
+    do: error(conn, 403, "a personal key is needed to list events")
+
+  @doc """
+  Creates an event for this person and returns its code.
+
+  The point of the whole personal key: a new presentation gets an event of its
+  own instead of pouring its questions into whichever event the machine was
+  last connected to. The code is generated rather than asked for, because it is
+  a detail of joining and not a decision worth making in a sidebar.
+  """
+  def event_create(%{assigns: %{addin_user: user}} = conn, params) do
+    with {:ok, name} <- fetch_title(params, "name"),
+         {:ok, event} <- create_event_with_free_code(user, name) do
+      conn |> put_status(:created) |> json(%{event: %{name: event.name, code: event.code}})
+    else
+      {:error, status, message} -> error(conn, status, message)
+      _ -> error(conn, 422, "event could not be created")
+    end
+  end
+
+  def event_create(conn, _params),
+    do: error(conn, 403, "a personal key is needed to create an event")
+
+  @doc """
   The event behind the token and its polls, so the sidebar can show what exists
   and offer it for a slide.
   """
@@ -201,6 +258,46 @@ defmodule ClaperWeb.AddinController do
     end
   end
 
+  defp expired?(%{expired_at: nil}), do: false
+
+  defp expired?(%{expired_at: at}), do: NaiveDateTime.compare(at, NaiveDateTime.utc_now()) != :gt
+
+  # Five lowercase letters, the shape Claper's own codes have, retried on the
+  # rare collision rather than handed back as an error somebody would have to
+  # understand.
+  defp create_event_with_free_code(user, name, attempts \\ 5)
+
+  defp create_event_with_free_code(_user, _name, 0),
+    do: {:error, 503, "could not find a free code, try again"}
+
+  defp create_event_with_free_code(user, name, attempts) do
+    attrs = %{
+      "name" => name,
+      "code" => random_code(),
+      "user_id" => user.id,
+      "started_at" => NaiveDateTime.utc_now() |> NaiveDateTime.truncate(:second)
+    }
+
+    case Claper.Events.create_event(attrs) do
+      {:ok, event} ->
+        {:ok, event}
+
+      {:error, %Ecto.Changeset{errors: errors}} ->
+        if Keyword.has_key?(errors, :code),
+          do: create_event_with_free_code(user, name, attempts - 1),
+          else: {:error, 422, "event could not be created"}
+
+      _ ->
+        {:error, 422, "event could not be created"}
+    end
+  end
+
+  defp random_code do
+    1..5
+    |> Enum.map(fn _ -> Enum.random(?a..?z) end)
+    |> List.to_string()
+  end
+
   defp deck_length(event), do: (event.presentation_file && event.presentation_file.length) || 0
 
   defp find_poll(event, id) do
@@ -327,14 +424,22 @@ defmodule ClaperWeb.AddinController do
 
   defp presentation_file(%{presentation_file: file}), do: {:ok, file}
 
-  defp fetch_title(%{"title" => title}) when is_binary(title) do
-    case String.trim(title) do
-      "" -> {:error, 422, "title is required"}
-      trimmed -> {:ok, trimmed}
+  defp fetch_title(params, key \\ "title")
+
+  defp fetch_title(params, key) when is_map(params) do
+    case Map.get(params, key) do
+      value when is_binary(value) ->
+        case String.trim(value) do
+          "" -> {:error, 422, "#{key} is required"}
+          trimmed -> {:ok, trimmed}
+        end
+
+      _ ->
+        {:error, 422, "#{key} is required"}
     end
   end
 
-  defp fetch_title(_), do: {:error, 422, "title is required"}
+  defp fetch_title(_params, key), do: {:error, 422, "#{key} is required"}
 
   defp fetch_options(%{"options" => options}) when is_list(options) do
     cleaned =

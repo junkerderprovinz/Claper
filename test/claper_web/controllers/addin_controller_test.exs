@@ -232,6 +232,122 @@ defmodule ClaperWeb.AddinControllerTest do
     end
   end
 
+  describe "the personal key" do
+    setup %{user: user} do
+      %{account_token: Claper.Accounts.create_addin_account_token(user)}
+    end
+
+    # The sidebar asks for one key and works out which sort it is, so a person
+    # never has to know there are two.
+    test "says which kind of key it is", %{conn: conn, token: token, account_token: account} do
+      event_key = conn |> auth(token) |> get(~p"/api/addin/me") |> json_response(200)
+      account_key = conn |> auth(account) |> get(~p"/api/addin/me") |> json_response(200)
+
+      assert event_key["kind"] == "event"
+      assert account_key["kind"] == "account"
+    end
+
+    test "lists the events its owner leads", %{conn: conn, account_token: account, event: event} do
+      stranger = user_fixture()
+      other_file = presentation_file_fixture(%{user: stranger}, [:event])
+
+      body = conn |> auth(account) |> get(~p"/api/addin/events") |> json_response(200)
+      codes = Enum.map(body["events"], & &1["code"])
+
+      assert event.code in codes
+      refute other_file.event.code in codes
+    end
+
+    # The whole reason this key exists: a new presentation gets an event of its
+    # own instead of pouring its questions into the last one used.
+    test "creates an event and hands back its code", %{conn: conn, account_token: account} do
+      body =
+        conn
+        |> auth(account)
+        |> post(~p"/api/addin/events", %{name: "Talk from PowerPoint"})
+        |> json_response(201)
+
+      code = body["event"]["code"]
+      assert body["event"]["name"] == "Talk from PowerPoint"
+      assert String.length(code) >= 5
+
+      created = Claper.Events.get_event_with_code(code)
+      assert created.name == "Talk from PowerPoint"
+    end
+
+    test "an event without a name is refused", %{conn: conn, account_token: account} do
+      assert conn
+             |> auth(account)
+             |> post(~p"/api/addin/events", %{name: "  "})
+             |> json_response(422)
+    end
+
+    # An event key is bound to one event by construction, which is what makes it
+    # safe to keep in a sidebar. It must not gain the run of the account.
+    test "an event key can neither list nor create events", %{conn: conn, token: token} do
+      assert conn |> auth(token) |> get(~p"/api/addin/events") |> json_response(403)
+
+      assert conn
+             |> auth(token)
+             |> post(~p"/api/addin/events", %{name: "X"})
+             |> json_response(403)
+    end
+
+    test "works on an event it leads, named in the header", %{
+      conn: conn,
+      account_token: account,
+      event: event,
+      presentation_file: presentation_file
+    } do
+      Claper.PollsFixtures.poll_fixture(%{
+        presentation_file_id: presentation_file.id,
+        title: "reachable with the personal key"
+      })
+
+      body =
+        conn
+        |> auth(account)
+        |> put_req_header("x-claper-event", event.code)
+        |> get(~p"/api/addin/polls")
+        |> json_response(200)
+
+      assert [%{"title" => "reachable with the personal key"}] = body["polls"]
+    end
+
+    test "an event it does not lead is not found", %{conn: conn, account_token: account} do
+      stranger = user_fixture()
+      other_file = presentation_file_fixture(%{user: stranger}, [:event])
+
+      assert conn
+             |> auth(account)
+             |> put_req_header("x-claper-event", other_file.event.code)
+             |> get(~p"/api/addin/polls")
+             |> json_response(404)
+    end
+
+    test "naming no event at all is a clear refusal, not a crash", %{
+      conn: conn,
+      account_token: account
+    } do
+      assert conn |> auth(account) |> get(~p"/api/addin/polls") |> json_response(400)
+    end
+
+    test "revoking closes it", %{conn: conn, user: user, account_token: account} do
+      assert 1 = Claper.Accounts.revoke_addin_account_tokens(user)
+
+      assert conn |> auth(account) |> get(~p"/api/addin/me") |> json_response(401)
+    end
+
+    # Three kinds of key exist and only two of them may write. The read-only one
+    # must not become a personal key by being sent to a different route.
+    test "the read-only embed token is still refused", %{conn: conn, user: user, event: event} do
+      {:ok, embed} = Claper.Events.create_presenter_embed_token(event, user)
+
+      assert conn |> auth(embed) |> get(~p"/api/addin/me") |> json_response(401)
+      assert conn |> auth(embed) |> get(~p"/api/addin/events") |> json_response(401)
+    end
+  end
+
   describe "quizzes" do
     defp a_quiz(overrides \\ %{}) do
       Map.merge(

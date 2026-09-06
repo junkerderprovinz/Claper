@@ -126,9 +126,12 @@
       <label for="base">Claper address</label>
       <input id="base" type="url" placeholder="https://claper.example.com" />
 
-      <label for="token">Sidebar key</label>
-      <input id="token" type="password" placeholder="Event settings, PowerPoint sidebar" />
-      <p class="help">Can create and delete questions, so it stays on this computer and never inside a presentation.</p>
+      <label for="token">Your key</label>
+      <input id="token" type="password" placeholder="Account settings, PowerPoint" />
+      <p class="help">
+        From your account settings. It can create and delete, so it stays on this computer
+        and never inside a presentation. A key from a single event's settings works too.
+      </p>
 
       <div style="margin-top:.9rem; display:flex; gap:.4rem">
         <button id="save" type="button">Connect</button>
@@ -137,10 +140,32 @@
       <div class="msg" id="connectMsg"></div>
     </div>
 
+    <!-- WHICH EVENT -->
+    <!-- Only reached with a personal key. An event key answers this by itself. -->
+    <div id="pickEvent" class="pad" hidden>
+      <h2>This presentation</h2>
+      <p class="help" style="margin-bottom:.7rem">
+        Give it an event of its own and its questions stay its own. The choice is saved in the
+        file, so it is the same on any computer that opens it.
+      </p>
+
+      <label for="newEventName">Start a new event</label>
+      <input id="newEventName" type="text" placeholder="Name of your talk" />
+      <div style="margin-top:.55rem"><button id="createEvent" type="button">Create it</button></div>
+
+      <details class="more" style="margin-top:1rem">
+        <summary>Or use one you already have</summary>
+        <div id="eventList" style="margin-top:.5rem"></div>
+      </details>
+
+      <div class="msg" id="pickMsg"></div>
+    </div>
+
     <!-- WORK -->
     <div id="work" class="pad" hidden>
       <div style="display:flex; align-items:center; gap:.5rem; margin-bottom:.6rem">
         <h2 style="flex:1; margin:0" id="eventName">Your event</h2>
+        <button class="link" id="changeEvent" type="button" hidden>Change</button>
         <button class="link" id="home" type="button">Start</button>
         <button class="link" id="settings" type="button">Connection</button>
       </div>
@@ -253,6 +278,12 @@
       // tag keys uppercase, so it is written uppercase.
       var DECK_TAG = "CLAPERLINK";
 
+      // Which event this presentation belongs to. In the document rather than on
+      // the machine, so opening deck B never lands its questions in deck A's
+      // event, and so the same deck behaves the same on another computer. Only
+      // the code, which is public by nature: it is what the room types in.
+      var EVENT_TAG = "CLAPEREVENT";
+
       function tagsUsable() {
         try {
           return typeof PowerPoint !== "undefined" &&
@@ -262,10 +293,10 @@
         }
       }
 
-      function readDeckLink() {
+      function readTag(key) {
         if (!tagsUsable()) return Promise.resolve("");
         return PowerPoint.run(function (context) {
-          var tag = context.presentation.tags.getItemOrNullObject(DECK_TAG);
+          var tag = context.presentation.tags.getItemOrNullObject(key);
           tag.load("value");
           return context.sync().then(function () {
             return tag.isNullObject ? "" : tag.value || "";
@@ -273,22 +304,27 @@
         }).catch(function () { return ""; });
       }
 
-      function writeDeckLink(value) {
+      function writeTag(key, value) {
         if (!tagsUsable()) return Promise.resolve(false);
         return PowerPoint.run(function (context) {
-          context.presentation.tags.add(DECK_TAG, value);
+          context.presentation.tags.add(key, value);
           return context.sync().then(function () { return true; });
         }).catch(function () { return false; });
       }
 
-      var cfg = { base: "", token: "", embed: "" };
+      function readDeckLink() { return readTag(DECK_TAG); }
+      function writeDeckLink(value) { return writeTag(DECK_TAG, value); }
+
+      var cfg = { base: "", token: "", embed: "", event: "", kind: "" };
       var deckLength = 0;
       var eventCode = "";
 
       function $(id) { return document.getElementById(id); }
       function say(el, text, kind) { el.className = "msg " + (kind || ""); el.textContent = text || ""; }
       function show(which) {
-        ["welcome", "connect", "work"].forEach(function (id) { $(id).hidden = id !== which; });
+        ["welcome", "connect", "pickEvent", "work"].forEach(function (id) {
+          $(id).hidden = id !== which;
+        });
       }
       function store(key, value) { try { localStorage.setItem(key, value); } catch (e) {} }
       function read(key) { try { return localStorage.getItem(key) || ""; } catch (e) { return ""; } }
@@ -310,10 +346,14 @@
 
       function api(path, options) {
         options = options || {};
-        options.headers = Object.assign(
-          { Authorization: "Bearer " + cfg.token, "Content-Type": "application/json" },
-          options.headers || {}
-        );
+        var headers = {
+          Authorization: "Bearer " + cfg.token,
+          "Content-Type": "application/json"
+        };
+        // A personal key belongs to a person, not to an event, so every request
+        // made with one names the event it means. An event key ignores this.
+        if (cfg.event) headers["x-claper-event"] = cfg.event;
+        options.headers = Object.assign(headers, options.headers || {});
         return fetch(cfg.base.replace(/\/+$/, "") + path, options).then(function (r) {
           if (r.status === 204) return {};
           return r.json().catch(function () { return {}; }).then(function (body) {
@@ -535,6 +575,9 @@
             deckLength = (body.event && body.event.deck_length) || 0;
             eventCode = (body.event && body.event.code) || "";
             $("eventName").textContent = body.event.name;
+            // Only a personal key can point the deck somewhere else; an event
+            // key has exactly one event and the offer would be a dead end.
+            $("changeEvent").hidden = cfg.kind !== "account";
 
             renderList(
               $("polls"),
@@ -807,6 +850,113 @@
           .catch(function (e) { say($("quizListMsg"), e.message, "err"); });
       }
 
+      /* ---------- which key, which event ---------- */
+
+      // The one place that decides what the sidebar shows. A key that belongs to
+      // one event answers the question by itself; a key that belongs to a person
+      // asks the presentation, and asks the person only if the presentation has
+      // no answer yet.
+      function begin() {
+        say($("connectMsg"), "Checking…");
+
+        return api("/api/addin/me")
+          .then(function (me) {
+            cfg.kind = me.kind;
+
+            if (me.kind === "event") {
+              cfg.event = "";
+              show("work");
+              return loadPolls();
+            }
+
+            return readTag(EVENT_TAG).then(function (code) {
+              if (code) {
+                cfg.event = code;
+                show("work");
+                return loadPolls();
+              }
+              return offerEvents();
+            });
+          })
+          .catch(function (e) {
+            say($("connectMsg"), e.message, "err");
+            show("connect");
+          });
+      }
+
+      function useEvent(code) {
+        cfg.event = code;
+        return writeTag(EVENT_TAG, code).then(function (saved) {
+          show("work");
+          return loadPolls().then(function () {
+            if (!saved) {
+              say($("listMsg"), "This presentation could not remember its event. Save the file, then reconnect.", "err");
+            }
+          });
+        });
+      }
+
+      function offerEvents() {
+        show("pickEvent");
+        say($("pickMsg"), "");
+
+        // A talk is usually named after its file, so that is the offer rather
+        // than an empty box.
+        if (!$("newEventName").value) $("newEventName").value = presentationName();
+
+        return api("/api/addin/events")
+          .then(function (body) {
+            var box = $("eventList");
+            box.innerHTML = "";
+            var events = body.events || [];
+
+            if (!events.length) {
+              box.innerHTML = '<p class="help">You have no events yet.</p>';
+              return;
+            }
+
+            events.forEach(function (event) {
+              var row = document.createElement("div");
+              row.className = "card";
+              var title = document.createElement("div");
+              title.className = "title";
+              title.textContent = event.name;
+              var pick = document.createElement("button");
+              pick.className = "link";
+              pick.type = "button";
+              pick.textContent = "Use this one";
+              pick.addEventListener("click", function () { useEvent(event.code); });
+              row.appendChild(title);
+              row.appendChild(pick);
+              box.appendChild(row);
+            });
+          })
+          .catch(function (e) { say($("pickMsg"), e.message, "err"); });
+      }
+
+      function presentationName() {
+        try {
+          var url = Office.context.document.url || "";
+          var file = url.split(/[\\/]/).pop() || "";
+          return decodeURIComponent(file).replace(/\.pptx?$/i, "");
+        } catch (e) {
+          return "";
+        }
+      }
+
+      function createEvent() {
+        var name = $("newEventName").value.trim();
+        if (!name) { say($("pickMsg"), "Give it a name.", "err"); return; }
+
+        $("createEvent").disabled = true;
+        say($("pickMsg"), "Creating…");
+
+        api("/api/addin/events", { method: "POST", body: JSON.stringify({ name: name }) })
+          .then(function (body) { return useEvent(body.event.code); })
+          .catch(function (e) { say($("pickMsg"), e.message, "err"); })
+          .then(function () { $("createEvent").disabled = false; });
+      }
+
       /* ---------- the joining picture ---------- */
 
       // Claper already draws this code on its own joining screen, and the embed
@@ -1014,8 +1164,7 @@
         $("questions").appendChild(questionEditor(null));
 
         if (cfg.base && cfg.token) {
-          show("work");
-          loadPolls();
+          begin();
         } else if (read(LS.seen)) {
           show("connect");
         } else {
@@ -1064,8 +1213,13 @@
           store(LS.seen, "1");
 
           say($("connectMsg"), "");
-          show("work");
-          loadPolls();
+          begin();
+        });
+
+        $("changeEvent").addEventListener("click", offerEvents);
+        $("createEvent").addEventListener("click", createEvent);
+        $("newEventName").addEventListener("keydown", function (e) {
+          if (e.key === "Enter") createEvent();
         });
 
         $("create").addEventListener("click", function () {

@@ -132,8 +132,26 @@ defmodule ClaperWeb.Router do
   # the writing one and is scoped to a single event, so no action here takes an
   # event id from the caller. Off with the rest of the feature: without an allow
   # list PresenterEmbedFrame reports framing as disabled and this scope refuses.
+  # What a key is and what it can reach. Before the event is settled, because
+  # these are how the sidebar finds out which event to name in the first place.
   scope "/api/addin", ClaperWeb do
     pipe_through([:api, ClaperWeb.Plugs.PresenterEmbedEnabled, ClaperWeb.Plugs.AddinToken])
+
+    get("/me", AddinController, :me)
+    get("/events", AddinController, :event_index)
+    post("/events", AddinController, :event_create)
+  end
+
+  # Everything about one event. `AddinEvent` settles which one, from the key
+  # itself when it is an event key and from the request when it is a personal
+  # one, so no action below has to know which was used.
+  scope "/api/addin", ClaperWeb do
+    pipe_through([
+      :api,
+      ClaperWeb.Plugs.PresenterEmbedEnabled,
+      ClaperWeb.Plugs.AddinToken,
+      ClaperWeb.Plugs.AddinEvent
+    ])
 
     get("/polls", AddinController, :index)
     post("/polls", AddinController, :create)

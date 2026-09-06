@@ -34,6 +34,9 @@ defmodule ClaperWeb.UserSettingsLive.Show do
      |> assign(:profile_changeset, profile_changeset)
      |> assign(:preferences_changeset, preferences_changeset)
      |> assign(:is_external_user, oidc_accounts != [] or lti_accounts != [])
+     |> assign(:addin_token, nil)
+     |> assign(:addin_token_exists, Accounts.addin_account_token?(socket.assigns.current_user))
+     |> assign(:addin_available, ClaperWeb.Plugs.PresenterEmbedFrame.framing_allowed?())
      |> assign(:oidc_accounts, oidc_accounts)
      |> assign(:lti_accounts, lti_accounts)
      |> assign(
@@ -238,6 +241,26 @@ defmodule ClaperWeb.UserSettingsLive.Show do
   end
 
   @impl true
+  # Shown once and then only as a hash, like every other key in Claper. Making a
+  # new one replaces the old, because the sidebar keeps exactly one.
+  def handle_event("create-addin-account-token", _params, socket) do
+    token = Accounts.create_addin_account_token(socket.assigns.current_user)
+
+    {:noreply,
+     socket
+     |> assign(:addin_token, token)
+     |> assign(:addin_token_exists, true)}
+  end
+
+  def handle_event("revoke-addin-account-token", _params, socket) do
+    Accounts.revoke_addin_account_tokens(socket.assigns.current_user)
+
+    {:noreply,
+     socket
+     |> assign(:addin_token, nil)
+     |> assign(:addin_token_exists, false)}
+  end
+
   def handle_event("validate", _params, socket) do
     {:noreply, socket}
   end

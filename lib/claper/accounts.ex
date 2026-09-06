@@ -476,6 +476,63 @@ defmodule Claper.Accounts do
   end
 
   @doc """
+  Creates the personal key the PowerPoint sidebar signs in with, replacing any
+  the user already had.
+
+  One at a time, like the event scoped keys: the sidebar keeps it in the storage
+  of the machine that authors the deck, and somebody who makes a new one meant
+  to stop using the old one. The raw value is returned once and stored hashed.
+  """
+  def create_addin_account_token(%User{} = user) do
+    {token, user_token} = UserToken.build_addin_account_token(user)
+
+    Repo.transaction(fn ->
+      Repo.delete_all(
+        UserToken.user_and_contexts_query(user, [UserToken.addin_account_context()])
+      )
+
+      Repo.insert!(user_token)
+    end)
+
+    Claper.Audit.log_resource_action(user, "user.addin_token.create", "user", user.id)
+
+    token
+  end
+
+  @doc """
+  The user a personal sidebar key belongs to, or nil.
+  """
+  def get_user_by_addin_account_token(token) do
+    case UserToken.verify_addin_account_token_query(token) do
+      {:ok, query} -> Repo.one(query)
+      :error -> nil
+    end
+  end
+
+  @doc """
+  Revokes the user's personal sidebar key. Returns how many were removed.
+  """
+  def revoke_addin_account_tokens(%User{} = user) do
+    {count, _} =
+      Repo.delete_all(
+        UserToken.user_and_contexts_query(user, [UserToken.addin_account_context()])
+      )
+
+    if count > 0 do
+      Claper.Audit.log_resource_action(user, "user.addin_token.revoke", "user", user.id)
+    end
+
+    count
+  end
+
+  @doc """
+  Whether the user has a personal sidebar key.
+  """
+  def addin_account_token?(%User{} = user) do
+    Repo.exists?(UserToken.user_and_contexts_query(user, [UserToken.addin_account_context()]))
+  end
+
+  @doc """
   Verify the token for a given user email is valid.
   """
   def magic_token_valid?(email) do

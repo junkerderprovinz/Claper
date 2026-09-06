@@ -468,7 +468,15 @@ defmodule Claper.Events do
   # Whether the user may manage this event: its owner, or an activity leader
   # invited by email. Same condition as `get_managed_event!/3`, asked about an
   # event that is already loaded.
-  defp leads_event?(%Event{} = event, %Accounts.User{} = user) do
+  @doc """
+  Whether this user may act on this event, as its owner or as a leader invited
+  to it.
+
+  Public because the PowerPoint sidebar signs in with a key bound to a person
+  rather than to one event, so every request it makes has to be checked against
+  the event it names.
+  """
+  def leads_event?(%Event{} = event, %Accounts.User{} = user) do
     from(e in Event,
       left_join: a in ActivityLeader,
       on: e.id == a.event_id,

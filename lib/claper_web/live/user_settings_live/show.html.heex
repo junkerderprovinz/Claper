@@ -17,7 +17,6 @@
           class="mt-5 space-y-4"
         >
           {hidden_input(f, :action, name: "action", value: "update_profile")}
-
           <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <.text_field
               form={f}
@@ -28,7 +27,6 @@
               autofocus
               autocomplete="given-name"
             />
-
             <.text_field
               form={f}
               key={:last_name}
@@ -38,8 +36,7 @@
               autocomplete="family-name"
             />
           </div>
-
-          {submit(gettext("Save"),
+           {submit(gettext("Save"),
             phx_disable_with: gettext("Saving..."),
             class: "btn btn-primary w-full"
           )}
@@ -47,7 +44,7 @@
       </div>
     </.live_component>
   <% end %>
-
+  
   <%= if @live_action in [:edit_email] do %>
     <.live_component
       module={ClaperWeb.ModalComponent}
@@ -60,7 +57,6 @@
       <div>
         <.form :let={f} for={@email_changeset} phx-submit="save" id="update_email" class="mt-5">
           {hidden_input(f, :action, name: "action", value: "update_email")}
-
           <.text_field
             form={f}
             key={:email}
@@ -68,9 +64,7 @@
             label={gettext("Email")}
             required
             autocomplete="email"
-          />
-
-          {submit(gettext("Save"),
+          /> {submit(gettext("Save"),
             phx_disable_with: "Saving...",
             class: "btn btn-primary w-full mt-4"
           )}
@@ -78,7 +72,7 @@
       </div>
     </.live_component>
   <% end %>
-
+  
   <%= if @live_action in [:edit_password] do %>
     <.live_component
       module={ClaperWeb.ModalComponent}
@@ -97,7 +91,6 @@
           class="mt-5 space-y-4"
         >
           {hidden_input(f, :action, name: "action", value: "update_password")}
-
           <div class="md:flex md:items-end gap-x-2">
             <.text_field
               form={f}
@@ -116,8 +109,7 @@
               autocomplete="new-password"
             />
           </div>
-
-          {submit(gettext("Save"),
+           {submit(gettext("Save"),
             phx_disable_with: "Saving...",
             class: "btn btn-primary w-full"
           )}
@@ -125,7 +117,7 @@
       </div>
     </.live_component>
   <% end %>
-
+  
   <%= if @live_action in [:set_password] do %>
     <.live_component
       module={ClaperWeb.ModalComponent}
@@ -144,7 +136,6 @@
           class="mt-5 space-y-4"
         >
           {hidden_input(f, :action, name: "action", value: "set_password")}
-
           <div class="md:flex md:items-end gap-x-2">
             <.text_field
               form={f}
@@ -154,7 +145,6 @@
               required
               autocomplete="new-password"
             />
-
             <.text_field
               form={f}
               key={:password_confirmation}
@@ -164,8 +154,7 @@
               autocomplete="new-password"
             />
           </div>
-
-          {submit(gettext("Save"),
+           {submit(gettext("Save"),
             phx_disable_with: "Saving...",
             class: "btn btn-primary w-full"
           )}
@@ -173,7 +162,7 @@
       </div>
     </.live_component>
   <% end %>
-
+  
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
     <!-- Personal Information Card -->
     <div class="card bg-base-100 shadow-md">
@@ -193,16 +182,18 @@
               />
             </svg>
           </div>
+          
           <div>
             <h3 class="text-lg font-semibold text-base-content">
               {gettext("Personal informations")}
             </h3>
+            
             <p class="text-sm text-base-content/60">
               {gettext("Your personal informations to access your account")}
             </p>
           </div>
         </div>
-
+        
         <div class="space-y-4">
           <!-- Name -->
           <div class="flex items-center justify-between gap-4 py-3 px-4 bg-base-200 rounded-xl">
@@ -211,19 +202,23 @@
                 <p class="text-xs font-medium text-base-content/60 uppercase tracking-wide">
                   {gettext("First name")}
                 </p>
+                
                 <p class="mt-1 text-sm font-medium text-base-content">
                   {@current_user.first_name || gettext("Not set")}
                 </p>
               </div>
+              
               <div>
                 <p class="text-xs font-medium text-base-content/60 uppercase tracking-wide">
                   {gettext("Last name")}
                 </p>
+                
                 <p class="mt-1 text-sm font-medium text-base-content">
                   {@current_user.last_name || gettext("Not set")}
                 </p>
               </div>
             </div>
+            
             <.link
               patch={~p"/users/settings/edit/profile"}
               class="btn btn-link btn-sm text-primary"
@@ -237,8 +232,10 @@
               <p class="text-xs font-medium text-base-content/60 uppercase tracking-wide">
                 {gettext("Email address")}
               </p>
+              
               <p class="mt-1 text-sm font-medium text-base-content">{@current_user.email}</p>
             </div>
+            
             <.link
               :if={!@is_external_user}
               patch={~p"/users/settings/edit/email"}
@@ -256,8 +253,10 @@
               <p class="text-xs font-medium text-base-content/60 uppercase tracking-wide">
                 {gettext("Password")}
               </p>
+              
               <p class="mt-1 text-sm font-medium text-base-content">••••••••</p>
             </div>
+            
             <.link
               patch={~p"/users/settings/edit/password"}
               class="btn btn-link btn-sm text-primary"
@@ -287,16 +286,18 @@
               />
             </svg>
           </div>
+          
           <div>
             <h3 class="text-lg font-semibold text-base-content">
               {gettext("Preferences")}
             </h3>
+            
             <p class="text-sm text-base-content/60">
               {gettext("Customize your account")}
             </p>
           </div>
         </div>
-
+        
         <div class="py-3 px-4 bg-base-200 rounded-xl">
           <.form :let={f} for={@preferences_changeset} phx-change="save">
             {hidden_input(f, :action, name: "action", value: "update_preferences")}
@@ -351,16 +352,18 @@
               />
             </svg>
           </div>
+          
           <div>
             <h3 class="text-lg font-semibold text-base-content">
               {gettext("Accounts linked")}
             </h3>
+            
             <p class="text-sm text-base-content/60">
               {gettext("External accounts connected to your profile")}
             </p>
           </div>
         </div>
-
+        
         <div class="space-y-3">
           <%= for account <- @oidc_accounts do %>
             <div class="flex items-center justify-between py-3 px-4 bg-base-200 rounded-xl">
@@ -368,6 +371,7 @@
                 <img src="/images/icons/openid.png" class="w-5" />
                 <div>
                   <p class="text-sm font-medium text-base-content">{account.provider}</p>
+                  
                   <p
                     :if={account.organization}
                     class="text-xs text-base-content/60 flex items-center gap-1"
@@ -384,10 +388,11 @@
                         clip-rule="evenodd"
                       />
                     </svg>
-                    {account.organization}
+                     {account.organization}
                   </p>
                 </div>
               </div>
+              
               <button
                 :if={@allow_unlink_external_provider}
                 phx-click="unlink"
@@ -399,15 +404,18 @@
               </button>
             </div>
           <% end %>
+          
           <%= for account <- @lti_accounts do %>
             <div class="flex items-center justify-between py-3 px-4 bg-base-200 rounded-xl">
               <div class="flex items-center gap-3">
                 <img src="/images/icons/lms.png" class="w-8" />
                 <div>
                   <p class="text-sm font-medium text-base-content">LMS</p>
+                  
                   <p class="text-xs text-base-content/60">#{account.registration_id}</p>
                 </div>
               </div>
+              
               <button
                 :if={@allow_unlink_external_provider}
                 phx-click="unlink"
@@ -419,6 +427,93 @@
               </button>
             </div>
           <% end %>
+        </div>
+      </div>
+    </div>
+    
+<!-- PowerPoint Card -->
+    <%!-- Here rather than in an event's settings, because the whole point of
+    this key is that it is not tied to one event: it is what lets a new
+    presentation get an event of its own without leaving PowerPoint. --%>
+    <div :if={@addin_available} class="card bg-base-100 shadow-md">
+      <div class="card-body">
+        <div class="flex items-center gap-3 mb-6">
+          <div class="p-2 bg-primary/10 rounded-xl">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              class="w-5 h-5 text-primary"
+            >
+              <path d="M5.625 1.5H9a3.75 3.75 0 0 1 3.75 3.75v1.875c0 1.036.84 1.875 1.875 1.875H16.5a3.75 3.75 0 0 1 3.75 3.75v7.875c0 1.035-.84 1.875-1.875 1.875H5.625a1.875 1.875 0 0 1-1.875-1.875V3.375c0-1.036.84-1.875 1.875-1.875Z" />
+              <path d="M12.971 1.816A5.23 5.23 0 0 1 14.25 5.25v1.875c0 .207.168.375.375.375H16.5a5.23 5.23 0 0 1 3.434 1.279 9.768 9.768 0 0 0-6.963-6.963Z" />
+            </svg>
+          </div>
+          
+          <div>
+            <%!-- A product name, so not through gettext: there is nothing to
+            translate, and gettext fuzzy-matched it to an unrelated string. --%>
+            <h3 class="text-lg font-semibold text-base-content">PowerPoint</h3>
+            
+            <p class="text-sm text-base-content/60">
+              {gettext("Write questions for your talks without leaving your slides")}
+            </p>
+          </div>
+        </div>
+        
+        <p class="text-sm text-base-content/70">
+          {gettext(
+            "The Claper sidebar asks for this key once. With it, a new presentation can start a new event of its own, so one talk's questions never turn up in another."
+          )}
+        </p>
+        
+        <div :if={@addin_token} class="mt-4 space-y-2">
+          <input
+            type="text"
+            readonly
+            value={@addin_token}
+            onclick="this.select()"
+            class="input input-bordered w-full text-sm"
+          />
+          <p class="text-sm font-semibold">
+            {gettext("Copy it now. It is stored hashed and cannot be shown again.")}
+          </p>
+        </div>
+        
+        <%!-- Said plainly next to the button that hands it out: this one can
+        create and delete, so it is the one that must never travel in a file. --%>
+        <p class="mt-4 text-sm text-base-content/60">
+          {gettext(
+            "It can create and delete questions and events, so keep it on your own computer and never inside a presentation you share."
+          )}
+        </p>
+        
+        <div class="mt-4 flex flex-wrap gap-2">
+          <button
+            type="button"
+            phx-click="create-addin-account-token"
+            data-confirm={
+              if @addin_token_exists,
+                do: gettext("Replace the key? The sidebar will ask for the new one.")
+            }
+            class="btn btn-primary btn-sm"
+          >
+            {if @addin_token_exists, do: gettext("New key"), else: gettext("Create key")}
+          </button>
+          
+          <button
+            :if={@addin_token_exists}
+            type="button"
+            phx-click="revoke-addin-account-token"
+            data-confirm={gettext("Revoke the key?")}
+            class="btn btn-sm"
+          >
+            {gettext("Revoke")}
+          </button>
+          
+          <.link href="/addin" target="_blank" class="btn btn-sm btn-soft">
+            {gettext("How to add Claper to PowerPoint")}
+          </.link>
         </div>
       </div>
     </div>
@@ -441,21 +536,25 @@
               />
             </svg>
           </div>
+          
           <div>
             <h3 class="text-lg font-semibold text-base-content">
               {gettext("Danger zone")}
             </h3>
+            
             <p class="text-sm text-base-content/60">
               {gettext("Be careful, these actions are irreversible")}
             </p>
           </div>
         </div>
-
+        
         <div class="py-3 px-4 bg-error/10 rounded-xl">
           <p class="text-sm font-medium text-base-content">{gettext("Delete account")}</p>
+          
           <p class="text-xs text-base-content/60 mt-1">
             {gettext("All your events and files will be permanently deleted, are you sure?")}
           </p>
+          
           <div class="mt-4">
             {link(gettext("Delete account"),
               to: ~p"/users/register/delete",
