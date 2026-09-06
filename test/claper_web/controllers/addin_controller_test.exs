@@ -142,6 +142,88 @@ defmodule ClaperWeb.AddinControllerTest do
              |> json_response(422)
     end
 
+    test "the listing says how long the Claper deck is", %{conn: conn, token: token} do
+      body = conn |> auth(token) |> get(~p"/api/addin/polls") |> json_response(200)
+
+      assert body["event"]["deck_length"] == 42
+    end
+  end
+
+  describe "editing" do
+    setup %{conn: conn, token: token} do
+      poll =
+        conn
+        |> auth(token)
+        |> post(~p"/api/addin/polls", %{title: "before", options: ["A", "B"]})
+        |> json_response(201)
+
+      %{poll: poll}
+    end
+
+    test "renames without touching the answers", %{conn: conn, token: token, poll: poll} do
+      body =
+        conn
+        |> auth(token)
+        |> patch(~p"/api/addin/polls/#{poll["id"]}", %{title: "after"})
+        |> json_response(200)
+
+      assert body["title"] == "after"
+      assert Enum.map(body["options"], & &1["content"]) == ["A", "B"]
+    end
+
+    test "replaces the answers when they are sent", %{conn: conn, token: token, poll: poll} do
+      body =
+        conn
+        |> auth(token)
+        |> patch(~p"/api/addin/polls/#{poll["id"]}", %{title: "after", options: ["X", "Y", "Z"]})
+        |> json_response(200)
+
+      assert Enum.map(body["options"], & &1["content"]) == ["X", "Y", "Z"]
+    end
+
+    test "deletes", %{conn: conn, token: token, poll: poll} do
+      assert conn |> auth(token) |> delete(~p"/api/addin/polls/#{poll["id"]}") |> response(204)
+
+      remaining =
+        conn |> auth(token) |> get(~p"/api/addin/polls") |> json_response(200) |> Map.get("polls")
+
+      refute Enum.any?(remaining, &(&1["id"] == poll["id"]))
+    end
+
+    # The token is the whole authorisation, so an id from another event must be
+    # invisible rather than merely refused.
+    test "a poll of another event is not found", %{conn: conn, token: token} do
+      other_user = user_fixture()
+      other_file = presentation_file_fixture(%{user: other_user}, [:event])
+
+      foreign =
+        Claper.PollsFixtures.poll_fixture(%{
+          presentation_file_id: other_file.id,
+          title: "someone else's"
+        })
+
+      assert conn
+             |> auth(token)
+             |> patch(~p"/api/addin/polls/#{foreign.id}", %{title: "hijacked"})
+             |> json_response(404)
+
+      assert conn
+             |> auth(token)
+             |> delete(~p"/api/addin/polls/#{foreign.id}")
+             |> json_response(404)
+
+      assert Claper.Polls.get_poll!(foreign.id).title == "someone else's"
+    end
+
+    test "a nonsense id is not found", %{conn: conn, token: token} do
+      assert conn
+             |> auth(token)
+             |> delete(~p"/api/addin/polls/not-a-number")
+             |> json_response(404)
+    end
+  end
+
+  describe "creating extra" do
     test "an empty title is refused", %{conn: conn, token: token} do
       assert conn
              |> auth(token)

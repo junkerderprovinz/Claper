@@ -137,6 +137,8 @@ defmodule ClaperWeb.Router do
 
     get("/polls", AddinController, :index)
     post("/polls", AddinController, :create)
+    patch("/polls/:id", AddinController, :update)
+    delete("/polls/:id", AddinController, :delete)
   end
 
   # Enables LiveDashboard only for development

@@ -23,6 +23,7 @@ defmodule ClaperWeb.EventLive.Presenter do
     # presenter advances PowerPoint rather than Claper. Scoped to the event, so
     # an id from another event resolves to nothing.
     |> assign(:pinned_poll_id, pinned_poll_id(params["poll"]))
+    |> assign(:embed_style, embed_style(params))
     |> mount_event(event, true)
   end
 
@@ -47,6 +48,38 @@ defmodule ClaperWeb.EventLive.Presenter do
       mount_event(socket, event, !is_nil(params["iframe"]))
     end
   end
+
+  @doc """
+  How an embedded interaction is drawn, from the query of the link.
+
+  A block sitting on someone else's slide has to match that slide rather than
+  Claper, so the look is part of the link instead of a fixed choice here:
+  `theme` picks the text colour, `panel` whether it brings a ground at all,
+  `radius` how round the bars are and `shadow` whether it lifts off the page.
+  Every value falls back to the readable default, so a hand-edited link cannot
+  produce an invisible block.
+  """
+  def embed_style(params) do
+    %{
+      theme: one_of(params["theme"], ~w(light dark), "light"),
+      panel: one_of(params["panel"], ~w(on off), "on"),
+      radius: one_of(params["radius"], ~w(sharp soft round), "soft"),
+      shadow: one_of(params["shadow"], ~w(on off), "off")
+    }
+  end
+
+  @doc """
+  The corner treatment a bar gets, from the link's `radius`.
+  """
+  def bar_radius("sharp"), do: "rounded-none"
+  def bar_radius("round"), do: "rounded-3xl"
+  def bar_radius(_soft), do: "rounded-md"
+
+  defp one_of(value, allowed, fallback) when is_binary(value) do
+    if value in allowed, do: value, else: fallback
+  end
+
+  defp one_of(_value, _allowed, fallback), do: fallback
 
   # The poll id a pinned embed carries in its query, or nil. Anything that is
   # not a positive integer is nil rather than an error: the value comes from a
@@ -95,6 +128,7 @@ defmodule ClaperWeb.EventLive.Presenter do
         socket.assigns[:live_action] == :interaction
       end)
       |> assign_new(:pinned_poll_id, fn -> nil end)
+      |> assign_new(:embed_style, fn -> embed_style(%{}) end)
       # False on the regular presenter route. The template uses it to leave the
       # join screen out entirely rather than only hiding it, because the join
       # screen carries the event code and the embeddable link is meant to be

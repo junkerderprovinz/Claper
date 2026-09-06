@@ -24,7 +24,18 @@ defmodule ClaperWeb.AddinController do
       end
       |> Enum.map(&poll_json/1)
 
-    json(conn, %{event: %{name: event.name, code: event.code}, polls: polls})
+    json(conn, %{
+      event: %{
+        name: event.name,
+        code: event.code,
+        # How many slides Claper itself holds. A poll positioned inside that
+        # range belongs to the deck uploaded to Claper; one beyond it was made
+        # for a slide of someone else's document, and the sidebar says so
+        # instead of showing one flat list.
+        deck_length: (event.presentation_file && event.presentation_file.length) || 0
+      },
+      polls: polls
+    })
   end
 
   @doc """
@@ -54,6 +65,69 @@ defmodule ClaperWeb.AddinController do
       end
     else
       {:error, status, message} -> error(conn, status, message)
+    end
+  end
+
+  @doc """
+  Renames a poll or replaces its options.
+
+  The id is looked up inside the token's event, so a poll of another event is
+  simply not found rather than refused with a different message.
+  """
+  def update(%{assigns: %{addin_event: event}} = conn, %{"id" => id} = params) do
+    with {:ok, poll} <- find_poll(event, id),
+         {:ok, attrs} <- update_attrs(params, poll) do
+      case Polls.update_poll(event.uuid, poll, attrs) do
+        {:ok, poll} -> json(conn, poll_json(Claper.Polls.get_poll!(poll.id)))
+        {:error, _changeset} -> error(conn, 422, "poll could not be updated")
+      end
+    else
+      {:error, status, message} -> error(conn, status, message)
+    end
+  end
+
+  @doc """
+  Deletes a poll of this event.
+  """
+  def delete(%{assigns: %{addin_event: event}} = conn, %{"id" => id}) do
+    case find_poll(event, id) do
+      {:ok, poll} ->
+        Polls.delete_poll(event.uuid, poll)
+        send_resp(conn, :no_content, "")
+
+      {:error, status, message} ->
+        error(conn, status, message)
+    end
+  end
+
+  defp find_poll(event, id) do
+    with {parsed, ""} <- Integer.parse(to_string(id)),
+         poll when not is_nil(poll) <- Polls.get_poll_for_event(parsed, event.id) do
+      {:ok, poll}
+    else
+      _ -> {:error, 404, "no such poll on this event"}
+    end
+  end
+
+  defp update_attrs(params, poll) do
+    title =
+      case fetch_title(params) do
+        {:ok, value} -> value
+        _ -> poll.title
+      end
+
+    case params do
+      %{"options" => _} ->
+        with {:ok, options} <- fetch_options(params) do
+          {:ok,
+           %{
+             "title" => title,
+             "poll_opts" => Enum.map(options, &%{"content" => &1, "vote_count" => 0})
+           }}
+        end
+
+      _ ->
+        {:ok, %{"title" => title}}
     end
   end
 
@@ -93,6 +167,7 @@ defmodule ClaperWeb.AddinController do
     %{
       id: poll.id,
       title: poll.title,
+      position: poll.position,
       enabled: poll.enabled,
       show_results: poll.show_results,
       options:

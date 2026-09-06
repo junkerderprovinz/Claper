@@ -474,6 +474,48 @@ defmodule ClaperWeb.EventLive.PresenterEmbedTest do
       refute poll_block =~ "text-white"
     end
 
+    # The block sits on someone else's slide, so its look belongs to the link.
+    # Every value falls back to the readable default, because a hand-edited or
+    # truncated link must not produce an invisible block.
+    test "the link decides ground, text and corners", %{
+      conn: conn,
+      token: token,
+      presentation_file: presentation_file
+    } do
+      Claper.PollsFixtures.poll_fixture(%{
+        presentation_file_id: presentation_file.id,
+        position: 0,
+        title: "styled poll",
+        show_results: true
+      })
+
+      show_poll(presentation_file)
+
+      block = fn query ->
+        get(conn, "/embed/interaction/#{token}#{query}")
+        |> html_response(200)
+        |> String.split(~s(id="poll"))
+        |> Enum.at(1)
+        |> String.slice(0, 1400)
+      end
+
+      default = block.("")
+      assert default =~ "bg-white"
+      assert default =~ "rounded-md"
+      refute default =~ "shadow-lg"
+
+      transparent = block.("?panel=off&theme=dark&radius=sharp&shadow=on")
+      refute transparent =~ "bg-white/95"
+      assert transparent =~ "text-white"
+      assert transparent =~ "rounded-none"
+      assert transparent =~ "shadow-lg"
+
+      nonsense = block.("?theme=neon&panel=maybe&radius=blob&shadow=yes")
+      assert nonsense =~ "bg-white"
+      assert nonsense =~ "text-gray-900"
+      assert nonsense =~ "rounded-md"
+    end
+
     test "the same token opens both views", %{conn: conn, token: token} do
       assert {:ok, _view, _html} = live(conn, ~p"/embed/interaction/#{token}")
       assert {:ok, _view, _html} = live(conn, ~p"/embed/presenter/#{token}")

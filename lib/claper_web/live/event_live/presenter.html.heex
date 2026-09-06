@@ -58,7 +58,20 @@
       id="poll"
       class={
         if @interaction_only,
-          do: "w-full flex flex-col justify-center p-4 bg-white/95 rounded-2xl shadow-lg",
+          do:
+            [
+              "w-full flex flex-col justify-center p-4",
+              if(@embed_style.panel == "on",
+                do:
+                  if(@embed_style.theme == "dark",
+                    do: "bg-gray-900/95 rounded-2xl",
+                    else: "bg-white/95 rounded-2xl"
+                  ),
+                else: ""
+              ),
+              if(@embed_style.shadow == "on", do: "shadow-lg", else: "")
+            ]
+            |> Enum.join(" "),
           else:
             "#{if @state.poll_visible, do: "opacity-100", else: "opacity-0 pointer-events-none"} h-full w-full flex flex-col justify-center bg-black/90 absolute z-30 left-1/2 top-1/2 transform -translate-y-1/2 -translate-x-1/2 p-10 transition-opacity"
       }
@@ -69,20 +82,20 @@
         <%!-- On the projected view this sits on a black overlay, so the text is white.
         An embed on someone else's slide has no ground of its own, so the block
         brings a light one and the text turns dark with it. --%>
-        <p class={"#{if @iframe, do: "text-xl mb-6", else: "text-5xl mb-24"} #{if @interaction_only, do: "text-gray-900", else: "text-white"} font-bold text-center"}>
+        <p class={"#{if @iframe, do: "text-xl mb-6", else: "text-5xl mb-24"} #{if @interaction_only, do: (if @embed_style.theme == "dark", do: "text-white", else: "text-gray-900"), else: "text-white"} font-bold text-center"}>
           {@current_poll.title}
         </p>
 
         <div class={"#{if @iframe, do: "space-y-5", else: "space-y-8"} flex flex-col"}>
           <%= if (length @current_poll.poll_opts) > 0 do %>
             <%= for opt <- @current_poll.poll_opts do %>
-              <div class={"#{if @iframe, do: "py-1", else: "py-4"} #{if @interaction_only, do: "bg-gray-200 text-gray-900", else: "bg-gray-500 text-white"} px-6 rounded-3xl flex justify-between items-center relative"}>
+              <div class={"#{if @iframe, do: "py-1", else: "py-4"} #{if @interaction_only, do: (if @embed_style.theme == "dark", do: "bg-white/15 text-white", else: "bg-gray-200 text-gray-900"), else: "bg-gray-500 text-white"} #{if @interaction_only, do: bar_radius(@embed_style.radius), else: "rounded-3xl"} px-6 flex justify-between items-center relative overflow-hidden"}>
                 <%!-- show_results is the owner's choice about other devices,
                 and the attendee view honours it for both the bar and the
                 numbers. The embed is another device. --%>
                 <div
                   style={"width: #{if !@presenter_embed || @current_poll.show_results, do: opt.percentage, else: 0}%;"}
-                  class="bg-primary rounded-3xl h-full absolute left-0 transition-all"
+                  class={"bg-primary h-full absolute left-0 transition-all #{if @interaction_only, do: bar_radius(@embed_style.radius), else: "rounded-3xl"}"}
                 >
                 </div>
                 <div class="flex space-x-3 z-10 text-left">
