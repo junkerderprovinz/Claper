@@ -59,6 +59,8 @@
         border-radius: 999px; background: #fff; color: var(--ink); font: inherit; cursor: pointer;
       }
       .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
+      details { margin-top: .7rem; }
+      details summary { cursor: pointer; font-weight: 600; font-size: .78rem; color: var(--muted); }
       .err { color: var(--danger); font-size: .78rem; margin-top: .6rem; min-height: 1rem; }
       .err.ok { color: #146c43; }
       [hidden] { display: none !important; }
@@ -87,37 +89,43 @@
         <label for="what">Show on this slide</label>
         <select id="what"></select>
 
-        <div class="grid2" style="margin-top:.7rem">
-          <div>
-            <label for="theme">Text</label>
-            <select id="theme">
-              <option value="light">Dark text</option>
-              <option value="dark">Light text</option>
-            </select>
+        <!-- Folded away by default: four dropdowns open made the panel 438px
+             tall against an object 420px high, which is the scrollbar the
+             author then sees. Measured, not guessed. -->
+        <details id="look">
+          <summary>Change how it looks</summary>
+          <div class="grid2" style="margin-top:.5rem">
+            <div>
+              <label for="theme">Text</label>
+              <select id="theme">
+                <option value="light">Dark text</option>
+                <option value="dark">Light text</option>
+              </select>
+            </div>
+            <div>
+              <label for="panel">Background</label>
+              <select id="panel">
+                <option value="on">Card</option>
+                <option value="off">Transparent</option>
+              </select>
+            </div>
+            <div>
+              <label for="radius">Bars</label>
+              <select id="radius">
+                <option value="soft">Slightly rounded</option>
+                <option value="sharp">Square</option>
+                <option value="round">Fully rounded</option>
+              </select>
+            </div>
+            <div>
+              <label for="shadow">Shadow</label>
+              <select id="shadow">
+                <option value="off">None</option>
+                <option value="on">Soft shadow</option>
+              </select>
+            </div>
           </div>
-          <div>
-            <label for="panel">Background</label>
-            <select id="panel">
-              <option value="on">Card</option>
-              <option value="off">Transparent</option>
-            </select>
-          </div>
-          <div>
-            <label for="radius">Bars</label>
-            <select id="radius">
-              <option value="soft">Slightly rounded</option>
-              <option value="sharp">Square</option>
-              <option value="round">Fully rounded</option>
-            </select>
-          </div>
-          <div>
-            <label for="shadow">Shadow</label>
-            <select id="shadow">
-              <option value="off">None</option>
-              <option value="on">Soft shadow</option>
-            </select>
-          </div>
-        </div>
+        </details>
 
         <button class="go" id="save" type="button">Show it</button>
         <button class="plain" id="useOther" type="button">Use a different link</button>
@@ -132,6 +140,33 @@
       // the embed link is read only and is meant to be shared with the file.
       // The sidebar's writing token is never put here.
       var KEY = "claper.slide";
+
+      // Each block has its own settings bag and cannot read the sidebar's, so a
+      // link kept there would have to be pasted into every block by hand. A
+      // presentation tag is document-scoped instead of add-in-scoped, which is
+      // what lets the sidebar hand the link to every block at once. Keys are
+      // stored uppercase by PowerPoint, so it is written uppercase here too.
+      var DECK_TAG = "CLAPERLINK";
+
+      function tagsUsable() {
+        try {
+          return typeof PowerPoint !== "undefined" &&
+            Office.context.requirements.isSetSupported("PowerPointApi", "1.3");
+        } catch (e) {
+          return false;
+        }
+      }
+
+      function readDeckLink() {
+        if (!tagsUsable()) return Promise.resolve("");
+        return PowerPoint.run(function (context) {
+          var tag = context.presentation.tags.getItemOrNullObject(DECK_TAG);
+          tag.load("value");
+          return context.sync().then(function () {
+            return tag.isNullObject ? "" : tag.value || "";
+          });
+        }).catch(function () { return ""; });
+      }
 
       var state = {
         link: "",
@@ -338,13 +373,26 @@
       Office.onReady(function () {
         var saved = null;
         try { saved = JSON.parse(Office.context.document.settings.get(KEY) || "null"); } catch (e) {}
+        if (saved) state = Object.assign(state, saved);
 
-        if (saved && saved.link) {
-          state = Object.assign(state, saved);
-          present();
-        } else {
-          openSetup(false);
-        }
+        // The deck's own link wins over one this block remembered earlier, so a
+        // link made again for the presentation reaches blocks that are already
+        // sitting on slides instead of leaving them pointing at a dead one.
+        readDeckLink().then(function (deckLink) {
+          var fromDeck = deckLink && parseLink(deckLink);
+          if (fromDeck) state.link = fromDeck.base;
+
+          if (saved && saved.link && state.link) {
+            // Configured before: show it, using the deck's current link.
+            present();
+          } else if (state.link) {
+            // The deck knows the link but this block has never been told what to
+            // show. Skip the pasting and go straight to the choice.
+            reconfigure();
+          } else {
+            openSetup(false);
+          }
+        });
 
         $("change").addEventListener("click", reconfigure);
         $("connect").addEventListener("click", goToStep2);

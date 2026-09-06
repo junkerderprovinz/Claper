@@ -44,14 +44,34 @@ On Mac, put the manifests in
    from your event's settings. The key can create and delete questions, so it
    stays on this machine and never inside the file.
 2. Write your polls and quizzes in the sidebar.
-3. On the **On slides** tab, create the slide link once. It only reads, so it is
-   saved into the presentation and travels with it.
-4. Insert **Claper on a slide** where you want it, paste the link into it once,
-   and pick what that slide shows. Copy the block onto the next slide and change
-   only what it shows.
+3. On the **On slides** tab, press **Put the code on this slide**. That is a
+   picture, so it lands on the slide you have open. Without it nobody in the
+   room knows how to answer.
+4. On the same tab, create the slide link once. It only reads, so it is saved
+   into the presentation and travels with it.
+5. Insert **Claper on a slide** wherever you want a live answer, and pick what
+   that block shows. It finds the link on its own.
 
-Put a "How to join" block on an early slide. Your deck never shows Claper's own
-joining screen, so without it nobody in the room knows how to answer.
+## Things that are PowerPoint's and not ours
+
+- **The frame and the soft shadow along the top edge of a live block** are drawn
+  by PowerPoint around every content add-in. Fill, Outline and Effects are
+  greyed out on such an object, and neither manifest nor CSS can reach it. A
+  block whose content does not need to be live is better inserted as a picture,
+  which is why the joining code is one.
+- **Duplicating a slide** that holds a block: on PowerPoint for the web the copy
+  keeps the original's instance id (office-js#2765), so the two can read each
+  other's choice. Insert a second block instead of copying one.
+- **Handing the link to the blocks** uses a presentation tag, which needs
+  PowerPointApi 1.3. Where that is missing the sidebar says so and the link has
+  to be pasted into each block once.
+
+## What ends up inside the .pptx
+
+The slide link and each block's choice are stored in the presentation file.
+Anyone who unzips a .pptx can read them, so treat a deck you send out as
+carrying its slide link in the clear. That is why the link only reads, and why
+the sidebar key is kept on your machine instead.
 
 ## What the two keys can do
 

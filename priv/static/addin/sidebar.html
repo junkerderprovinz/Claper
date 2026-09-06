@@ -208,9 +208,8 @@
 
         <h2>One link for the whole deck</h2>
         <p class="help" style="margin-bottom:.6rem">
-          The live blocks are a different thing: insert the Claper object on a slide, paste this link
-          into it once, then pick there what that slide shows. The link only reads, so it is safe
-          inside the file.
+          Made once, then every Claper object you put on a slide finds it by itself and only asks
+          what that slide should show. The link only reads, so it is safe inside the file.
         </p>
 
         <div class="linkrow">
@@ -227,12 +226,13 @@
         <h2>Insert a live block</h2>
         <ol class="steps">
           <li><span class="n">1</span><span><b>Insert &gt; Add-ins &gt; My Add-ins</b><span>Pick "Claper on a slide".</span></span></li>
-          <li><span class="n">2</span><span><b>Paste the link</b><span>Once per object, then choose what it shows.</span></span></li>
-          <li><span class="n">3</span><span><b>Copy the object</b><span>Onto the next slide, and change only what it shows.</span></span></li>
+          <li><span class="n">2</span><span><b>Choose what it shows</b><span>It already knows the link.</span></span></li>
+          <li><span class="n">3</span><span><b>Repeat per slide</b><span>Insert another one wherever you want a live answer.</span></span></li>
         </ol>
         <p class="help">
           A picture can be placed for you, a live object cannot: PowerPoint does not let a sidebar
-          drop one onto a slide.
+          drop one onto a slide. Its frame and the soft shadow along its top edge are PowerPoint's
+          own, and cannot be turned off from here.
         </p>
       </div>
     </div>
@@ -245,6 +245,41 @@
       // document, so every machine that opens the deck finds the same one.
       var LS = { base: "claper.base", token: "claper.token", seen: "claper.seen" };
       var DOC_EMBED = "claper.embed";
+
+      // A block on a slide has its own settings bag and cannot read this one, so
+      // a link kept only here has to be pasted into every block by hand. A
+      // presentation tag is scoped to the document rather than to an add-in,
+      // which is what lets one link reach every block at once. PowerPoint stores
+      // tag keys uppercase, so it is written uppercase.
+      var DECK_TAG = "CLAPERLINK";
+
+      function tagsUsable() {
+        try {
+          return typeof PowerPoint !== "undefined" &&
+            Office.context.requirements.isSetSupported("PowerPointApi", "1.3");
+        } catch (e) {
+          return false;
+        }
+      }
+
+      function readDeckLink() {
+        if (!tagsUsable()) return Promise.resolve("");
+        return PowerPoint.run(function (context) {
+          var tag = context.presentation.tags.getItemOrNullObject(DECK_TAG);
+          tag.load("value");
+          return context.sync().then(function () {
+            return tag.isNullObject ? "" : tag.value || "";
+          });
+        }).catch(function () { return ""; });
+      }
+
+      function writeDeckLink(value) {
+        if (!tagsUsable()) return Promise.resolve(false);
+        return PowerPoint.run(function (context) {
+          context.presentation.tags.add(DECK_TAG, value);
+          return context.sync().then(function () { return true; });
+        }).catch(function () { return false; });
+      }
 
       var cfg = { base: "", token: "", embed: "" };
       var deckLength = 0;
@@ -907,14 +942,16 @@
         api("/api/addin/embed_token", { method: "POST" })
           .then(function (body) {
             cfg.embed = body.token;
-            docSet(DOC_EMBED, body.token, function (saved) {
+            docSet(DOC_EMBED, body.token, function () {});
+
+            return writeDeckLink(embedUrl()).then(function (shared) {
               showLink();
               say(
                 $("linkMsg"),
-                saved
-                  ? "Ready. Paste it into the Claper object on a slide."
-                  : "Made, but it could not be saved into this file. Save the presentation, then create it again.",
-                saved ? "ok" : "err"
+                shared
+                  ? "Ready. Blocks you put on slides pick it up on their own."
+                  : "Ready. This PowerPoint cannot hand it over on its own, so paste it into each Claper object.",
+                "ok"
               );
             });
           })
@@ -939,6 +976,14 @@
         cfg.base = read(LS.base);
         cfg.token = read(LS.token);
         cfg.embed = docGet(DOC_EMBED);
+
+        // The tag is the deck's own copy and outlives this add-in's bag, so it
+        // decides when the two disagree.
+        readDeckLink().then(function (deckLink) {
+          var match = deckLink && deckLink.match(/\/embed\/interaction\/([^/?#]+)/);
+          if (match) cfg.embed = match[1];
+          showLink();
+        });
 
         $("base").value = cfg.base;
         $("token").value = cfg.token;

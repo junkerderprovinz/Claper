@@ -33,7 +33,9 @@
   <DefaultSettings>
     <SourceLocation DefaultValue="https://claper.example.com/addin/slide.html" />
     <RequestedWidth>640</RequestedWidth>
-    <RequestedHeight>420</RequestedHeight>
+    <!-- Headroom for the setup panel. At 420 it came out 18px taller than the
+         object and PowerPoint put a scrollbar on a slide. -->
+    <RequestedHeight>480</RequestedHeight>
   </DefaultSettings>
 
   <Permissions>ReadWriteDocument</Permissions>
