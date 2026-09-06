@@ -176,6 +176,23 @@
         stage.hidden = false;
         $("setup").hidden = true;
         $("frame").src = url;
+
+        // A slide link is replaced whenever a new one is made for the event, and
+        // this block would then frame Claper's own 404 page: a dead rectangle
+        // mid-talk with nothing saying why. One request on open turns that into
+        // a sentence and the form for a new link.
+        // Only a 404 means the link itself is gone. A network hiccup leaves the
+        // frame alone, because it will right itself and the block is on a slide
+        // somebody may be looking at.
+        var parts = parseLink(state.link);
+        if (parts) {
+          loadCatalogue(parts).catch(function (e) {
+            if (e.status !== 404) return;
+            $("frame").src = "about:blank";
+            openSetup(false);
+            say("This slide link no longer works. Ask the Claper sidebar for the current one.");
+          });
+        }
       }
 
       function reconfigure() {
@@ -199,7 +216,11 @@
         return fetch(parts.origin + "/api/embed/" + parts.token + "/interactions")
           .then(function (r) {
             return r.json().catch(function () { return {}; }).then(function (body) {
-              if (!r.ok) throw new Error(body.error || ("Claper answered " + r.status));
+              if (!r.ok) {
+                var e = new Error(body.error || ("Claper answered " + r.status));
+                e.status = r.status;
+                throw e;
+              }
               return body;
             });
           });
