@@ -5,6 +5,8 @@ defmodule ClaperWeb.EventLive.ManagePresenterEmbedComponent do
 
   attr :embed_exists, :boolean, required: true
   attr :embed_url, :string, default: nil
+  attr :addin_token_exists, :boolean, default: false
+  attr :addin_token, :string, default: nil
 
   def render(assigns) do
     # Without an allow list the feature is off: the route answers 404 and the
@@ -119,6 +121,58 @@ defmodule ClaperWeb.EventLive.ManagePresenterEmbedComponent do
             "Revoking or replacing the link disconnects embeds that are already open, and so does ending the event. Letting the event expire or deleting it only stops new visitors. Slide images stay reachable either way, because this server publishes them at a fixed address whether or not a link exists."
           )}
         </p>
+
+        <%!-- The sidebar token is the writing one. It is shown separately and
+        described separately, because the difference between the two decides
+        whether a token may travel inside a shared file. --%>
+        <div :if={@frame_ancestors_configured} class="border-t border-gray-200 pt-2 mt-1">
+          <p class="text-xs font-semibold text-gray-900">
+            {gettext("PowerPoint sidebar")}
+          </p>
+          <p class="text-xs text-gray-500 mt-1">
+            {gettext(
+              "The sidebar creates polls from inside PowerPoint. Its token can write, so keep it on your own computer and never inside a presentation you share."
+            )}
+          </p>
+
+          <div :if={@addin_token} class="space-y-2 mt-2">
+            <input
+              type="text"
+              readonly
+              value={@addin_token}
+              onclick="this.select()"
+              class="w-full text-xs rounded-full border border-gray-200 px-3 py-2 bg-gray-50 text-gray-700"
+            />
+            <p class="text-xs font-semibold text-gray-900">
+              {gettext("Copy it now. It is stored hashed and cannot be shown again.")}
+            </p>
+          </div>
+
+          <div class="flex flex-wrap gap-2 mt-2">
+            <button
+              type="button"
+              phx-click="create-addin-token"
+              data-confirm={
+                if @addin_token_exists,
+                  do: gettext("Replace the sidebar token? The current one stops working.")
+              }
+              class="btn btn-secondary btn-sm"
+            >
+              {if @addin_token_exists,
+                do: gettext("New sidebar token"),
+                else: gettext("Create sidebar token")}
+            </button>
+            <button
+              :if={@addin_token_exists}
+              type="button"
+              phx-click="revoke-addin-token"
+              data-confirm={gettext("Revoke the sidebar token?")}
+              class="btn btn-secondary btn-sm"
+            >
+              {gettext("Revoke")}
+            </button>
+          </div>
+        </div>
       </div>
     </div>
     """

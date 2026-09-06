@@ -128,6 +128,17 @@ defmodule ClaperWeb.Router do
     end
   end
 
+  # The API the PowerPoint sidebar uses to list and create polls. Its token is
+  # the writing one and is scoped to a single event, so no action here takes an
+  # event id from the caller. Off with the rest of the feature: without an allow
+  # list PresenterEmbedFrame reports framing as disabled and this scope refuses.
+  scope "/api/addin", ClaperWeb do
+    pipe_through([:api, ClaperWeb.Plugs.PresenterEmbedEnabled, ClaperWeb.Plugs.AddinToken])
+
+    get("/polls", AddinController, :index)
+    post("/polls", AddinController, :create)
+  end
+
   # Enables LiveDashboard only for development
   #
   # If you want to use the LiveDashboard in production, you should put

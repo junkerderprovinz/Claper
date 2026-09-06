@@ -25,6 +25,8 @@ defmodule ClaperWeb.EventLive.ManagerSettingsComponent do
       <ClaperWeb.EventLive.ManagePresenterEmbedComponent.render
         embed_exists={@presenter_embed_exists}
         embed_url={@presenter_embed_url}
+        addin_token_exists={@addin_token_exists}
+        addin_token={@addin_token}
       />
     </div>
     """

@@ -101,6 +101,8 @@ defmodule ClaperWeb.EventLive.Manage do
       |> assign(:thumbnail_regeneration_in_progress, false)
       |> assign(:presenter_embed_exists, Events.presenter_embed_token?(event))
       |> assign(:presenter_embed_url, nil)
+      |> assign(:addin_token_exists, Events.addin_token?(event))
+      |> assign(:addin_token, nil)
       |> push_event("page-manage", %{
         current_page: event.presentation_file.presentation_state.position,
         timeout: 500
@@ -570,6 +572,42 @@ defmodule ClaperWeb.EventLive.Manage do
 
       {:error, _reason} ->
         {:noreply, socket |> put_flash(:error, gettext("Could not revoke the embed link"))}
+    end
+  end
+
+  @impl true
+  def handle_event(
+        "create-addin-token",
+        _params,
+        %{assigns: %{event: event, current_user: current_user}} = socket
+      ) do
+    case Events.create_addin_token(event, current_user) do
+      {:ok, token} ->
+        {:noreply,
+         socket
+         |> assign(:addin_token_exists, true)
+         |> assign(:addin_token, token)}
+
+      {:error, _reason} ->
+        {:noreply, socket |> put_flash(:error, gettext("Could not create the sidebar token"))}
+    end
+  end
+
+  @impl true
+  def handle_event(
+        "revoke-addin-token",
+        _params,
+        %{assigns: %{event: event, current_user: current_user}} = socket
+      ) do
+    case Events.revoke_addin_tokens(event, current_user) do
+      {:ok, _count} ->
+        {:noreply,
+         socket
+         |> assign(:addin_token_exists, false)
+         |> assign(:addin_token, nil)}
+
+      {:error, _reason} ->
+        {:noreply, socket |> put_flash(:error, gettext("Could not revoke the sidebar token"))}
     end
   end
 

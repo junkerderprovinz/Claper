@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Claper on this slide</title>
+    <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+    <style>
+      :root { color-scheme: light; }
+      html, body { margin: 0; height: 100%; font: 14px/1.4 system-ui, sans-serif; }
+      body { display: flex; }
+      iframe { border: 0; width: 100%; height: 100%; }
+      .setup { margin: auto; padding: 1.25rem; max-width: 22rem; width: 100%; }
+      .setup h1 { font-size: 1rem; margin: 0 0 .25rem; }
+      .setup p { margin: 0 0 1rem; color: #4b5563; font-size: .8rem; }
+      label { display: block; font-weight: 600; font-size: .78rem; margin: .75rem 0 .2rem; }
+      input { width: 100%; box-sizing: border-box; padding: .5rem .6rem; border: 1px solid #d1d5db; border-radius: .5rem; font: inherit; }
+      button { margin-top: 1rem; width: 100%; padding: .55rem; border: 0; border-radius: 999px; background: #140553; color: #fff; font: inherit; font-weight: 600; cursor: pointer; }
+      .err { color: #b91c1c; font-size: .78rem; margin-top: .6rem; min-height: 1rem; }
+    </style>
+  </head>
+  <body>
+    <div class="setup" id="setup" hidden>
+      <h1>Show a Claper poll here</h1>
+      <p>Paste the link the Claper sidebar shows for the poll you want on this slide. It is stored with this presentation, so everyone who opens the file sees the same poll.</p>
+      <label for="url">Poll link</label>
+      <input id="url" type="url" placeholder="https://claper.example.com/embed/interaction/TOKEN?poll=12" />
+      <button id="save" type="button">Show it</button>
+      <div class="err" id="err"></div>
+    </div>
+
+    <script>
+      // The link lives in the document's own settings, so it travels with the
+      // .pptx exactly like the picture on a slide does. That is deliberate: the
+      // embed link is read only and is meant to be shared with the file. The
+      // sidebar's writing token is never put here.
+      var KEY = "claper.interactionUrl";
+
+      function show(url) {
+        var frame = document.createElement("iframe");
+        frame.src = url;
+        frame.setAttribute("title", "Claper interaction");
+        document.body.innerHTML = "";
+        document.body.appendChild(frame);
+      }
+
+      function looksRight(url) {
+        try {
+          var u = new URL(url);
+          return (u.protocol === "https:" || u.hostname === "localhost") &&
+                 u.pathname.indexOf("/embed/interaction/") === 0;
+        } catch (e) {
+          return false;
+        }
+      }
+
+      Office.onReady(function () {
+        var saved = Office.context.document.settings.get(KEY);
+        if (saved) {
+          show(saved);
+          return;
+        }
+
+        var setup = document.getElementById("setup");
+        setup.hidden = false;
+
+        document.getElementById("save").addEventListener("click", function () {
+          var value = document.getElementById("url").value.trim();
+          var err = document.getElementById("err");
+
+          if (!looksRight(value)) {
+            err.textContent = "That does not look like a Claper poll link.";
+            return;
+          }
+
+          Office.context.document.settings.set(KEY, value);
+          Office.context.document.settings.saveAsync(function (result) {
+            if (result.status === Office.AsyncResultStatus.Succeeded) {
+              show(value);
+            } else {
+              err.textContent = "PowerPoint could not save the link: " + result.error.message;
+            }
+          });
+        });
+      });
+    </script>
+  </body>
+</html>

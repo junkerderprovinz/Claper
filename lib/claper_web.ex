@@ -17,7 +17,10 @@ defmodule ClaperWeb do
   and import those modules here.
   """
 
-  def static_paths, do: ~w(assets fonts .well-known images worklets favicon.ico robots.txt)
+  # `addin` carries the PowerPoint add-in's two pages. They are served from here
+  # rather than from a separate host so every call the sidebar makes is
+  # same-origin, which keeps CORS out of this application entirely.
+  def static_paths, do: ~w(addin assets fonts .well-known images worklets favicon.ico robots.txt)
 
   def controller do
     quote do

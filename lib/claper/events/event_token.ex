@@ -2,10 +2,15 @@ defmodule Claper.Events.EventToken do
   @moduledoc """
   Event scoped tokens.
 
-  The only context today is `"presenter_embed"`: a revocable, per event
-  capability that grants read-only access to the presenter view without an
-  interactive login, so the view can be framed by a third party such as the
-  PowerPoint web viewer.
+  Two contexts exist, and the difference between them is the whole point:
+
+  - `"presenter_embed"`: read-only access to the presenter view without an
+    interactive login, so the view can be framed by a third party such as a
+    slide deck. It travels inside a shared document.
+  - `"addin"`: lets the PowerPoint sidebar list and create polls for one event.
+    It can write, so it must never travel inside a document. The sidebar keeps
+    it in the browser storage of the machine that authored the deck, not in
+    Office document settings, which are saved into the file.
 
   Only the SHA-256 hash of the token is stored, following
   `Claper.Accounts.UserToken`. The raw value is returned once, when the token is
@@ -21,6 +26,7 @@ defmodule Claper.Events.EventToken do
   @rand_size 32
 
   @presenter_embed_context "presenter_embed"
+  @addin_context "addin"
 
   schema "events_tokens" do
     field :token, :binary
@@ -38,19 +44,42 @@ defmodule Claper.Events.EventToken do
   def presenter_embed_context, do: @presenter_embed_context
 
   @doc """
+  The context string used for PowerPoint sidebar tokens.
+  """
+  def addin_context, do: @addin_context
+
+  @doc """
+  Builds a sidebar token and its hash, like `build_presenter_embed_token/2` but
+  in the writing context.
+  """
+  def build_addin_token(%Event{} = event, %Claper.Accounts.User{} = user) do
+    build_token(event, user, @addin_context)
+  end
+
+  @doc """
+  The lookup query for a sidebar token, with the same event lifetime condition
+  the read-only one uses.
+  """
+  def verify_addin_token_query(token), do: verify_token_query(token, @addin_context)
+
+  @doc """
   Builds a presenter embed token and its hash.
 
   Returns `{encoded_token, event_token_struct}`. The encoded token is the only
   copy of the secret, the struct carries its hash for storage.
   """
   def build_presenter_embed_token(%Event{} = event, %Claper.Accounts.User{} = user) do
+    build_token(event, user, @presenter_embed_context)
+  end
+
+  defp build_token(%Event{} = event, %Claper.Accounts.User{} = user, context) do
     token = :crypto.strong_rand_bytes(@rand_size)
     hashed_token = :crypto.hash(@hash_algorithm, token)
 
     {Base.url_encode64(token, padding: false),
      %__MODULE__{
        token: hashed_token,
-       context: @presenter_embed_context,
+       context: context,
        event_id: event.id,
        created_by_id: user.id
      }}
@@ -64,7 +93,10 @@ defmodule Claper.Events.EventToken do
   `Claper.Events.get_event_with_code/2` already applies, so an embed link can
   never outlive its event.
   """
-  def verify_presenter_embed_token_query(token) when is_binary(token) do
+  def verify_presenter_embed_token_query(token),
+    do: verify_token_query(token, @presenter_embed_context)
+
+  defp verify_token_query(token, context) when is_binary(token) do
     case Base.url_decode64(token, padding: false) do
       {:ok, decoded_token} when byte_size(decoded_token) == @rand_size ->
         hashed_token = :crypto.hash(@hash_algorithm, decoded_token)
@@ -75,7 +107,7 @@ defmodule Claper.Events.EventToken do
             join: e in Event,
             on: e.id == t.event_id,
             where:
-              t.token == ^hashed_token and t.context == ^@presenter_embed_context and
+              t.token == ^hashed_token and t.context == ^context and
                 (is_nil(e.expired_at) or e.expired_at > ^now),
             select: e
 
@@ -86,7 +118,7 @@ defmodule Claper.Events.EventToken do
     end
   end
 
-  def verify_presenter_embed_token_query(_token), do: :error
+  defp verify_token_query(_token, _context), do: :error
 
   @doc """
   Gets all tokens for the given event for the given contexts.

@@ -460,6 +460,14 @@ defmodule Claper.Events do
   end
 
   @doc """
+  Whether this event has a PowerPoint sidebar token.
+  """
+  def addin_token?(%Event{} = event) do
+    EventToken.event_and_contexts_query(event, [EventToken.addin_context()])
+    |> Repo.exists?()
+  end
+
+  @doc """
   Gets the event an embeddable presenter token was issued for.
 
   Returns `nil` for an unknown, malformed or revoked token, and for a token
@@ -475,6 +483,70 @@ defmodule Claper.Events do
   end
 
   def get_event_by_presenter_embed_token(_token, _preload), do: nil
+
+  @doc """
+  Creates the sidebar token the PowerPoint add-in writes with.
+
+  Separate from the embed token on purpose: this one can create polls, so it
+  must not travel inside a shared document. Like the embed token, only one is
+  valid per event and creating another replaces it.
+  """
+  def create_addin_token(%Event{} = event, %Accounts.User{} = user) do
+    if leads_event?(event, user) do
+      {encoded_token, event_token} = EventToken.build_addin_token(event, user)
+
+      result =
+        Repo.transaction(fn ->
+          Repo.delete_all(
+            EventToken.event_and_contexts_query(event, [EventToken.addin_context()])
+          )
+
+          case Repo.insert(event_token) do
+            {:ok, _} -> :ok
+            {:error, changeset} -> Repo.rollback(changeset)
+          end
+        end)
+
+      with {:ok, :ok} <- result do
+        Claper.Audit.log_resource_action(user, "event.addin_token.create", "event", event.id)
+        {:ok, encoded_token}
+      end
+    else
+      {:error, :unauthorized}
+    end
+  end
+
+  @doc """
+  Revokes the sidebar token of an event.
+  """
+  def revoke_addin_tokens(%Event{} = event, %Accounts.User{} = user) do
+    if leads_event?(event, user) do
+      {count, _} =
+        Repo.delete_all(EventToken.event_and_contexts_query(event, [EventToken.addin_context()]))
+
+      if count > 0 do
+        Claper.Audit.log_resource_action(user, "event.addin_token.revoke", "event", event.id)
+      end
+
+      {:ok, count}
+    else
+      {:error, :unauthorized}
+    end
+  end
+
+  @doc """
+  The event a sidebar token belongs to, or nil.
+  """
+  def get_event_by_addin_token(token, preload \\ [])
+
+  def get_event_by_addin_token(token, preload) when is_binary(token) do
+    case EventToken.verify_addin_token_query(token) do
+      {:ok, query} -> query |> Repo.one() |> Repo.preload(preload)
+      :error -> nil
+    end
+  end
+
+  def get_event_by_addin_token(_token, _preload), do: nil
 
   @doc """
   Check if a user is a facilitator of a specific event.

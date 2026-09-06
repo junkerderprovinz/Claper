@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Claper</title>
+    <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+    <style>
+      :root { color-scheme: light; }
+      body { margin: 0; padding: .9rem; font: 14px/1.45 system-ui, sans-serif; color: #111827; }
+      h1 { font-size: .95rem; margin: 0 0 .1rem; }
+      .hint { color: #4b5563; font-size: .78rem; margin: 0 0 .9rem; }
+      label { display: block; font-weight: 600; font-size: .76rem; margin: .7rem 0 .2rem; }
+      input, textarea { width: 100%; box-sizing: border-box; padding: .45rem .55rem; border: 1px solid #d1d5db; border-radius: .5rem; font: inherit; }
+      textarea { min-height: 4.5rem; resize: vertical; }
+      button { padding: .5rem .8rem; border: 0; border-radius: 999px; background: #140553; color: #fff; font: inherit; font-weight: 600; cursor: pointer; }
+      button.ghost { background: #e5e7eb; color: #111827; }
+      button:disabled { opacity: .5; cursor: default; }
+      section { border-top: 1px solid #e5e7eb; margin-top: 1rem; padding-top: .7rem; }
+      .poll { border: 1px solid #e5e7eb; border-radius: .6rem; padding: .5rem .6rem; margin-bottom: .5rem; }
+      .poll b { font-size: .84rem; }
+      .poll .opts { color: #6b7280; font-size: .75rem; margin: .15rem 0 .45rem; }
+      .row { display: flex; gap: .4rem; }
+      .row input { font-size: .72rem; }
+      .msg { font-size: .78rem; margin-top: .5rem; min-height: 1.1rem; }
+      .msg.err { color: #b91c1c; }
+      .msg.ok { color: #047857; }
+      [hidden] { display: none !important; }
+    </style>
+  </head>
+  <body>
+    <h1>Claper</h1>
+    <p class="hint">Create polls for your event without leaving PowerPoint, then put one on a slide.</p>
+
+    <section id="connect">
+      <label for="base">Claper address</label>
+      <input id="base" type="url" placeholder="https://claper.example.com" />
+
+      <label for="token">Sidebar token</label>
+      <input id="token" type="password" placeholder="from Claper, event settings" />
+
+      <label for="embed">Poll link for slides</label>
+      <input id="embed" type="url" placeholder="https://claper.example.com/embed/interaction/TOKEN" />
+
+      <p class="hint" style="margin:.6rem 0 .4rem">
+        Both come from your event in Claper. The sidebar token stays on this computer. The poll link
+        is read only and is the one that travels inside the presentation.
+      </p>
+      <button id="save" type="button">Connect</button>
+      <div class="msg" id="connectMsg"></div>
+    </section>
+
+    <section id="work" hidden>
+      <label for="title">New poll</label>
+      <input id="title" type="text" placeholder="Question" />
+      <label for="options">Options, one per line</label>
+      <textarea id="options" placeholder="Yes&#10;No"></textarea>
+      <div style="margin-top:.6rem"><button id="create" type="button">Create poll</button></div>
+      <div class="msg" id="createMsg"></div>
+
+      <label style="margin-top:1rem">Polls in this event</label>
+      <div id="polls"></div>
+      <button class="ghost" id="reload" type="button">Reload</button>
+      <div class="msg" id="listMsg"></div>
+    </section>
+
+    <script>
+      // The writing token is kept in this machine's storage, never in
+      // Office.context.document.settings: those are saved into the .pptx, and a
+      // token that can create polls must not travel with a shared file. The
+      // read-only poll link is the opposite and belongs in the document.
+      var LS = { base: "claper.base", token: "claper.token", embed: "claper.embed" };
+      var cfg = { base: "", token: "", embed: "" };
+
+      function $(id) { return document.getElementById(id); }
+      function say(el, text, kind) { el.className = "msg " + (kind || ""); el.textContent = text; }
+
+      function api(path, options) {
+        options = options || {};
+        options.headers = Object.assign(
+          { Authorization: "Bearer " + cfg.token, "Content-Type": "application/json" },
+          options.headers || {}
+        );
+        return fetch(cfg.base.replace(/\/+$/, "") + path, options).then(function (r) {
+          return r.json().catch(function () { return {}; }).then(function (body) {
+            if (!r.ok) throw new Error(body.error || ("Claper answered " + r.status));
+            return body;
+          });
+        });
+      }
+
+      function slideLink(pollId) {
+        var base = cfg.embed.replace(/\/+$/, "").split("?")[0];
+        return base + "?poll=" + pollId;
+      }
+
+      function renderPolls(polls) {
+        var box = $("polls");
+        box.innerHTML = "";
+
+        if (!polls.length) {
+          box.innerHTML = '<p class="hint">No polls yet. Create one above.</p>';
+          return;
+        }
+
+        polls.forEach(function (poll) {
+          var wrap = document.createElement("div");
+          wrap.className = "poll";
+
+          var title = document.createElement("b");
+          title.textContent = poll.title;
+          wrap.appendChild(title);
+
+          var opts = document.createElement("div");
+          opts.className = "opts";
+          opts.textContent = poll.options.map(function (o) { return o.content; }).join(" · ");
+          wrap.appendChild(opts);
+
+          var row = document.createElement("div");
+          row.className = "row";
+          var field = document.createElement("input");
+          field.readOnly = true;
+          field.value = slideLink(poll.id);
+          field.addEventListener("focus", function () { field.select(); });
+          var copy = document.createElement("button");
+          copy.type = "button";
+          copy.textContent = "Copy";
+          copy.addEventListener("click", function () {
+            field.select();
+            navigator.clipboard.writeText(field.value).then(function () {
+              copy.textContent = "Copied";
+              setTimeout(function () { copy.textContent = "Copy"; }, 1500);
+            });
+          });
+          row.appendChild(field);
+          row.appendChild(copy);
+          wrap.appendChild(row);
+
+          box.appendChild(wrap);
+        });
+      }
+
+      function load() {
+        say($("listMsg"), "Loading…");
+        return api("/api/addin/polls")
+          .then(function (body) {
+            renderPolls(body.polls || []);
+            say($("listMsg"), "Event: " + body.event.name, "ok");
+          })
+          .catch(function (e) { say($("listMsg"), e.message, "err"); });
+      }
+
+      Office.onReady(function () {
+        try {
+          cfg.base = localStorage.getItem(LS.base) || "";
+          cfg.token = localStorage.getItem(LS.token) || "";
+          cfg.embed = localStorage.getItem(LS.embed) || "";
+        } catch (e) { /* storage can be blocked; the fields simply start empty */ }
+
+        $("base").value = cfg.base;
+        $("token").value = cfg.token;
+        $("embed").value = cfg.embed;
+
+        if (cfg.base && cfg.token && cfg.embed) {
+          $("work").hidden = false;
+          load();
+        }
+
+        $("save").addEventListener("click", function () {
+          cfg.base = $("base").value.trim();
+          cfg.token = $("token").value.trim();
+          cfg.embed = $("embed").value.trim();
+
+          if (!cfg.base || !cfg.token || !cfg.embed) {
+            say($("connectMsg"), "All three are needed.", "err");
+            return;
+          }
+
+          try {
+            localStorage.setItem(LS.base, cfg.base);
+            localStorage.setItem(LS.token, cfg.token);
+            localStorage.setItem(LS.embed, cfg.embed);
+          } catch (e) { /* not fatal, the session still works */ }
+
+          say($("connectMsg"), "Connected.", "ok");
+          $("work").hidden = false;
+          load();
+        });
+
+        $("reload").addEventListener("click", load);
+
+        $("create").addEventListener("click", function () {
+          var title = $("title").value.trim();
+          var options = $("options").value.split("\n")
+            .map(function (l) { return l.trim(); })
+            .filter(function (l) { return l.length; });
+
+          if (!title) { say($("createMsg"), "The question is missing.", "err"); return; }
+          if (options.length < 2) { say($("createMsg"), "At least two options.", "err"); return; }
+
+          $("create").disabled = true;
+          say($("createMsg"), "Creating…");
+
+          api("/api/addin/polls", {
+            method: "POST",
+            body: JSON.stringify({ title: title, options: options })
+          })
+            .then(function () {
+              $("title").value = "";
+              $("options").value = "";
+              say($("createMsg"), "Created. Copy its link below onto a slide.", "ok");
+              return load();
+            })
+            .catch(function (e) { say($("createMsg"), e.message, "err"); })
+            .then(function () { $("create").disabled = false; });
+        });
+      });
+    </script>
+  </body>
+</html>

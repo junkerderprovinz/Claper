@@ -21,7 +21,7 @@ msgstr ""
 #: lib/claper_web/live/admin_live/user_live.html.heex:41
 #: lib/claper_web/live/admin_live/user_live.html.heex:116
 #: lib/claper_web/live/admin_live/user_live/form_component.ex:42
-#: lib/claper_web/live/event_live/manage.ex:1203
+#: lib/claper_web/live/event_live/manage.ex:1241
 #: lib/claper_web/live/form_live/form_component.html.heex:39
 #: lib/claper_web/live/user_settings_live/show.html.heex:68
 #: lib/claper_web/templates/user_registration/new.html.heex:86
@@ -582,7 +582,7 @@ msgstr ""
 #: lib/claper_web/live/admin_live/oidc_provider_live.html.heex:74
 #: lib/claper_web/live/admin_live/oidc_provider_live.html.heex:234
 #: lib/claper_web/live/admin_live/oidc_provider_live/form_component.ex:24
-#: lib/claper_web/live/event_live/manage.ex:1202
+#: lib/claper_web/live/event_live/manage.ex:1240
 #, elixir-autogen, elixir-format
 msgid "Name"
 msgstr ""
@@ -917,7 +917,7 @@ msgstr ""
 
 #: lib/claper_web/live/event_live/index.ex:174
 #: lib/claper_web/live/event_live/manage.ex:26
-#: lib/claper_web/live/event_live/presenter.ex:38
+#: lib/claper_web/live/event_live/presenter.ex:44
 #: lib/claper_web/live/event_live/show.ex:40
 #, elixir-autogen, elixir-format
 msgid "Event doesn't exist"
@@ -1172,12 +1172,12 @@ msgstr ""
 msgid "Try logging in again"
 msgstr ""
 
-#: lib/claper_web/live/event_live/manage.ex:1175
+#: lib/claper_web/live/event_live/manage.ex:1213
 #, elixir-autogen, elixir-format
 msgid "No"
 msgstr ""
 
-#: lib/claper_web/live/event_live/manage.ex:1175
+#: lib/claper_web/live/event_live/manage.ex:1213
 #, elixir-autogen, elixir-format
 msgid "Yes"
 msgstr ""
@@ -2424,10 +2424,10 @@ msgstr ""
 msgid "Resource Type"
 msgstr ""
 
-#: lib/claper_web/live/event_live/manage.ex:1183
-#: lib/claper_web/live/event_live/manage.ex:1226
-#: lib/claper_web/live/event_live/manage.ex:1242
-#: lib/claper_web/live/event_live/manage.ex:1284
+#: lib/claper_web/live/event_live/manage.ex:1221
+#: lib/claper_web/live/event_live/manage.ex:1264
+#: lib/claper_web/live/event_live/manage.ex:1280
+#: lib/claper_web/live/event_live/manage.ex:1322
 #, elixir-autogen, elixir-format
 msgid "Resource not found"
 msgstr ""
@@ -2657,12 +2657,12 @@ msgstr ""
 msgid "Sign in to launch or manage your interactive sessions."
 msgstr ""
 
-#: lib/claper_web/live/event_live/manage.ex:387
+#: lib/claper_web/live/event_live/manage.ex:389
 #, elixir-autogen, elixir-format
 msgid "Could not regenerate thumbnails"
 msgstr ""
 
-#: lib/claper_web/live/event_live/manage.ex:532
+#: lib/claper_web/live/event_live/manage.ex:534
 #, elixir-autogen, elixir-format
 msgid "Could not start thumbnail regeneration"
 msgstr ""
@@ -2692,12 +2692,12 @@ msgstr ""
 msgid "Regenerating..."
 msgstr ""
 
-#: lib/claper_web/live/event_live/manage.ex:529
+#: lib/claper_web/live/event_live/manage.ex:531
 #, elixir-autogen, elixir-format
 msgid "Thumbnail regeneration started"
 msgstr ""
 
-#: lib/claper_web/live/event_live/manage.ex:376
+#: lib/claper_web/live/event_live/manage.ex:378
 #, elixir-autogen, elixir-format
 msgid "Thumbnails regenerated successfully"
 msgstr ""
@@ -3000,7 +3000,7 @@ msgstr ""
 msgid "Transcription deleted"
 msgstr ""
 
-#: lib/claper_web/live/event_live/manage.ex:937
+#: lib/claper_web/live/event_live/manage.ex:975
 #, elixir-autogen, elixir-format
 msgid "Transcription has been disabled by the administrator"
 msgstr ""
@@ -3066,12 +3066,12 @@ msgstr ""
 msgid "Powered by"
 msgstr ""
 
-#: lib/claper_web/live/event_live/manage.ex:470
+#: lib/claper_web/live/event_live/manage.ex:472
 #, elixir-autogen, elixir-format
 msgid "Could not reorder slides"
 msgstr ""
 
-#: lib/claper_web/live/event_live/manage.ex:497
+#: lib/claper_web/live/event_live/manage.ex:499
 #, elixir-autogen, elixir-format
 msgid "Could not move interaction"
 msgstr ""
@@ -3595,82 +3595,128 @@ msgstr ""
 msgid "name@example.com"
 msgstr ""
 
-#: lib/claper_web/live/event_live/manage_presenter_embed_component.ex:71
+#: lib/claper_web/live/event_live/manage_presenter_embed_component.ex:73
 #, elixir-autogen, elixir-format
 msgid "An embed link is active. Anyone holding it can watch this event. Create a new one to replace it, or revoke it to switch it off."
 msgstr ""
 
-#: lib/claper_web/live/event_live/manage_presenter_embed_component.ex:66
+#: lib/claper_web/live/event_live/manage_presenter_embed_component.ex:68
 #, elixir-autogen, elixir-format
 msgid "Copied"
 msgstr ""
 
-#: lib/claper_web/live/event_live/manage_presenter_embed_component.ex:65
+#: lib/claper_web/live/event_live/manage_presenter_embed_component.ex:67
 #, elixir-autogen, elixir-format
 msgid "Copy link"
 msgstr ""
 
-#: lib/claper_web/live/event_live/manage_presenter_embed_component.ex:50
+#: lib/claper_web/live/event_live/manage_presenter_embed_component.ex:52
 #, elixir-autogen, elixir-format
 msgid "Copy the link now. It is stored hashed and cannot be shown again."
 msgstr ""
 
-#: lib/claper_web/live/event_live/manage.ex:554
+#: lib/claper_web/live/event_live/manage.ex:556
 #, elixir-autogen, elixir-format
 msgid "Could not create the embed link"
 msgstr ""
 
-#: lib/claper_web/live/event_live/manage_presenter_embed_component.ex:92
+#: lib/claper_web/live/event_live/manage_presenter_embed_component.ex:94
 #, elixir-autogen, elixir-format
 msgid "Create a new link"
 msgstr ""
 
-#: lib/claper_web/live/event_live/manage_presenter_embed_component.ex:92
+#: lib/claper_web/live/event_live/manage_presenter_embed_component.ex:94
 #, elixir-autogen, elixir-format
 msgid "Create embed link"
 msgstr ""
 
-#: lib/claper_web/live/event_live/manage_presenter_embed_component.ex:38
+#: lib/claper_web/live/event_live/manage_presenter_embed_component.ex:40
 #, elixir-autogen, elixir-format
 msgid "Embed link"
 msgstr ""
 
-#: lib/claper_web/live/event_live/manage_presenter_embed_component.ex:101
+#: lib/claper_web/live/event_live/manage_presenter_embed_component.ex:103
+#: lib/claper_web/live/event_live/manage_presenter_embed_component.ex:172
 #, elixir-autogen, elixir-format
 msgid "Revoke"
 msgstr ""
 
-#: lib/claper_web/live/event_live/manage_presenter_embed_component.ex:98
+#: lib/claper_web/live/event_live/manage_presenter_embed_component.ex:100
 #, elixir-autogen, elixir-format
 msgid "Revoke the embed link? Open embeds stop working immediately."
 msgstr ""
 
-#: lib/claper_web/live/event_live/manage_presenter_embed_component.ex:43
+#: lib/claper_web/live/event_live/manage_presenter_embed_component.ex:45
 #, elixir-autogen, elixir-format
 msgid "Show this event's presenter view as a live web page inside another document, for example a slide deck. The link is read-only: it cannot change the presentation and it grants no account access."
 msgstr ""
 
-#: lib/claper_web/live/event_live/manage_presenter_embed_component.ex:86
+#: lib/claper_web/live/event_live/manage_presenter_embed_component.ex:88
 #, elixir-autogen, elixir-format
 msgid "Replace the embed link? The current one stops working and open embeds are disconnected."
 msgstr ""
 
-#: lib/claper_web/live/event_live/manage_presenter_embed_component.ex:118
+#: lib/claper_web/live/event_live/manage_presenter_embed_component.ex:120
 #, elixir-autogen, elixir-format
 msgid "Revoking or replacing the link disconnects embeds that are already open, and so does ending the event. Letting the event expire or deleting it only stops new visitors. Slide images stay reachable either way, because this server publishes them at a fixed address whether or not a link exists."
 msgstr ""
 
-#: lib/claper_web/live/event_live/manage.ex:572
+#: lib/claper_web/live/event_live/manage.ex:574
 #, elixir-autogen, elixir-format
 msgid "Could not revoke the embed link"
 msgstr ""
 
-#: lib/claper_web/live/event_live/manage_presenter_embed_component.ex:112
+#: lib/claper_web/live/event_live/manage_presenter_embed_component.ex:114
 #, elixir-autogen, elixir-format
 msgid "This server does not allow any site to embed it yet. Set PRESENTER_EMBED_FRAME_ANCESTORS to the origins that may frame the link, otherwise the browser refuses to display it."
 msgstr ""
 
-#: lib/claper_web/live/event_live/manage_presenter_embed_component.ex:106
+#: lib/claper_web/live/event_live/manage_presenter_embed_component.ex:108
 #, elixir-autogen, elixir-format
 msgid "The link shows the page you are projecting and the interactions you have released, in a compact layout and without the joining instructions. Pages you have not reached are not sent. Use the presentation settings above to hide the messages before you embed it."
+msgstr ""
+
+#: lib/claper_web/live/event_live/manage_presenter_embed_component.ex:147
+#, elixir-autogen, elixir-format
+msgid "Copy it now. It is stored hashed and cannot be shown again."
+msgstr ""
+
+#: lib/claper_web/live/event_live/manage.ex:592
+#, elixir-autogen, elixir-format
+msgid "Could not create the sidebar token"
+msgstr ""
+
+#: lib/claper_web/live/event_live/manage.ex:610
+#, elixir-autogen, elixir-format
+msgid "Could not revoke the sidebar token"
+msgstr ""
+
+#: lib/claper_web/live/event_live/manage_presenter_embed_component.ex:163
+#, elixir-autogen, elixir-format
+msgid "Create sidebar token"
+msgstr ""
+
+#: lib/claper_web/live/event_live/manage_presenter_embed_component.ex:162
+#, elixir-autogen, elixir-format
+msgid "New sidebar token"
+msgstr ""
+
+#: lib/claper_web/live/event_live/manage_presenter_embed_component.ex:130
+#, elixir-autogen, elixir-format
+msgid "PowerPoint sidebar"
+msgstr ""
+
+#: lib/claper_web/live/event_live/manage_presenter_embed_component.ex:157
+#, elixir-autogen, elixir-format
+msgid "Replace the sidebar token? The current one stops working."
+msgstr ""
+
+#: lib/claper_web/live/event_live/manage_presenter_embed_component.ex:169
+#, elixir-autogen, elixir-format
+msgid "Revoke the sidebar token?"
+msgstr ""
+
+#: lib/claper_web/live/event_live/manage_presenter_embed_component.ex:133
+#, elixir-autogen, elixir-format
+msgid "The sidebar creates polls from inside PowerPoint. Its token can write, so keep it on your own computer and never inside a presentation you share."
 msgstr ""

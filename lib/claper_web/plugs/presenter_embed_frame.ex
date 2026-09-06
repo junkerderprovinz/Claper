@@ -39,8 +39,17 @@ defmodule ClaperWeb.Plugs.PresenterEmbedFrame do
   rather than from a second, slightly different check.
   """
   def frame_ancestors do
-    Application.get_env(:claper, :presenter_embed_frame_ancestors, @default_ancestors)
-    |> sanitize()
+    case Application.get_env(:claper, :presenter_embed_frame_ancestors, @default_ancestors)
+         |> sanitize() do
+      @default_ancestors ->
+        @default_ancestors
+
+      allowed ->
+        # The add-in's own page is served by this application and frames the
+        # interaction view, so this server always frames itself once anything
+        # is allowed at all. Off stays off: with no allow list nothing is added.
+        "'self' " <> allowed
+    end
   end
 
   @doc """

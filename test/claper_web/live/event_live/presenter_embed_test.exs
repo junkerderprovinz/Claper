@@ -631,7 +631,7 @@ defmodule ClaperWeb.EventLive.PresenterEmbedTest do
       assert get_resp_header(conn, "x-frame-options") == []
 
       assert get_resp_header(conn, "content-security-policy") == [
-               "frame-ancestors https://*.officeapps.live.com"
+               "frame-ancestors 'self' https://*.officeapps.live.com"
              ]
     end
 
@@ -705,7 +705,7 @@ defmodule ClaperWeb.EventLive.PresenterEmbedTest do
       conn = get(conn, ~p"/embed/presenter/#{token}")
 
       assert get_resp_header(conn, "content-security-policy") == [
-               "frame-ancestors https://*.officeapps.live.com"
+               "frame-ancestors 'self' https://*.officeapps.live.com"
              ]
     end
 
@@ -733,7 +733,7 @@ defmodule ClaperWeb.EventLive.PresenterEmbedTest do
       assert get_resp_header(conn, "x-frame-options") == []
 
       assert get_resp_header(conn, "content-security-policy") == [
-               "frame-ancestors https://*.officeapps.live.com"
+               "frame-ancestors 'self' https://*.officeapps.live.com"
              ]
     end
 

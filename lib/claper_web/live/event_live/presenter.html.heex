@@ -50,7 +50,10 @@
   hiding is enough. Behind an embed link the markup is readable by anyone who
   holds the link, and poll_visible defaults to false, so the title, the options
   and the running vote counts would ship with every response. --%>
-  <%= if @current_poll && (!@presenter_embed || @state.poll_visible) do %>
+  <%!-- A pinned embed shows its own poll without waiting for poll_visible: putting
+  it on a slide IS the release, and the slide is only shown when the presenter
+  reaches it. The results stay behind show_results either way. --%>
+  <%= if @current_poll && (!@presenter_embed || @state.poll_visible || @pinned_poll_id) do %>
     <div
       id="poll"
       class={

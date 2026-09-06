@@ -13,11 +13,17 @@ defmodule ClaperWeb.EventLive.Presenter do
   # the token and loaded the event, so there is nothing left to authorize here.
   @impl true
   def mount(
-        _params,
+        params,
         _session,
         %{assigns: %{presenter_embed: true, embed_event: event}} = socket
       ) do
-    mount_event(socket, event, true)
+    socket
+    # An embed placed on a foreign slide pins one interaction instead of
+    # following the deck: the slide it sits on is what selects it, and the
+    # presenter advances PowerPoint rather than Claper. Scoped to the event, so
+    # an id from another event resolves to nothing.
+    |> assign(:pinned_poll_id, pinned_poll_id(params["poll"]))
+    |> mount_event(event, true)
   end
 
   @impl true
@@ -41,6 +47,18 @@ defmodule ClaperWeb.EventLive.Presenter do
       mount_event(socket, event, !is_nil(params["iframe"]))
     end
   end
+
+  # The poll id a pinned embed carries in its query, or nil. Anything that is
+  # not a positive integer is nil rather than an error: the value comes from a
+  # URL a third party document holds.
+  defp pinned_poll_id(raw) when is_binary(raw) do
+    case Integer.parse(raw) do
+      {id, ""} when id > 0 -> id
+      _ -> nil
+    end
+  end
+
+  defp pinned_poll_id(_), do: nil
 
   defp mount_event(socket, event, iframe) do
     if connected?(socket) do
@@ -76,6 +94,7 @@ defmodule ClaperWeb.EventLive.Presenter do
       |> assign_new(:interaction_only, fn ->
         socket.assigns[:live_action] == :interaction
       end)
+      |> assign_new(:pinned_poll_id, fn -> nil end)
       # False on the regular presenter route. The template uses it to leave the
       # join screen out entirely rather than only hiding it, because the join
       # screen carries the event code and the embeddable link is meant to be
@@ -465,6 +484,13 @@ defmodule ClaperWeb.EventLive.Presenter do
 
   defp apply_action(socket, :interaction, _params) do
     socket
+  end
+
+  # A pinned embed keeps its own poll whatever the deck does, so the presenter
+  # moving through Claper cannot change what a PowerPoint slide shows.
+  defp poll_at_position(%{assigns: %{pinned_poll_id: id, event: event}} = socket)
+       when is_integer(id) do
+    assign(socket, :current_poll, Claper.Polls.get_poll_for_event(id, event.id))
   end
 
   defp poll_at_position(%{assigns: %{event: event, state: state}} = socket) do
