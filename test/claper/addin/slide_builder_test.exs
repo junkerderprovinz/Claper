@@ -71,7 +71,7 @@ defmodule Claper.Addin.SlideBuilderTest do
       "_rels/.rels" =>
         ~s(<?xml version="1.0"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="ppt/presentation.xml"/><Relationship Id="rId1" Type="http://schemas.microsoft.com/office/2011/relationships/webextensiontaskpanes" Target="ppt/webextensions/taskpanes.xml"/></Relationships>),
       "ppt/presentation.xml" =>
-        ~s(<?xml version="1.0"?><p:presentation xmlns:p="p" xmlns:r="r"><p:sldIdLst>#{sld_ids}</p:sldIdLst></p:presentation>),
+        ~s(<?xml version="1.0"?><p:presentation xmlns:p="p" xmlns:r="r"><p:sldIdLst>#{sld_ids}</p:sldIdLst><p:custDataLst><p:tags r:id="rId3"/></p:custDataLst></p:presentation>),
       "ppt/_rels/presentation.xml.rels" =>
         ~s(<?xml version="1.0"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">#{slide_rels}<Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/tags" Target="tags/tag1.xml"/></Relationships>),
       "ppt/tags/tag1.xml" => "<p:tagLst/>",
@@ -270,12 +270,37 @@ defmodule Claper.Addin.SlideBuilderTest do
       end
     end
 
-    test "the source document's own tags and task pane do not travel" do
-      {:ok, built} = SlideBuilder.one_slide(deck(), %{"kind" => "poll", "id" => 7})
+    # This asserted the opposite until PowerPoint refused every file. The tags
+    # part and the task pane part belong to the source document rather than to
+    # the slide, so throwing them out looked like tidying. It is not: only
+    # slides are inserted from this file, so nothing else in it is ever looked
+    # at, and every part removed is another chance to leave a pointer dangling.
+    test "nothing but the other slides is removed" do
+      {:ok, built} = SlideBuilder.one_slide(deck(slides: 3), %{"kind" => "poll", "id" => 7})
       kept = parts(built)
 
-      refute Map.has_key?(kept, "ppt/tags/tag1.xml")
-      refute Map.has_key?(kept, "ppt/webextensions/taskpanes.xml")
+      assert Map.has_key?(kept, "ppt/tags/tag1.xml")
+      assert Map.has_key?(kept, "ppt/webextensions/taskpanes.xml")
+      refute Map.has_key?(kept, "ppt/slides/slide1.xml")
+    end
+
+    # The defect itself, as a test. ppt/presentation.xml carries
+    # <p:custDataLst><p:tags r:id="rId3"/></p:custDataLst>, and dropping the
+    # tags relationship left that id pointing at nothing. PowerPoint called the
+    # file corrupt and said no more than that.
+    test "every relationship id the presentation names still exists" do
+      {:ok, built} = SlideBuilder.one_slide(deck(slides: 3), %{"kind" => "poll", "id" => 7})
+      kept = parts(built)
+
+      declared =
+        Regex.scan(~r{Id="([^"]+)"}, kept["ppt/_rels/presentation.xml.rels"])
+        |> Enum.map(&Enum.at(&1, 1))
+        |> MapSet.new()
+
+      for [_, used] <- Regex.scan(~r{r:id="([^"]+)"}, kept["ppt/presentation.xml"]) do
+        assert MapSet.member?(declared, used),
+               "presentation.xml uses #{used}, which its relationships no longer declare"
+      end
     end
   end
 

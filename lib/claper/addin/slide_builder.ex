@@ -232,51 +232,33 @@ defmodule Claper.Addin.SlideBuilder do
     |> String.replace("\"", "&quot;")
   end
 
-  # Everything the package needs, and nothing that belongs to the rest of the
-  # deck. The other slides go because only one is being inserted; the task pane
-  # part and the presentation's tags go because they describe the source
-  # document rather than the slide, and the target document has its own.
-  defp keep_only(parts, slide, webext) do
+  # Only the other slides go, and nothing else.
+  #
+  # An earlier version also threw out the task pane part, the other
+  # webextensions and the presentation's tags, on the reasoning that they
+  # describe the source document rather than the slide. PowerPoint refused every
+  # file that did. The reason is in `ppt/presentation.xml`, which carries
+  # `<p:custDataLst><p:tags r:id="rId3"/></p:custDataLst>`: removing the tags
+  # part and its relationship leaves that pointer aimed at nothing, and a
+  # relationship id with no relationship makes the package corrupt.
+  #
+  # Rather than chase every place a part might be named, nothing is removed that
+  # does not have to be. Only slides are inserted from this file, so whatever
+  # else it carries is never looked at, and the file exists for a fraction of a
+  # second on the way into PowerPoint.
+  defp keep_only(parts, slide, _webext) do
     other_slides =
       parts
       |> Map.keys()
       |> Enum.filter(&Regex.match?(~r{^ppt/slides/slide\d+\.xml$}, &1))
       |> Enum.reject(&(&1 == slide))
 
-    other_webextensions =
-      parts
-      |> Map.keys()
-      |> Enum.filter(&Regex.match?(~r{^ppt/webextensions/webextension\d+\.xml$}, &1))
-      |> Enum.reject(&(&1 == webext))
-
-    drop =
-      other_slides
-      |> Enum.flat_map(&[&1, rels_path(&1)])
-      |> Kernel.++(Enum.flat_map(other_webextensions, &[&1, rels_path(&1)]))
-      |> Kernel.++([
-        "ppt/webextensions/taskpanes.xml",
-        "ppt/webextensions/_rels/taskpanes.xml.rels"
-      ])
-      |> Kernel.++(Enum.filter(Map.keys(parts), &String.starts_with?(&1, "ppt/tags/")))
-
+    drop = Enum.flat_map(other_slides, &[&1, rels_path(&1)])
     kept = Map.drop(parts, drop)
 
     kept
     |> Map.put("[Content_Types].xml", drop_overrides(kept["[Content_Types].xml"], drop))
-    |> drop_root_relationships(drop)
     |> single_slide_presentation(slide)
-  end
-
-  # The task pane part is referenced from the package's own root relationships,
-  # not from the presentation's, so removing the part alone leaves a pointer to
-  # something that is not there. Measured on a real file: everything else in
-  # that part resolved, this one did not.
-  defp drop_root_relationships(parts, dropped) do
-    Map.update!(parts, "_rels/.rels", fn rels ->
-      Enum.reduce(dropped, rels, fn part, acc ->
-        Regex.replace(~r{<Relationship [^>]*Target="#{Regex.escape(part)}"[^>]*/>}, acc, "")
-      end)
-    end)
   end
 
   defp drop_overrides(content_types, dropped) do
@@ -303,7 +285,7 @@ defmodule Claper.Addin.SlideBuilder do
 
     trimmed_rels =
       Regex.replace(
-        ~r{<Relationship [^>]*Type="[^"]*/(slide|tags)"[^>]*/>},
+        ~r{<Relationship [^>]*Type="[^"]*/slide"[^>]*/>},
         rels,
         fn whole ->
           if String.contains?(whole, ~s(Id="#{keep_id}")), do: whole, else: ""
