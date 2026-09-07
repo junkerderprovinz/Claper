@@ -12,6 +12,12 @@ defmodule ClaperWeb.AddinStrings do
   missing translation fall back to something a person can read rather than to a
   bare identifier. Each entry names its string twice, once as the key and once
   inside `gettext/1`, so `mix gettext.extract` finds every one of them.
+
+  Two kinds of text are deliberately absent. Product names, because a
+  translator's fuzzy match once turned "Claper" into "Applaus" and there is
+  nothing to translate in a name anyway. And the numerals of the step list,
+  which are the same in every language this speaks and would only be a target
+  for a mistake.
   """
 
   use Gettext, backend: ClaperWeb.Gettext
@@ -43,23 +49,24 @@ defmodule ClaperWeb.AddinStrings do
           "Write the questions here, keep the deck as your own PowerPoint file, and let the answers come in live on the slide."
         ),
       "Connect once" => gettext("Connect once"),
-      "Your Claper address and the sidebar key from your event." =>
-        gettext("Your Claper address and the sidebar key from your event."),
+      "Your Claper address and the sidebar key from your account." =>
+        gettext("Your Claper address and the sidebar key from your account."),
       "Write questions" => gettext("Write questions"),
-      "Polls and quizzes, created on your event straight away." =>
-        gettext("Polls and quizzes, created on your event straight away."),
+      "Polls, quizzes and open questions, created straight away." =>
+        gettext("Polls, quizzes and open questions, created straight away."),
       "Put the join code on a slide" => gettext("Put the join code on a slide"),
       "One button. Without it nobody in the room can answer." =>
         gettext("One button. Without it nobody in the room can answer."),
       "Put the answers on slides" => gettext("Put the answers on slides"),
-      "One link for the whole deck. Each block then picks what it shows." =>
-        gettext("One link for the whole deck. Each block then picks what it shows."),
+      "One button per question, on this slide or on a new one." =>
+        gettext("One button per question, on this slide or on a new one."),
       "Get started" => gettext("Get started"),
 
       # Connecting
       "Connect" => gettext("Connect"),
       "Claper address" => gettext("Claper address"),
       "Your key" => gettext("Your key"),
+      "Account settings, PowerPoint" => gettext("Account settings, PowerPoint"),
       "From your account settings. It can create and delete, so it stays on this computer and never inside a presentation. A key from a single event's settings works too." =>
         gettext(
           "From your account settings. It can create and delete, so it stays on this computer and never inside a presentation. A key from a single event's settings works too."
@@ -70,9 +77,9 @@ defmodule ClaperWeb.AddinStrings do
 
       # Choosing an event for this presentation
       "This presentation" => gettext("This presentation"),
-      "Give it an event of its own and its questions stay its own. The choice is saved in the file, so it is the same on any computer that opens it." =>
+      "Every presentation gets an event of its own, so it never shows the questions of another talk. The choice is saved in the file, so it is the same on any computer that opens it." =>
         gettext(
-          "Give it an event of its own and its questions stay its own. The choice is saved in the file, so it is the same on any computer that opens it."
+          "Every presentation gets an event of its own, so it never shows the questions of another talk. The choice is saved in the file, so it is the same on any computer that opens it."
         ),
       "Start a new event" => gettext("Start a new event"),
       "Name of your talk" => gettext("Name of your talk"),
@@ -82,6 +89,7 @@ defmodule ClaperWeb.AddinStrings do
       "You have no events yet." => gettext("You have no events yet."),
       "Give it a name." => gettext("Give it a name."),
       "Creating…" => gettext("Creating…"),
+      "Setting up this presentation…" => gettext("Setting up this presentation…"),
       "This presentation could not remember its event. Save the file, then reconnect." =>
         gettext("This presentation could not remember its event. Save the file, then reconnect."),
 
@@ -92,7 +100,8 @@ defmodule ClaperWeb.AddinStrings do
       "Connection" => gettext("Connection"),
       "Polls" => gettext("Polls"),
       "Quizzes" => gettext("Quizzes"),
-      "On slides" => gettext("On slides"),
+      "Open" => gettext("Open"),
+      "Slides" => gettext("Slides"),
       "Reload" => gettext("Reload"),
       "Loading…" => gettext("Loading…"),
       "Edit" => gettext("Edit"),
@@ -102,55 +111,121 @@ defmodule ClaperWeb.AddinStrings do
       "Cancel" => gettext("Cancel"),
       "For PowerPoint" => gettext("For PowerPoint"),
       "Claper slide" => gettext("Claper slide"),
-      "Put on its own slide" => gettext("Put on its own slide"),
-      "Building the slide…" => gettext("Building the slide…"),
-      "Added as a new slide at the end." => gettext("Added as a new slide at the end."),
-      "Put one Claper block on a slide first. Every slide after that is copied from it." =>
-        gettext(
-          "Put one Claper block on a slide first. Every slide after that is copied from it."
-        ),
       "already on the deck inside Claper" => gettext("already on the deck inside Claper"),
       "answers so far" => gettext("answers so far"),
-      "Delete this question? The answers already given go with it." =>
-        gettext("Delete this question? The answers already given go with it."),
-      "Delete this quiz? The answers already given go with it." =>
-        gettext("Delete this quiz? The answers already given go with it."),
+
+      # Putting a question on a slide
+      "On this slide" => gettext("On this slide"),
+      "Puts a live block on the slide you have open, keeping what is on it." =>
+        gettext("Puts a live block on the slide you have open, keeping what is on it."),
+      "New slide" => gettext("New slide"),
+      "Adds a slide at the end showing this question." =>
+        gettext("Adds a slide at the end showing this question."),
+      "Building the slide…" => gettext("Building the slide…"),
+      "Added as a new slide at the end." => gettext("Added as a new slide at the end."),
+      "Done. It is on the slide you had open." =>
+        gettext("Done. It is on the slide you had open."),
+      "Open the slide you want it on first." => gettext("Open the slide you want it on first."),
+
+      # Telling the three kinds apart
+      "Which one do I want?" => gettext("Which one do I want?"),
+      "Poll" => gettext("Poll"),
+      "You give the answers, the room picks one. No answer is right, and the bars grow while people vote. For opinions, warm-ups and getting a decision out of a room." =>
+        gettext(
+          "You give the answers, the room picks one. No answer is right, and the bars grow while people vote. For opinions, warm-ups and getting a decision out of a room."
+        ),
+      "Quiz" => gettext("Quiz"),
+      "Looks like a poll, but one answer is the right one and nobody sees which until you release it. For checking whether something landed." =>
+        gettext(
+          "Looks like a poll, but one answer is the right one and nobody sees which until you release it. For checking whether something landed."
+        ),
+      "Open question" => gettext("Open question"),
+      "No answers to pick from. People write their own, and what they write appears on the slide. For ideas, questions and moods." =>
+        gettext(
+          "No answers to pick from. People write their own, and what they write appears on the slide. For ideas, questions and moods."
+        ),
+      "All three work the same way afterwards: write it here, then put it on a slide with one button. The room answers on their phones after scanning the join code." =>
+        gettext(
+          "All three work the same way afterwards: write it here, then put it on a slide with one button. The room answers on their phones after scanning the join code."
+        ),
 
       # Polls
       "Question" => gettext("Question"),
       "How was it?" => gettext("How was it?"),
-      "Answers, one per line" => gettext("Answers, one per line"),
+      "Answers" => gettext("Answers"),
+      "Answer" => gettext("Answer"),
       "Create poll" => gettext("Create poll"),
       "No polls for this presentation yet." => gettext("No polls for this presentation yet."),
       "The question is missing." => gettext("The question is missing."),
       "At least two answers." => gettext("At least two answers."),
-      "Created. Pick it on a slide." => gettext("Created. Pick it on a slide."),
+      "Created. Put it on a slide below." => gettext("Created. Put it on a slide below."),
       "Changing the answers clears the votes already given for this question." =>
         gettext("Changing the answers clears the votes already given for this question."),
+      "Delete this question? The answers already given go with it." =>
+        gettext("Delete this question? The answers already given go with it."),
 
       # Quizzes
+      "How a quiz differs from a poll" => gettext("How a quiz differs from a poll"),
+      "A quiz has right answers and can hold several questions in a row. Tick the right one while you write it. On the slide every answer looks the same until you release the results in Claper, so nobody in the room can read the answer off the wall." =>
+        gettext(
+          "A quiz has right answers and can hold several questions in a row. Tick the right one while you write it. On the slide every answer looks the same until you release the results in Claper, so nobody in the room can read the answer off the wall."
+        ),
       "Quiz name" => gettext("Quiz name"),
       "Round one" => gettext("Round one"),
+      "What is the capital of France?" => gettext("What is the capital of France?"),
       "Add another question" => gettext("Add another question"),
       "Create quiz" => gettext("Create quiz"),
-      "Right answers stay hidden on the slide until you release the results in Claper." =>
-        gettext("Right answers stay hidden on the slide until you release the results in Claper."),
       "No quizzes for this presentation yet." => gettext("No quizzes for this presentation yet."),
       "Add answer" => gettext("Add answer"),
       "Remove" => gettext("Remove"),
       "Right" => gettext("Right"),
       "The quiz needs a name." => gettext("The quiz needs a name."),
       "A quiz needs at least one question." => gettext("A quiz needs at least one question."),
+      "A question is missing its text." => gettext("A question is missing its text."),
+      "Every question needs at least two answers." =>
+        gettext("Every question needs at least two answers."),
+      "Every question needs one answer ticked as right." =>
+        gettext("Every question needs one answer ticked as right."),
       "Saving rebuilds the questions, which clears the answers already given for this quiz." =>
         gettext(
           "Saving rebuilds the questions, which clears the answers already given for this quiz."
         ),
+      "Delete this quiz? The answers already given go with it." =>
+        gettext("Delete this quiz? The answers already given go with it."),
+
+      # Open questions
+      "What an open question is for" => gettext("What an open question is for"),
+      "Nothing to pick from: people write their own answer and it appears on your slide as it arrives. Use it when you do not know the answers yet, for gathering questions, or for one word each on how the room is feeling." =>
+        gettext(
+          "Nothing to pick from: people write their own answer and it appears on your slide as it arrives. Use it when you do not know the answers yet, for gathering questions, or for one word each on how the room is feeling."
+        ),
+      "Usually one box is enough. Add a second when you want two things at once, say a name and a question." =>
+        gettext(
+          "Usually one box is enough. Add a second when you want two things at once, say a name and a question."
+        ),
+      "What should we talk about?" => gettext("What should we talk about?"),
+      "Boxes people fill in" => gettext("Boxes people fill in"),
+      "Name of the box" => gettext("Name of the box"),
+      "Your answer" => gettext("Your answer"),
+      "Add box" => gettext("Add box"),
+      "At least one box." => gettext("At least one box."),
+      "Create open question" => gettext("Create open question"),
+      "Open questions" => gettext("Open questions"),
+      "No open questions for this presentation yet." =>
+        gettext("No open questions for this presentation yet."),
+      "Delete this open question? What people wrote goes with it." =>
+        gettext("Delete this open question? What people wrote goes with it."),
 
       # On slides
       "How people join" => gettext("How people join"),
       "Put this on an early slide, otherwise nobody in the room knows how to answer. It is a picture, so it goes straight onto the slide you have open." =>
         gettext(
           "Put this on an early slide, otherwise nobody in the room knows how to answer. It is a picture, so it goes straight onto the slide you have open."
+        ),
+      "Show the web address as well" => gettext("Show the web address as well"),
+      "Off by default: the code is scanned, and the address underneath is one more thing on your slide. Turn it on for a room where phones are not a given." =>
+        gettext(
+          "Off by default: the code is scanned, and the address underneath is one more thing on your slide. Turn it on for a room where phones are not a given."
         ),
       "Put the code on this slide" => gettext("Put the code on this slide"),
       "Drawing the code…" => gettext("Drawing the code…"),
@@ -169,14 +244,23 @@ defmodule ClaperWeb.AddinStrings do
       "Asking Claper…" => gettext("Asking Claper…"),
       "Ready. Blocks you put on slides pick it up on their own." =>
         gettext("Ready. Blocks you put on slides pick it up on their own."),
-      "Insert a live block" => gettext("Insert a live block"),
+      "Ready. This PowerPoint cannot hand it over on its own, so paste it into each Claper object." =>
+        gettext(
+          "Ready. This PowerPoint cannot hand it over on its own, so paste it into each Claper object."
+        ),
+      "The first live block" => gettext("The first live block"),
+      "The buttons on each question copy a block that already exists in this file, so the very first one has to be inserted by hand. Once one is in, you never have to do this again." =>
+        gettext(
+          "The buttons on each question copy a block that already exists in this file, so the very first one has to be inserted by hand. Once one is in, you never have to do this again."
+        ),
       "Insert > Add-ins > My Add-ins" => gettext("Insert > Add-ins > My Add-ins"),
       "Pick \"Claper on a slide\"." => gettext("Pick \"Claper on a slide\"."),
       "Choose what it shows" => gettext("Choose what it shows"),
       "It already knows the link." => gettext("It already knows the link."),
-      "Repeat per slide" => gettext("Repeat per slide"),
-      "Insert another one wherever you want a live answer." =>
-        gettext("Insert another one wherever you want a live answer."),
+      "The frame around a live block, and the soft shadow along its top edge, are PowerPoint's own and cannot be turned off from here. A picture has neither, which is why the joining code is one." =>
+        gettext(
+          "The frame around a live block, and the soft shadow along its top edge, are PowerPoint's own and cannot be turned off from here. A picture has neither, which is why the joining code is one."
+        ),
 
       # The block on a slide
       "Claper on this slide" => gettext("Claper on this slide"),
@@ -201,6 +285,9 @@ defmodule ClaperWeb.AddinStrings do
       "Shadow" => gettext("Shadow"),
       "None" => gettext("None"),
       "Soft shadow" => gettext("Soft shadow"),
+      "Use my own colours" => gettext("Use my own colours"),
+      "Text colour" => gettext("Text colour"),
+      "Bar colour" => gettext("Bar colour"),
       "Show it" => gettext("Show it"),
       "Use a different link" => gettext("Use a different link"),
       "How to join (QR code and code)" => gettext("How to join (QR code and code)"),

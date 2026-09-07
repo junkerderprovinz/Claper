@@ -10,6 +10,7 @@ defmodule ClaperWeb.AddinController do
 
   use ClaperWeb, :controller
 
+  alias Claper.Forms
   alias Claper.Polls
   alias Claper.Quizzes
 
@@ -240,6 +241,83 @@ defmodule ClaperWeb.AddinController do
   end
 
   @doc """
+  The open questions of this event.
+
+  Claper calls them forms, and they are its third kind of interaction: one or
+  more named boxes people write into freely, rather than a list to pick from.
+  The sidebar offers them as "open question" because that is what an author is
+  choosing between when the alternative is a poll.
+  """
+  def form_index(%{assigns: %{addin_event: event}} = conn, _params) do
+    forms =
+      case event.presentation_file do
+        nil -> []
+        file -> Forms.list_forms(file.id)
+      end
+
+    json(conn, %{
+      forms: Enum.map(forms, &form_json/1),
+      event: %{deck_length: deck_length(event)}
+    })
+  end
+
+  @doc """
+  Creates an open question on this event.
+
+  Positioned past the deck for the same reason a poll made here is: it is
+  picked by its id from a slide of another document, never by a Claper position.
+  """
+  def form_create(%{assigns: %{addin_event: event}} = conn, params) do
+    with {:ok, file} <- presentation_file(event),
+         {:ok, title} <- fetch_title(params),
+         {:ok, fields} <- fetch_fields(params) do
+      attrs = %{
+        "title" => title,
+        "presentation_file_id" => file.id,
+        "position" => next_position(file),
+        "enabled" => true,
+        "fields" => fields
+      }
+
+      case Forms.create_form(attrs) do
+        {:ok, form} -> conn |> put_status(:created) |> json(form_json(form))
+        {:error, _changeset} -> error(conn, 422, "form could not be created")
+      end
+    else
+      {:error, status, message} -> error(conn, status, message)
+    end
+  end
+
+  @doc """
+  Renames an open question or replaces its boxes.
+  """
+  def form_update(%{assigns: %{addin_event: event}} = conn, %{"id" => id} = params) do
+    with {:ok, form} <- find_form(event, id),
+         {:ok, attrs} <- form_update_attrs(params, form) do
+      case Forms.update_form(event.uuid, form, attrs) do
+        {:ok, form} -> json(conn, form_json(form))
+        {:error, _changeset} -> error(conn, 422, "form could not be updated")
+      end
+    else
+      {:error, status, message} -> error(conn, status, message)
+    end
+  end
+
+  @doc """
+  Deletes an open question of this event.
+  """
+  def form_delete(%{assigns: %{addin_event: event}} = conn, %{"id" => id}) do
+    case find_form(event, id) do
+      {:ok, form} ->
+        Forms.delete_form(event.uuid, form)
+        send_resp(conn, :no_content, "")
+
+      {:error, status, message} ->
+        error(conn, status, message)
+    end
+  end
+
+  @doc """
   Issues the read-only link a block on a slide reads, and returns it once.
 
   The sidebar keeps this in the document's own settings, so a deck asks for one
@@ -316,9 +394,12 @@ defmodule ClaperWeb.AddinController do
   def slide(%{assigns: %{addin_event: event}} = conn, params) do
     with {:ok, choice} <- fetch_choice(event, params),
          {:ok, deck} <- fetch_deck(params),
-         {:ok, built} <- Claper.Addin.SlideBuilder.one_slide(deck, choice) do
+         {:ok, built} <- build_slide(deck, choice, params["onto"]) do
       json(conn, %{slide: Base.encode64(built)})
     else
+      {:error, :no_such_slide} ->
+        error(conn, 422, "that slide is not in the presentation")
+
       {:error, :no_block} ->
         error(
           conn,
@@ -337,6 +418,21 @@ defmodule ClaperWeb.AddinController do
     end
   end
 
+  # Without `onto` the answer is a slide of its own, which the add-in appends.
+  # With it the answer is the slide already in that place, carrying a block, and
+  # the add-in puts it back where it was.
+  defp build_slide(deck, choice, nil), do: Claper.Addin.SlideBuilder.one_slide(deck, choice)
+
+  defp build_slide(deck, choice, onto) do
+    case Integer.parse(to_string(onto)) do
+      {position, ""} when position >= 1 ->
+        Claper.Addin.SlideBuilder.onto_slide(deck, choice, position)
+
+      _ ->
+        {:error, :no_such_slide}
+    end
+  end
+
   # The id is checked against this event before it is written into a file that
   # travels, so a slide cannot be built pointing at somebody else's question.
   defp fetch_choice(event, %{"kind" => "poll", "id" => id}) do
@@ -345,6 +441,10 @@ defmodule ClaperWeb.AddinController do
 
   defp fetch_choice(event, %{"kind" => "quiz", "id" => id}) do
     with {:ok, quiz} <- find_quiz(event, id), do: {:ok, %{"kind" => "quiz", "id" => quiz.id}}
+  end
+
+  defp fetch_choice(event, %{"kind" => "form", "id" => id}) do
+    with {:ok, form} <- find_form(event, id), do: {:ok, %{"kind" => "form", "id" => form.id}}
   end
 
   defp fetch_choice(_event, %{"kind" => kind}) when kind in ~w(join messages),
@@ -391,6 +491,69 @@ defmodule ClaperWeb.AddinController do
         {:ok, %{"title" => title}}
     end
   end
+
+  defp find_form(event, id) do
+    with {parsed, ""} <- Integer.parse(to_string(id)),
+         form when not is_nil(form) <- Forms.get_form_for_event(parsed, event.id) do
+      {:ok, form}
+    else
+      _ -> {:error, 404, "no such open question on this event"}
+    end
+  end
+
+  defp form_update_attrs(params, form) do
+    title =
+      case fetch_title(params) do
+        {:ok, value} -> value
+        _ -> form.title
+      end
+
+    case params do
+      %{"fields" => _} ->
+        with {:ok, fields} <- fetch_fields(params) do
+          {:ok, %{"title" => title, "fields" => fields}}
+        end
+
+      _ ->
+        {:ok, %{"title" => title}}
+    end
+  end
+
+  # Boxes arrive as a list of {name, type, required}. A bare string is accepted
+  # as the name of a required text box, because that is what nearly every open
+  # question is and asking for the other two would be ceremony.
+  defp fetch_fields(%{"fields" => fields}) when is_list(fields) do
+    cleaned =
+      fields
+      |> Enum.map(&parse_field/1)
+      |> Enum.reject(&is_nil/1)
+
+    if cleaned == [],
+      do: {:error, 422, "at least one box is required"},
+      else: {:ok, cleaned}
+  end
+
+  defp fetch_fields(_), do: {:error, 422, "fields must be a list"}
+
+  defp parse_field(name) when is_binary(name), do: parse_field(%{"name" => name})
+
+  defp parse_field(%{"name" => name} = field) when is_binary(name) do
+    case String.trim(name) do
+      "" ->
+        nil
+
+      trimmed ->
+        %{
+          "name" => trimmed,
+          # Only what the attendee view can actually draw. Anything else would
+          # render as nothing at all, which reads as a lost question.
+          "type" => if(Map.get(field, "type") == "email", do: "email", else: "text"),
+          "required" => Map.get(field, "required", true) |> truthy?()
+        }
+    end
+  end
+
+  defp parse_field(_), do: nil
 
   defp find_quiz(event, id) do
     with {parsed, ""} <- Integer.parse(to_string(id)),
@@ -530,6 +693,19 @@ defmodule ClaperWeb.AddinController do
       options:
         Enum.map(poll.poll_opts || [], fn opt ->
           %{id: opt.id, content: opt.content, votes: opt.vote_count}
+        end)
+    }
+  end
+
+  defp form_json(form) do
+    %{
+      id: form.id,
+      title: form.title,
+      position: form.position,
+      enabled: form.enabled,
+      fields:
+        Enum.map(form.fields || [], fn field ->
+          %{name: field.name, type: field.type, required: field.required}
         end)
     }
   end

@@ -163,6 +163,11 @@ defmodule ClaperWeb.Router do
     patch("/quizzes/:id", AddinController, :quiz_update)
     delete("/quizzes/:id", AddinController, :quiz_delete)
 
+    get("/forms", AddinController, :form_index)
+    post("/forms", AddinController, :form_create)
+    patch("/forms/:id", AddinController, :form_update)
+    delete("/forms/:id", AddinController, :form_delete)
+
     post("/embed_token", AddinController, :embed_token)
     post("/slide", AddinController, :slide)
   end

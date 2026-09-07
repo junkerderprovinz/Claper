@@ -26,16 +26,29 @@ defmodule Claper.Addin.SlideBuilderTest do
       |> String.replace("&", "&amp;")
       |> String.replace("\"", "&quot;")
 
+    # The shape PowerPoint really writes: the live object and a picture to fall
+    # back on, wrapped in an AlternateContent, each half pointing at a
+    # relationship of its own. Copying a block onto another slide has to carry
+    # both, which is why the fixture carries both.
+    block =
+      ~s(<mc:AlternateContent xmlns:mc="mc"><mc:Choice Requires="wetp"><p:graphicFrame><p:nvGraphicFramePr><p:cNvPr id="4" name="Add-In 3"/></p:nvGraphicFramePr><a:graphic><a:graphicData uri="http://schemas.microsoft.com/office/webextensions/webextension/2010/11"><we:webextensionref xmlns:we="we" xmlns:r="r" r:id="rId2"/></a:graphicData></a:graphic></p:graphicFrame></mc:Choice><mc:Fallback><p:pic><p:nvPicPr><p:cNvPr id="4" name="Add-In 3"/></p:nvPicPr><p:blipFill><a:blip r:embed="rId3"/></p:blipFill></p:pic></mc:Fallback></mc:AlternateContent>)
+
     slide_parts =
       for n <- 1..slides, into: %{} do
-        {"ppt/slides/slide#{n}.xml", "<p:sld/>"}
+        # Something already on the slide, so a copied block has an existing
+        # shape id to avoid rather than an empty tree to land in.
+        own = ~s(<p:sp><p:nvSpPr><p:cNvPr id="#{n + 1}" name="Title"/></p:nvSpPr></p:sp>)
+        shapes = if n == slides, do: own <> block, else: own
+
+        {"ppt/slides/slide#{n}.xml",
+         ~s(<?xml version="1.0"?><p:sld xmlns:p="p" xmlns:a="a"><p:cSld><p:spTree>#{shapes}</p:spTree></p:cSld></p:sld>)}
       end
 
     rel_parts =
       for n <- 1..slides, into: %{} do
         webext =
           if n == slides do
-            ~s(<Relationship Id="rId2" Type="http://schemas.microsoft.com/office/2011/relationships/webextension" Target="../webextensions/webextension1.xml"/>)
+            ~s(<Relationship Id="rId2" Type="http://schemas.microsoft.com/office/2011/relationships/webextension" Target="../webextensions/webextension1.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/image1.png"/>)
           else
             ""
           end
@@ -67,7 +80,7 @@ defmodule Claper.Addin.SlideBuilderTest do
       # The defaults a real file carries, so the "everything has a content type"
       # check measures the module rather than a gap in this fixture.
       "[Content_Types].xml" =>
-        ~s(<?xml version="1.0"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/>#{overrides}<Override PartName="/ppt/webextensions/taskpanes.xml" ContentType="application/vnd.ms-office.webextensiontaskpanes+xml"/></Types>),
+        ~s(<?xml version="1.0"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="png" ContentType="image/png"/>#{overrides}<Override PartName="/ppt/webextensions/taskpanes.xml" ContentType="application/vnd.ms-office.webextensiontaskpanes+xml"/></Types>),
       "_rels/.rels" =>
         ~s(<?xml version="1.0"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="ppt/presentation.xml"/><Relationship Id="rId1" Type="http://schemas.microsoft.com/office/2011/relationships/webextensiontaskpanes" Target="ppt/webextensions/taskpanes.xml"/></Relationships>),
       "ppt/presentation.xml" =>
@@ -75,6 +88,8 @@ defmodule Claper.Addin.SlideBuilderTest do
       "ppt/_rels/presentation.xml.rels" =>
         ~s(<?xml version="1.0"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">#{slide_rels}<Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/tags" Target="tags/tag1.xml"/></Relationships>),
       "ppt/tags/tag1.xml" => "<p:tagLst/>",
+      # What the block's fallback picture points at.
+      "ppt/media/image1.png" => "not really a png",
       # Every slide points at a layout, and the check below insists that every
       # pointer resolves, so the fixture has to carry one.
       "ppt/slideLayouts/slideLayout1.xml" => "<p:sldLayout/>",
@@ -301,6 +316,103 @@ defmodule Claper.Addin.SlideBuilderTest do
         assert MapSet.member?(declared, used),
                "presentation.xml uses #{used}, which its relationships no longer declare"
       end
+    end
+  end
+
+  # "Put it on THIS slide" rather than on one of its own. The block cannot be
+  # pasted across as it stands: it is an AlternateContent holding both the live
+  # object and a picture to fall back on, and each half names a relationship by
+  # an id that means something else on the target slide.
+  # The fixture puts the block on the last slide, so slide 1 of three is a slide
+  # that has to be given one.
+  defp onto(position, choice \\ %{"kind" => "poll", "id" => 7}) do
+    {:ok, built} = SlideBuilder.onto_slide(deck(slides: 3), choice, position)
+    built
+  end
+
+  describe "putting the block on a slide that has none" do
+    test "keeps the slide that was asked for, not the one the block came from" do
+      kept = parts(onto(1))
+
+      assert Map.has_key?(kept, "ppt/slides/slide1.xml")
+      refute Map.has_key?(kept, "ppt/slides/slide3.xml")
+    end
+
+    test "the block ends up on it" do
+      assert parts(onto(1))["ppt/slides/slide1.xml"] =~ "we:webextensionref"
+    end
+
+    test "what was already on the slide stays on it" do
+      assert parts(onto(1))["ppt/slides/slide1.xml"] =~ ~s(name="Title")
+    end
+
+    # Two shapes with the same id is a slide PowerPoint refuses. The block
+    # brings the id it had where it came from, and renaming ids one after
+    # another can hand a shape an id another one is about to be given.
+    test "the copied shape does not take an id the slide already uses" do
+      ids =
+        Regex.scan(~r{<p:cNvPr id="(\d+)"}, parts(onto(1))["ppt/slides/slide1.xml"])
+        |> Enum.map(&Enum.at(&1, 1))
+
+      assert length(ids) == 3, "one own shape and both halves of the block"
+      assert length(Enum.uniq(ids)) == 2, "both halves of the block keep one id between them"
+      refute Enum.any?(ids, &String.contains?(&1, "@"))
+    end
+
+    # Both halves, not just the live one: without the image the fallback points
+    # at nothing, and a relationship id with no relationship is the corruption
+    # that made PowerPoint offer to repair the file twice before.
+    test "the relationships the block needs come with it" do
+      kept = parts(onto(1))
+      rels = kept["ppt/slides/_rels/slide1.xml.rels"]
+
+      assert rels =~ "relationships/webextension"
+      assert rels =~ "media/image1.png"
+
+      for id <- Regex.scan(~r{r:(?:id|embed)="(rId\d+)"}, kept["ppt/slides/slide1.xml"]) do
+        assert rels =~ ~s(Id="#{Enum.at(id, 1)}"),
+               "#{Enum.at(id, 1)} is named on the slide but declared nowhere"
+      end
+    end
+
+    test "no relationship id is handed out twice" do
+      ids =
+        Regex.scan(~r{Id="(rId\d+)"}, parts(onto(1))["ppt/slides/_rels/slide1.xml.rels"])
+        |> Enum.map(&Enum.at(&1, 1))
+
+      assert ids == Enum.uniq(ids)
+    end
+
+    test "the settings are pointed at the chosen question all the same" do
+      assert %{"quiz" => 9, "poll" => nil} = settings_of(onto(1, %{"kind" => "quiz", "id" => 9}))
+    end
+
+    test "the presentation is left listing one slide" do
+      assert length(Regex.scan(~r{<p:sldId }, parts(onto(1))["ppt/presentation.xml"])) == 1
+    end
+
+    test "the content types part still comes first" do
+      {:ok, files} = :zip.unzip(onto(1), [:memory])
+      [{first, _} | _] = files
+
+      assert List.to_string(first) == "[Content_Types].xml"
+    end
+
+    # Asking for the slide the block is already on is not an error, it is a
+    # request for that slide. Adding a second block would give the author two
+    # objects showing the same question.
+    test "a slide that already carries one does not get a second" do
+      kept = parts(onto(3))
+
+      assert length(Regex.scan(~r{we:webextensionref}, kept["ppt/slides/slide3.xml"])) == 1
+    end
+
+    test "a position the deck does not have is refused rather than guessed at" do
+      assert SlideBuilder.onto_slide(deck(slides: 3), %{"kind" => "poll", "id" => 7}, 9) ==
+               {:error, :no_such_slide}
+
+      assert SlideBuilder.onto_slide(deck(slides: 3), %{"kind" => "poll", "id" => 7}, 0) ==
+               {:error, :no_such_slide}
     end
   end
 

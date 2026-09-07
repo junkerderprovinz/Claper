@@ -59,6 +59,9 @@
         border-radius: 999px; background: #fff; color: var(--ink); font: inherit; cursor: pointer;
       }
       .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
+      .switch { display: flex; align-items: center; gap: .45rem; margin: .7rem 0 .2rem; font-size: .78rem; font-weight: 600; }
+      .switch input { width: auto; }
+      input[type="color"] { padding: .15rem; height: 2.1rem; cursor: pointer; }
       details { margin-top: .7rem; }
       details summary { cursor: pointer; font-weight: 600; font-size: .78rem; color: var(--muted); }
       .err { color: var(--danger); font-size: .78rem; margin-top: .6rem; min-height: 1rem; }
@@ -105,8 +108,8 @@
             <div>
               <label for="panel">Background</label>
               <select id="panel">
-                <option value="on">Card</option>
                 <option value="off">Transparent</option>
+                <option value="on">Card</option>
               </select>
             </div>
             <div>
@@ -123,6 +126,24 @@
                 <option value="off">None</option>
                 <option value="on">Soft shadow</option>
               </select>
+            </div>
+          </div>
+
+          <!-- The two dropdowns above pick between readable defaults. A deck
+               with a palette of its own needs the colours themselves, and
+               those live here so the simple case stays two dropdowns. -->
+          <label class="switch">
+            <input id="ownColours" type="checkbox" />
+            <span>Use my own colours</span>
+          </label>
+          <div class="grid2" id="colours" hidden>
+            <div>
+              <label for="text">Text colour</label>
+              <input id="text" type="color" value="#111827" />
+            </div>
+            <div>
+              <label for="bar">Bar colour</label>
+              <input id="bar" type="color" value="#140553" />
             </div>
           </div>
         </details>
@@ -173,10 +194,18 @@
         show: "interaction",
         poll: null,
         quiz: null,
+        form: null,
         theme: "light",
-        panel: "on",
+        // Transparent by default. A block sits on a slide that already has a
+        // background, and a white card on top of it is a rectangle the author
+        // then has to design around.
+        panel: "off",
         radius: "soft",
-        shadow: "off"
+        shadow: "off",
+        // Empty means "whatever the theme says", which is the readable default.
+        // Only a colour the author actually picked is sent.
+        text: "",
+        bar: ""
       };
 
 
@@ -194,7 +223,9 @@
         var nodes = [];
         while (walker.nextNode()) nodes.push(walker.currentNode);
         nodes.forEach(function (node) {
-          var key = node.nodeValue.replace(/s+/g, " ").trim();
+          // The backslash matters: /s+/ matches the letter s, so every "s" in
+          // the page became a space and nothing matched the dictionary.
+          var key = node.nodeValue.replace(/\s+/g, " ").trim();
           if (!key) return;
           var hit = dict[key];
           if (hit && hit !== key) node.nodeValue = node.nodeValue.replace(key, hit);
@@ -255,10 +286,18 @@
         var parts = parseLink(state.link);
         if (!parts) return "";
         var q = ["theme=" + state.theme, "panel=" + state.panel, "radius=" + state.radius, "shadow=" + state.shadow];
+        // Only when chosen. Sending the default as a colour would freeze it, so
+        // a later change to what Claper considers readable would not reach a
+        // block already sitting on a slide.
+        if (state.text) q.push("text=" + encodeURIComponent(state.text));
+        if (state.bar) q.push("bar=" + encodeURIComponent(state.bar));
+
         if (state.show === "join" || state.show === "messages") {
           q.unshift("show=" + state.show);
         } else if (state.quiz) {
           q.unshift("quiz=" + state.quiz);
+        } else if (state.form) {
+          q.unshift("form=" + state.form);
         } else if (state.poll) {
           q.unshift("poll=" + state.poll);
         }
@@ -371,7 +410,24 @@
           });
         }
 
-        var current = state.quiz ? "quiz:" + state.quiz : state.poll ? "poll:" + state.poll : state.show;
+        var forms = body.forms || [];
+        if (forms.length) {
+          var gf = group(t("Open questions"));
+          forms.forEach(function (f) {
+            var o = document.createElement("option");
+            o.value = "form:" + f.id;
+            o.textContent = f.title;
+            gf.appendChild(o);
+          });
+        }
+
+        var current = state.quiz
+          ? "quiz:" + state.quiz
+          : state.form
+            ? "form:" + state.form
+            : state.poll
+              ? "poll:" + state.poll
+              : state.show;
         what.value = current;
         if (!what.value) what.value = "join";
       }
@@ -380,6 +436,7 @@
         var value = $("what").value;
         state.poll = null;
         state.quiz = null;
+        state.form = null;
 
         if (value.indexOf("poll:") === 0) {
           state.show = "interaction";
@@ -387,11 +444,18 @@
         } else if (value.indexOf("quiz:") === 0) {
           state.show = "interaction";
           state.quiz = parseInt(value.slice(5), 10);
+        } else if (value.indexOf("form:") === 0) {
+          state.show = "interaction";
+          state.form = parseInt(value.slice(5), 10);
         } else {
           state.show = value;
         }
 
         ["theme", "panel", "radius", "shadow"].forEach(function (key) { state[key] = $(key).value; });
+
+        var own = $("ownColours").checked;
+        state.text = own ? $("text").value : "";
+        state.bar = own ? $("bar").value : "";
       }
 
       function openSetup(atStep2) {
@@ -403,6 +467,12 @@
         $("connect").disabled = false;
         $("url").value = state.link;
         ["theme", "panel", "radius", "shadow"].forEach(function (key) { $(key).value = state[key]; });
+
+        var own = !!(state.text || state.bar);
+        $("ownColours").checked = own;
+        $("colours").hidden = !own;
+        if (state.text) $("text").value = state.text;
+        if (state.bar) $("bar").value = state.bar;
       }
 
       function goToStep2() {
@@ -456,6 +526,9 @@
         }
 
         $("change").addEventListener("click", reconfigure);
+        $("ownColours").addEventListener("change", function () {
+          $("colours").hidden = !$("ownColours").checked;
+        });
         $("connect").addEventListener("click", goToStep2);
         $("url").addEventListener("keydown", function (e) { if (e.key === "Enter") goToStep2(); });
         $("useOther").addEventListener("click", function () { openSetup(false); say(""); });

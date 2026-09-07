@@ -16,19 +16,21 @@ defmodule ClaperWeb.EmbedCatalogController do
   use ClaperWeb, :controller
 
   def index(%{assigns: %{embed_event: event}} = conn, _params) do
-    {polls, quizzes} =
+    {polls, quizzes, forms} =
       case event.presentation_file do
         nil ->
-          {[], []}
+          {[], [], []}
 
         file ->
-          {Claper.Polls.list_polls(file.id), Claper.Quizzes.list_quizzes(file.id)}
+          {Claper.Polls.list_polls(file.id), Claper.Quizzes.list_quizzes(file.id),
+           Claper.Forms.list_forms(file.id)}
       end
 
     json(conn, %{
       event: %{name: event.name},
       polls: Enum.map(polls, &%{id: &1.id, title: &1.title}),
-      quizzes: Enum.map(quizzes, &%{id: &1.id, title: &1.title})
+      quizzes: Enum.map(quizzes, &%{id: &1.id, title: &1.title}),
+      forms: Enum.map(forms, &%{id: &1.id, title: &1.title})
     })
   end
 end

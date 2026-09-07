@@ -266,6 +266,27 @@ defmodule Claper.Forms do
   end
 
   @doc """
+  The submissions of one form, newest first.
+
+  Ordered because they are shown as they arrive: a slide displaying what the
+  room is writing puts the newest line at the top, and an unordered query would
+  reshuffle the whole list on every update.
+
+  ## Examples
+
+      iex> list_form_submits_for_form(123)
+      [%FormSubmit{}, ...]
+
+  """
+  def list_form_submits_for_form(form_id) do
+    from(fs in FormSubmit,
+      where: fs.form_id == ^form_id,
+      order_by: [desc: fs.inserted_at, desc: fs.id]
+    )
+    |> Repo.all()
+  end
+
+  @doc """
   Gets a single FormSubmit.
 
   ## Examples

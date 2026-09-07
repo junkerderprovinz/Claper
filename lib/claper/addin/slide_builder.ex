@@ -57,6 +57,230 @@ defmodule Claper.Addin.SlideBuilder do
     end
   end
 
+  @doc """
+  The same, but built on the slide the author is standing on rather than on the
+  one the block was copied from.
+
+  `onto` is a position in the deck, counted from one in the order the slides are
+  shown. What comes back is that slide with a Claper block added, which the
+  add-in puts back in its place: the effect for the author is a block appearing
+  on the slide they had open, keeping everything already on it.
+
+  The block cannot simply be pasted across. It is an `mc:AlternateContent`
+  carrying both the live object and a picture to fall back on, and both halves
+  point at relationships by id. Those ids mean something different in the target
+  slide, so they are renumbered on the way over, and so are the shape ids, which
+  have to be unique within a slide.
+  """
+  def onto_slide(pptx, choice, onto)
+      when is_binary(pptx) and is_map(choice) and is_integer(onto) do
+    with {:ok, parts, order} <- unzip(pptx),
+         {:ok, source, webext} <- find_block(parts),
+         {:ok, target} <- slide_at(parts, onto) do
+      if target == source do
+        # It already carries one. Copying a second block onto it would give the
+        # author two objects showing the same thing.
+        parts |> patch_settings(webext, choice) |> keep_only(target, webext) |> zip(order)
+      else
+        with {:ok, moved} <- copy_block(parts, source, target) do
+          moved |> patch_settings(webext, choice) |> keep_only(target, webext) |> zip(order)
+        end
+      end
+    end
+  end
+
+  # The slide shown in a given place, which is not the same as the file called
+  # slideN.xml: the running order lives in presentation.xml as a list of
+  # relationship ids, and deleting or reordering slides in PowerPoint leaves the
+  # file names where they were.
+  defp slide_at(parts, position) when position >= 1 do
+    rels = parts["ppt/_rels/presentation.xml.rels"] || ""
+
+    targets =
+      rels
+      |> SweetXml.xpath(~x"//*[local-name()='Relationship']"l,
+        id: ~x"./@Id"s,
+        type: ~x"./@Type"s,
+        target: ~x"./@Target"s
+      )
+      |> Enum.filter(&String.ends_with?(&1.type, "/slide"))
+      |> Map.new(&{&1.id, "ppt/" <> String.trim_leading(&1.target, "/ppt/")})
+
+    # Read with a pattern rather than an xpath: a `p:sldId` carries both its own
+    # `id` and the relationship's `r:id`, and `local-name()`, which is what a
+    # default namespace forces, cannot tell those two apart.
+    order =
+      Regex.scan(~r{<p:sldId [^>]*r:id="(rId\d+)"}, parts["ppt/presentation.xml"] || "")
+      |> Enum.map(&Enum.at(&1, 1))
+
+    case order |> Enum.at(position - 1) |> then(&Map.get(targets, &1)) do
+      nil -> {:error, :no_such_slide}
+      slide -> {:ok, slide}
+    end
+  end
+
+  defp slide_at(_parts, _position), do: {:error, :no_such_slide}
+
+  defp copy_block(parts, source, target) do
+    with {:ok, block} <- block_markup(parts[source]) do
+      source_rels = parts[rels_path(source)] || ""
+      target_rels = parts[rels_path(target)] || ""
+
+      {block, target_rels} = carry_relationships(block, source_rels, target_rels)
+      block = renumber_shapes(block, parts[target])
+
+      {:ok,
+       parts
+       |> Map.put(target, insert_into_tree(parts[target], block))
+       |> Map.put(rels_path(target), target_rels)}
+    end
+  end
+
+  # The whole element the reference sits in, not just the reference: an
+  # AlternateContent when PowerPoint wrote one, the bare graphic frame when it
+  # did not. Found by walking out from the reference and counting nesting, since
+  # a regular expression cannot match a balanced pair.
+  defp block_markup(slide_xml) when is_binary(slide_xml) do
+    case :binary.match(slide_xml, "<we:webextensionref") do
+      :nomatch ->
+        {:error, :no_block}
+
+      {at, _} ->
+        Enum.find_value(
+          [
+            {"mc:AlternateContent", "<mc:AlternateContent"},
+            {"p:graphicFrame", "<p:graphicFrame"}
+          ],
+          {:error, :no_block},
+          fn {name, open} ->
+            with start when is_integer(start) <- last_index(slide_xml, open, at),
+                 stop when is_integer(stop) <- closing(slide_xml, name, start) do
+              {:ok, binary_part(slide_xml, start, stop - start)}
+            else
+              _ -> nil
+            end
+          end
+        )
+    end
+  end
+
+  defp block_markup(_), do: {:error, :no_block}
+
+  # The last occurrence of `needle` that starts before `before`.
+  defp last_index(haystack, needle, before) do
+    :binary.matches(haystack, needle)
+    |> Enum.map(&elem(&1, 0))
+    |> Enum.filter(&(&1 <= before))
+    |> List.last()
+  end
+
+  # Where the element opened at `start` ends, counting nested elements of the
+  # same name so a graphic frame inside a fallback does not close the outer one.
+  defp closing(xml, name, start) do
+    opens = :binary.matches(xml, "<" <> name) |> Enum.map(&{elem(&1, 0), :open})
+    closes = :binary.matches(xml, "</" <> name <> ">") |> Enum.map(&{elem(&1, 0), :close})
+
+    (opens ++ closes)
+    |> Enum.sort()
+    |> Enum.filter(fn {at, _} -> at >= start end)
+    |> Enum.reduce_while(0, fn
+      {_at, :open}, depth ->
+        {:cont, depth + 1}
+
+      {at, :close}, 1 ->
+        {:halt, at + byte_size("</" <> name <> ">")}
+
+      {_at, :close}, depth ->
+        {:cont, depth - 1}
+    end)
+    |> case do
+      stop when is_integer(stop) and stop > start -> stop
+      _ -> nil
+    end
+  end
+
+  # Every relationship the block names is copied into the target slide under an
+  # id that is free there, and the block is rewritten to use the new ones. Both
+  # halves matter: the live object points at the webextension, the fallback
+  # picture at an image.
+  defp carry_relationships(block, source_rels, target_rels) do
+    wanted =
+      Regex.scan(~r{r:(?:id|embed|link)="(rId\d+)"}, block)
+      |> Enum.map(&Enum.at(&1, 1))
+      |> Enum.uniq()
+
+    known =
+      Regex.scan(~r{<Relationship [^>]*Id="(rId\d+)"[^>]*/>}, source_rels)
+      |> Map.new(fn [whole, id] -> {id, whole} end)
+
+    {mapping, added, _next} =
+      Enum.reduce(wanted, {%{}, [], free_rel_id(target_rels)}, fn old, {map, acc, next} ->
+        case Map.get(known, old) do
+          nil ->
+            {map, acc, next}
+
+          markup ->
+            new = "rId#{next}"
+
+            {Map.put(map, old, new),
+             [String.replace(markup, ~s(Id="#{old}"), ~s(Id="#{new}")) | acc], next + 1}
+        end
+      end)
+
+    rewritten =
+      Enum.reduce(mapping, block, fn {old, new}, acc ->
+        Regex.replace(~r{(r:(?:id|embed|link)=")#{old}(")}, acc, "\\1#{new}\\2")
+      end)
+
+    {rewritten,
+     String.replace(
+       target_rels,
+       "</Relationships>",
+       Enum.join(Enum.reverse(added)) <> "</Relationships>"
+     )}
+  end
+
+  defp free_rel_id(rels) do
+    Regex.scan(~r{Id="rId(\d+)"}, rels)
+    |> Enum.map(fn [_, n] -> String.to_integer(n) end)
+    |> Enum.max(fn -> 0 end)
+    |> Kernel.+(1)
+  end
+
+  # Shape ids have to be unique inside a slide, and the block brings the ids it
+  # had on the slide it came from. Both copies in an AlternateContent carry the
+  # same one on purpose, so they are renumbered together rather than one by one.
+  defp renumber_shapes(block, target_xml) do
+    highest =
+      Regex.scan(~r{<p:cNvPr id="(\d+)"}, target_xml || "")
+      |> Enum.map(fn [_, n] -> String.to_integer(n) end)
+      |> Enum.max(fn -> 1 end)
+
+    old =
+      Regex.scan(~r{<p:cNvPr id="(\d+)"}, block)
+      |> Enum.map(fn [_, n] -> String.to_integer(n) end)
+      |> Enum.uniq()
+
+    # Through a placeholder, because a new id can be an old one further down the
+    # list: renaming 4 to 7 and then 7 to 8 in one pass renames both to 8.
+    numbered = Enum.with_index(old, highest + 1)
+
+    staged =
+      Enum.reduce(numbered, block, fn {was, now}, acc ->
+        Regex.replace(~r{(<p:cNvPr id=")#{was}(")}, acc, "\\1@@#{now}@@\\2")
+      end)
+
+    Enum.reduce(numbered, staged, fn {_was, now}, acc ->
+      String.replace(acc, ~s(id="@@#{now}@@"), ~s(id="#{now}"))
+    end)
+  end
+
+  # Last in the shape tree, which is what PowerPoint does when something is
+  # added to a slide: it lands on top of what is already there.
+  defp insert_into_tree(slide_xml, block) do
+    String.replace(slide_xml, "</p:spTree>", block <> "</p:spTree>", global: false)
+  end
+
   # The order the parts came in is kept, because a package is not just a bag of
   # files. Rebuilt out of a map it comes back in whatever order the map felt
   # like, and PowerPoint then offers to repair the file.
@@ -205,16 +429,23 @@ defmodule Claper.Addin.SlideBuilder do
     |> escape()
   end
 
-  defp apply_choice(settings, %{"kind" => "quiz", "id" => id}),
-    do: settings |> Map.put("show", "interaction") |> Map.put("quiz", id) |> Map.put("poll", nil)
-
-  defp apply_choice(settings, %{"kind" => "poll", "id" => id}),
-    do: settings |> Map.put("show", "interaction") |> Map.put("poll", id) |> Map.put("quiz", nil)
+  # One of the three is set and the other two are cleared, always. A block
+  # carries whichever it was last pointed at, so leaving the old key in place
+  # would put two interactions in the link and let the view pick.
+  defp apply_choice(settings, %{"kind" => kind, "id" => id})
+       when kind in ~w(poll quiz form),
+       do: settings |> Map.put("show", "interaction") |> pick(kind, id)
 
   defp apply_choice(settings, %{"kind" => show}) when show in ~w(join messages),
-    do: settings |> Map.put("show", show) |> Map.put("poll", nil) |> Map.put("quiz", nil)
+    do: settings |> Map.put("show", show) |> pick(nil, nil)
 
   defp apply_choice(settings, _), do: settings
+
+  defp pick(settings, kind, id) do
+    Enum.reduce(~w(poll quiz form), settings, fn key, acc ->
+      Map.put(acc, key, if(key == kind, do: id, else: nil))
+    end)
+  end
 
   defp unescape(value) do
     value

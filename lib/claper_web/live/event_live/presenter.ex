@@ -24,6 +24,7 @@ defmodule ClaperWeb.EventLive.Presenter do
     # an id from another event resolves to nothing.
     |> assign(:pinned_poll_id, pinned_id(params["poll"]))
     |> assign(:pinned_quiz_id, pinned_id(params["quiz"]))
+    |> assign(:pinned_form_id, pinned_id(params["form"]))
     |> assign(:embed_style, embed_style(params))
     |> assign(:embed_show, embed_show(params))
     |> mount_event(event, true)
@@ -56,19 +57,76 @@ defmodule ClaperWeb.EventLive.Presenter do
 
   A block sitting on someone else's slide has to match that slide rather than
   Claper, so the look is part of the link instead of a fixed choice here:
-  `theme` picks the text colour, `panel` whether it brings a ground at all,
-  `radius` how round the bars are and `shadow` whether it lifts off the page.
-  Every value falls back to the readable default, so a hand-edited link cannot
-  produce an invisible block.
+  `theme` picks the readable default text colour, `panel` whether it brings a
+  ground at all, `radius` how round the bars are and `shadow` whether it lifts
+  off the page. `text` and `bar` override the two colours outright, for a deck
+  whose own palette is neither of the two themes. Every value falls back to the
+  readable default, so a hand-edited link cannot produce an invisible block.
+
+  `panel` defaults to off. A block sits on a slide that already has a
+  background, and a white card on top of it is a rectangle the author then has
+  to design around. Asking for a ground is the deliberate choice, not being
+  given one.
   """
   def embed_style(params) do
     %{
       theme: one_of(params["theme"], ~w(light dark), "light"),
-      panel: one_of(params["panel"], ~w(on off), "on"),
+      panel: one_of(params["panel"], ~w(on off), "off"),
       radius: one_of(params["radius"], ~w(sharp soft round), "soft"),
-      shadow: one_of(params["shadow"], ~w(on off), "off")
+      shadow: one_of(params["shadow"], ~w(on off), "off"),
+      text: colour(params["text"]),
+      bar: colour(params["bar"]),
+      qr: qr_size(params["qr"])
     }
   end
+
+  @doc """
+  The CSS a chosen text or bar colour needs, or nothing when neither was chosen.
+
+  Written as a rule rather than an inline style on each element because the
+  colours are spread over a dozen places in the template, and a rule states the
+  intent once. `!important` is deliberate: the author picked a colour for this
+  block, so it outranks the theme default it is replacing.
+
+  The class is only on what carries the wording and on the filled part of a
+  bar, which leaves the quiz's own right-and-wrong colouring alone.
+  """
+  def embed_css(%{text: nil, bar: nil}), do: nil
+
+  def embed_css(style) do
+    [
+      if(style.text, do: ".claper-ink { color: #{style.text} !important; }"),
+      if(style.bar, do: ".claper-bar { background-color: #{style.bar} !important; }")
+    ]
+    |> Enum.reject(&is_nil/1)
+    |> Enum.join("\n")
+  end
+
+  # Six hex digits, nothing else. The value comes out of a URL held by a
+  # document Claper does not own, and it is written into a stylesheet, so
+  # anything that is not exactly a colour is no colour at all.
+  defp colour(value) when is_binary(value) do
+    trimmed = String.trim_leading(value, "#")
+    if trimmed =~ ~r/^[0-9a-fA-F]{6}$/, do: "#" <> String.downcase(trimmed), else: nil
+  end
+
+  defp colour(_), do: nil
+
+  # How many pixels wide the joining code is drawn. The block on a slide wants
+  # the small one it has always had; the sidebar asks for a large one because it
+  # reads the drawing out and puts it on a slide as a picture, where 180 pixels
+  # blown up to slide size is the blur that made it worth asking for.
+  @qr_default 180
+  @qr_max 1200
+
+  defp qr_size(value) when is_binary(value) do
+    case Integer.parse(value) do
+      {size, ""} when size >= 120 and size <= @qr_max -> size
+      _ -> @qr_default
+    end
+  end
+
+  defp qr_size(_), do: @qr_default
 
   @doc """
   What an embedded block shows: the current interaction, the joining details or
@@ -200,6 +258,7 @@ defmodule ClaperWeb.EventLive.Presenter do
       end)
       |> assign_new(:pinned_poll_id, fn -> nil end)
       |> assign_new(:pinned_quiz_id, fn -> nil end)
+      |> assign_new(:pinned_form_id, fn -> nil end)
       |> assign_new(:embed_style, fn -> embed_style(%{}) end)
       |> assign_new(:embed_show, fn -> "interaction" end)
       # False on the regular presenter route. The template uses it to leave the
@@ -314,16 +373,42 @@ defmodule ClaperWeb.EventLive.Presenter do
      |> update(:current_poll, fn _current_poll -> nil end)}
   end
 
+  # A block pinned to one form is not following the event, so a change to a
+  # different form must not pull it off the one its slide names. Both of these
+  # come before the general clauses on purpose.
+  @impl true
+  def handle_info({:form_updated, form}, %{assigns: %{pinned_form_id: id}} = socket)
+      when is_integer(id) do
+    if form.id == id and form.enabled do
+      {:noreply,
+       socket |> assign(:current_form, form) |> assign(:form_answers, form_answers(form))}
+    else
+      {:noreply, socket}
+    end
+  end
+
+  @impl true
+  def handle_info({:form_deleted, form}, %{assigns: %{pinned_form_id: id}} = socket)
+      when is_integer(id) do
+    if form.id == id do
+      {:noreply, socket |> assign(:current_form, nil) |> assign(:form_answers, [])}
+    else
+      {:noreply, socket}
+    end
+  end
+
   @impl true
   def handle_info({:form_updated, form}, socket) do
     if form.enabled do
       {:noreply,
        socket
-       |> update(:current_form, fn _current_form -> form end)}
+       |> assign(:current_form, form)
+       |> assign(:form_answers, form_answers(form))}
     else
       {:noreply,
        socket
-       |> update(:current_form, fn _current_form -> nil end)}
+       |> assign(:current_form, nil)
+       |> assign(:form_answers, [])}
     end
   end
 
@@ -331,7 +416,24 @@ defmodule ClaperWeb.EventLive.Presenter do
   def handle_info({:form_deleted, _form}, socket) do
     {:noreply,
      socket
-     |> update(:current_form, fn _current_form -> nil end)}
+     |> assign(:current_form, nil)
+     |> assign(:form_answers, [])}
+  end
+
+  # Somebody in the room wrote something. Only reloaded when the form being
+  # shown is the one that was written into, so a busy event does not re-query on
+  # every submission to a form nobody is looking at.
+  @impl true
+  def handle_info(
+        {event, submit},
+        %{assigns: %{current_form: %Claper.Forms.Form{} = form}} = socket
+      )
+      when event in [:form_submit_created, :form_submit_updated, :form_submit_deleted] do
+    if submit.form_id == form.id do
+      {:noreply, assign(socket, :form_answers, form_answers(form))}
+    else
+      {:noreply, socket}
+    end
   end
 
   @impl true
@@ -584,6 +686,10 @@ defmodule ClaperWeb.EventLive.Presenter do
     assign(socket, :current_poll, nil)
   end
 
+  defp poll_at_position(%{assigns: %{pinned_form_id: id}} = socket) when is_integer(id) do
+    assign(socket, :current_poll, nil)
+  end
+
   defp poll_at_position(%{assigns: %{event: event, state: state}} = socket) do
     with poll <-
            Claper.Polls.get_poll_current_position(
@@ -594,14 +700,56 @@ defmodule ClaperWeb.EventLive.Presenter do
     end
   end
 
+  # The pinned pair, same as polls and quizzes: a link that names a form shows
+  # that form and nothing the presenter is standing on in Claper.
+  defp form_at_position(%{assigns: %{pinned_form_id: id, event: event}} = socket)
+       when is_integer(id) do
+    form = Claper.Forms.get_form_for_event(id, event.id)
+    socket |> assign(:current_form, form) |> assign(:form_answers, form_answers(form))
+  end
+
+  defp form_at_position(%{assigns: %{pinned_poll_id: id}} = socket) when is_integer(id) do
+    socket |> assign(:current_form, nil) |> assign(:form_answers, [])
+  end
+
+  defp form_at_position(%{assigns: %{pinned_quiz_id: id}} = socket) when is_integer(id) do
+    socket |> assign(:current_form, nil) |> assign(:form_answers, [])
+  end
+
   defp form_at_position(%{assigns: %{event: event, state: state}} = socket) do
     with form <-
            Claper.Forms.get_form_current_position(
              event.presentation_file.id,
              state.position
            ) do
-      socket |> assign(:current_form, form)
+      socket |> assign(:current_form, form) |> assign(:form_answers, form_answers(form))
     end
+  end
+
+  @doc """
+  What people have written into a form, newest first, as plain strings.
+
+  A form is Claper's open question: several named fields, each answered in free
+  text. On a slide the field names are already on the slide, so what is worth
+  showing is the writing itself. One entry per filled field rather than one per
+  person, because two people answering two questions is four things to read,
+  not two.
+
+  Blank fields are dropped rather than rendered as gaps, and the response map's
+  own key order is not meaningful, so it is sorted to keep the list stable
+  between updates.
+  """
+  def form_answers(nil), do: []
+
+  def form_answers(%Claper.Forms.Form{} = form) do
+    form.id
+    |> Claper.Forms.list_form_submits_for_form()
+    |> Enum.flat_map(fn submit ->
+      submit.response
+      |> Enum.sort_by(fn {name, _value} -> name end)
+      |> Enum.map(fn {_name, value} -> to_string(value) |> String.trim() end)
+      |> Enum.reject(&(&1 == ""))
+    end)
   end
 
   defp embed_at_position(%{assigns: %{event: event, state: state}} = socket) do
