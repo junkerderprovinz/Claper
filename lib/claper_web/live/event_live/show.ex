@@ -772,7 +772,11 @@ defmodule ClaperWeb.EventLive.Show do
            current_user,
            socket.assigns.event.uuid,
            opts,
-           socket.assigns.current_interaction.id
+           socket.assigns.current_interaction.id,
+           # The name this person already gave the chat. Carried onto the answer
+           # so a leaderboard has something to call them, rather than asking for
+           # a name a second time.
+           socket.assigns[:nickname]
          ) do
       {:ok, quiz} ->
         {:noreply,
@@ -794,7 +798,11 @@ defmodule ClaperWeb.EventLive.Show do
            attendee_identifier,
            socket.assigns.event.uuid,
            opts,
-           socket.assigns.current_interaction.id
+           socket.assigns.current_interaction.id,
+           # The name this person already gave the chat. Carried onto the answer
+           # so a leaderboard has something to call them, rather than asking for
+           # a name a second time.
+           socket.assigns[:nickname]
          ) do
       {:ok, quiz} ->
         {:noreply,

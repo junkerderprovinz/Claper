@@ -196,6 +196,7 @@ defmodule ClaperWeb.AddinController do
         # while the room is still answering gives it away. The owner releases it
         # from the manage screen when the question is over.
         "show_results" => Map.get(params, "show_results", false),
+        "seconds_per_question" => seconds(params),
         "quiz_questions" => questions
       }
 
@@ -576,14 +577,41 @@ defmodule ClaperWeb.AddinController do
         _ -> quiz.title
       end
 
+    base =
+      case params do
+        %{"seconds_per_question" => _} -> %{"seconds_per_question" => seconds(params)}
+        _ -> %{}
+      end
+      |> Map.put("title", title)
+
     case params do
       %{"questions" => _} ->
         with {:ok, questions} <- fetch_questions(params) do
-          {:ok, %{"title" => title, "quiz_questions" => questions}}
+          {:ok, Map.put(base, "quiz_questions", questions)}
         end
 
       _ ->
-        {:ok, %{"title" => title}}
+        {:ok, base}
+    end
+  end
+
+  # How long the room gets per question, or nothing at all, which is what every
+  # quiz had before there was a clock. An empty value clears it rather than
+  # being an error, so an author can take the timer off again.
+  defp seconds(params) do
+    case Map.get(params, "seconds_per_question") do
+      value when is_integer(value) -> value
+      value when is_binary(value) -> value |> String.trim() |> parse_seconds()
+      _ -> nil
+    end
+  end
+
+  defp parse_seconds(""), do: nil
+
+  defp parse_seconds(value) do
+    case Integer.parse(value) do
+      {n, ""} -> n
+      _ -> nil
     end
   end
 
@@ -717,6 +745,7 @@ defmodule ClaperWeb.AddinController do
       position: quiz.position,
       enabled: quiz.enabled,
       show_results: quiz.show_results,
+      seconds_per_question: quiz.seconds_per_question,
       questions:
         Enum.map(quiz.quiz_questions || [], fn question ->
           %{

@@ -127,6 +127,23 @@
                 <option value="on">Soft shadow</option>
               </select>
             </div>
+            <!-- Only means anything for an open question, and it is folded away
+                 with the rest, so it is left in place rather than shown and
+                 hidden as the choice above changes. -->
+            <div>
+              <label for="layout">Open answers</label>
+              <select id="layout">
+                <option value="cloud">Word cloud</option>
+                <option value="list">One after another</option>
+              </select>
+            </div>
+            <div>
+              <label for="board">Quiz leaderboard</label>
+              <select id="board">
+                <option value="off">Do not show</option>
+                <option value="on">Under the answers</option>
+              </select>
+            </div>
           </div>
 
           <!-- The two dropdowns above pick between readable defaults. A deck
@@ -202,6 +219,14 @@
         panel: "off",
         radius: "soft",
         shadow: "off",
+        // How the answers to an open question are drawn. A cloud says at a
+        // glance what the room agrees on, which is what an open question is
+        // asked for; a list is for answers that are sentences.
+        layout: "cloud",
+        // Whether a quiz block shows who is winning underneath. Off, because a
+        // board is something an author decides to put on a slide rather than
+        // something that appears under every quiz they place.
+        board: "off",
         // Empty means "whatever the theme says", which is the readable default.
         // Only a colour the author actually picked is sent.
         text: "",
@@ -285,7 +310,14 @@
       function viewUrl() {
         var parts = parseLink(state.link);
         if (!parts) return "";
-        var q = ["theme=" + state.theme, "panel=" + state.panel, "radius=" + state.radius, "shadow=" + state.shadow];
+        var q = [
+          "theme=" + state.theme,
+          "panel=" + state.panel,
+          "radius=" + state.radius,
+          "shadow=" + state.shadow,
+          "layout=" + state.layout,
+          "board=" + state.board
+        ];
         // Only when chosen. Sending the default as a colour would freeze it, so
         // a later change to what Claper considers readable would not reach a
         // block already sitting on a slide.
@@ -451,7 +483,7 @@
           state.show = value;
         }
 
-        ["theme", "panel", "radius", "shadow"].forEach(function (key) { state[key] = $(key).value; });
+        ["theme", "panel", "radius", "shadow", "layout", "board"].forEach(function (key) { state[key] = $(key).value; });
 
         var own = $("ownColours").checked;
         state.text = own ? $("text").value : "";
@@ -466,7 +498,7 @@
         $("save").disabled = false;
         $("connect").disabled = false;
         $("url").value = state.link;
-        ["theme", "panel", "radius", "shadow"].forEach(function (key) { $(key).value = state[key]; });
+        ["theme", "panel", "radius", "shadow", "layout", "board"].forEach(function (key) { $(key).value = state[key]; });
 
         var own = !!(state.text || state.bar);
         $("ownColours").checked = own;

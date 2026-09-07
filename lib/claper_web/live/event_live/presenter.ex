@@ -76,7 +76,15 @@ defmodule ClaperWeb.EventLive.Presenter do
       shadow: one_of(params["shadow"], ~w(on off), "off"),
       text: colour(params["text"]),
       bar: colour(params["bar"]),
-      qr: qr_size(params["qr"])
+      qr: qr_size(params["qr"]),
+      # How the answers to an open question are drawn. A cloud by default,
+      # because that is what an open question is asked for: one glance at what
+      # the room agrees on. A list when the answers are sentences.
+      layout: one_of(params["layout"], ~w(cloud list), "cloud"),
+      # Whether a quiz block shows who is winning under the bars. Off by
+      # default: a board is a thing an author decides to put on a slide, not
+      # something that appears under every quiz they place.
+      board: one_of(params["board"], ~w(on off), "off")
     }
   end
 
@@ -259,6 +267,9 @@ defmodule ClaperWeb.EventLive.Presenter do
       |> assign_new(:pinned_poll_id, fn -> nil end)
       |> assign_new(:pinned_quiz_id, fn -> nil end)
       |> assign_new(:pinned_form_id, fn -> nil end)
+      # No timer until the presenter moves to a question, which is what starts
+      # one. A block that loaded first simply shows no clock.
+      |> assign_new(:question_started_at, fn -> nil end)
       |> assign_new(:embed_style, fn -> embed_style(%{}) end)
       |> assign_new(:embed_show, fn -> "interaction" end)
       # False on the regular presenter route. The template uses it to leave the
@@ -380,8 +391,7 @@ defmodule ClaperWeb.EventLive.Presenter do
   def handle_info({:form_updated, form}, %{assigns: %{pinned_form_id: id}} = socket)
       when is_integer(id) do
     if form.id == id and form.enabled do
-      {:noreply,
-       socket |> assign(:current_form, form) |> assign(:form_answers, form_answers(form))}
+      {:noreply, assign_form(socket, form)}
     else
       {:noreply, socket}
     end
@@ -391,7 +401,7 @@ defmodule ClaperWeb.EventLive.Presenter do
   def handle_info({:form_deleted, form}, %{assigns: %{pinned_form_id: id}} = socket)
       when is_integer(id) do
     if form.id == id do
-      {:noreply, socket |> assign(:current_form, nil) |> assign(:form_answers, [])}
+      {:noreply, assign_form(socket, nil)}
     else
       {:noreply, socket}
     end
@@ -402,13 +412,11 @@ defmodule ClaperWeb.EventLive.Presenter do
     if form.enabled do
       {:noreply,
        socket
-       |> assign(:current_form, form)
-       |> assign(:form_answers, form_answers(form))}
+       |> assign_form(form)}
     else
       {:noreply,
        socket
-       |> assign(:current_form, nil)
-       |> assign(:form_answers, [])}
+       |> assign_form(nil)}
     end
   end
 
@@ -416,8 +424,7 @@ defmodule ClaperWeb.EventLive.Presenter do
   def handle_info({:form_deleted, _form}, socket) do
     {:noreply,
      socket
-     |> assign(:current_form, nil)
-     |> assign(:form_answers, [])}
+     |> assign_form(nil)}
   end
 
   # Somebody in the room wrote something. Only reloaded when the form being
@@ -430,7 +437,7 @@ defmodule ClaperWeb.EventLive.Presenter do
       )
       when event in [:form_submit_created, :form_submit_updated, :form_submit_deleted] do
     if submit.form_id == form.id do
-      {:noreply, assign(socket, :form_answers, form_answers(form))}
+      {:noreply, assign_form(socket, form)}
     else
       {:noreply, socket}
     end
@@ -460,14 +467,14 @@ defmodule ClaperWeb.EventLive.Presenter do
   def handle_info({:quiz_updated, quiz}, socket) do
     {:noreply,
      socket
-     |> update(:current_quiz, fn _current_quiz -> quiz end)}
+     |> assign_quiz(quiz)}
   end
 
   @impl true
   def handle_info({:quiz_deleted, _quiz}, socket) do
     {:noreply,
      socket
-     |> update(:current_quiz, fn _current_quiz -> nil end)}
+     |> assign_quiz(nil)}
   end
 
   @impl true
@@ -519,7 +526,7 @@ defmodule ClaperWeb.EventLive.Presenter do
      |> assign(:current_poll, interaction)
      |> assign(:current_embed, nil)
      |> assign(:current_form, nil)
-     |> assign(:current_quiz, nil)}
+     |> assign_quiz(nil)}
   end
 
   @impl true
@@ -532,7 +539,7 @@ defmodule ClaperWeb.EventLive.Presenter do
      |> assign(:current_embed, interaction)
      |> assign(:current_poll, nil)
      |> assign(:current_form, nil)
-     |> assign(:current_quiz, nil)}
+     |> assign_quiz(nil)}
   end
 
   @impl true
@@ -545,7 +552,7 @@ defmodule ClaperWeb.EventLive.Presenter do
      |> assign(:current_form, interaction)
      |> assign(:current_poll, nil)
      |> assign(:current_embed, nil)
-     |> assign(:current_quiz, nil)}
+     |> assign_quiz(nil)}
   end
 
   @impl true
@@ -555,7 +562,7 @@ defmodule ClaperWeb.EventLive.Presenter do
       ) do
     {:noreply,
      socket
-     |> assign(:current_quiz, interaction)
+     |> assign_quiz(interaction)
      |> assign(:current_poll, nil)
      |> assign(:current_embed, nil)
      |> assign(:current_form, nil)}
@@ -571,7 +578,7 @@ defmodule ClaperWeb.EventLive.Presenter do
      |> assign(:current_poll, nil)
      |> assign(:current_embed, nil)
      |> assign(:current_form, nil)
-     |> assign(:current_quiz, nil)}
+     |> assign_quiz(nil)}
   end
 
   @impl true
@@ -705,15 +712,15 @@ defmodule ClaperWeb.EventLive.Presenter do
   defp form_at_position(%{assigns: %{pinned_form_id: id, event: event}} = socket)
        when is_integer(id) do
     form = Claper.Forms.get_form_for_event(id, event.id)
-    socket |> assign(:current_form, form) |> assign(:form_answers, form_answers(form))
+    assign_form(socket, form)
   end
 
   defp form_at_position(%{assigns: %{pinned_poll_id: id}} = socket) when is_integer(id) do
-    socket |> assign(:current_form, nil) |> assign(:form_answers, [])
+    assign_form(socket, nil)
   end
 
   defp form_at_position(%{assigns: %{pinned_quiz_id: id}} = socket) when is_integer(id) do
-    socket |> assign(:current_form, nil) |> assign(:form_answers, [])
+    assign_form(socket, nil)
   end
 
   defp form_at_position(%{assigns: %{event: event, state: state}} = socket) do
@@ -722,8 +729,33 @@ defmodule ClaperWeb.EventLive.Presenter do
              event.presentation_file.id,
              state.position
            ) do
-      socket |> assign(:current_form, form) |> assign(:form_answers, form_answers(form))
+      assign_form(socket, form)
     end
+  end
+
+  # The quiz and the board that goes under it. Only queried when a link asked
+  # for the board: it reads every response of the quiz, and quiz_updated
+  # arrives once per answer given in the room.
+  defp assign_quiz(socket, quiz) do
+    board =
+      if quiz && socket.assigns[:embed_style][:board] == "on" do
+        Claper.Quizzes.leaderboard(quiz.id)
+      else
+        []
+      end
+
+    socket |> assign(:current_quiz, quiz) |> assign(:quiz_board, board)
+  end
+
+  # The form and everything derived from it, in one place. The cloud is counted
+  # here rather than in the template, which would recount it once per word.
+  defp assign_form(socket, form) do
+    answers = form_answers(form)
+
+    socket
+    |> assign(:current_form, form)
+    |> assign(:form_answers, answers)
+    |> assign(:form_cloud, form_cloud(answers))
   end
 
   @doc """
@@ -752,6 +784,78 @@ defmodule ClaperWeb.EventLive.Presenter do
     end)
   end
 
+  @doc """
+  The same answers counted, as `{text, count}` from most said to least.
+
+  What makes a word cloud worth having over a list: when eleven people write
+  "tired", the room should see one large "tired" rather than eleven identical
+  lines. Counted case-insensitively because "Tired" and "tired" are the same
+  answer, and shown in the spelling that was used most often, so a cloud of
+  names is not flattened to lower case.
+
+  Ties keep the order they arrived in, so the cloud does not reshuffle itself
+  every time somebody answers.
+  """
+  def form_cloud(answers) when is_list(answers) do
+    answers
+    |> Enum.reduce({%{}, []}, fn answer, {seen, order} ->
+      key = answer |> String.downcase() |> String.trim()
+      entry = Map.get(seen, key, %{count: 0, spellings: %{}})
+
+      entry = %{
+        count: entry.count + 1,
+        spellings: Map.update(entry.spellings, answer, 1, &(&1 + 1))
+      }
+
+      {Map.put(seen, key, entry), if(key in order, do: order, else: order ++ [key])}
+    end)
+    |> then(fn {seen, order} ->
+      order
+      |> Enum.map(fn key ->
+        entry = seen[key]
+        {entry.spellings |> Enum.max_by(fn {_text, n} -> n end) |> elem(0), entry.count}
+      end)
+      |> Enum.sort_by(fn {_text, count} -> -count end)
+    end)
+  end
+
+  @doc """
+  How big one word in the cloud is drawn, as a Tailwind class.
+
+  Relative to the most said answer rather than to an absolute count, because a
+  cloud of three answers and a cloud of three hundred both have to read as a
+  cloud. A long answer is stepped down: twelve words set in the largest size is
+  a paragraph shouting, not a word cloud.
+  """
+  def cloud_size(count, top) when is_integer(count) and is_integer(top) and top > 0 do
+    case count / top do
+      share when share > 0.75 -> "text-5xl font-bold"
+      share when share > 0.5 -> "text-4xl font-bold"
+      share when share > 0.3 -> "text-3xl font-semibold"
+      share when share > 0.15 -> "text-2xl font-semibold"
+      _ -> "text-xl"
+    end
+  end
+
+  def cloud_size(_count, _top), do: "text-xl"
+
+  @doc """
+  The same, stepped down for an answer that is a sentence rather than a word.
+  """
+  def cloud_class(text, count, top) do
+    size = cloud_size(count, top)
+
+    if String.length(text) > 24 do
+      size
+      |> String.replace("text-5xl", "text-2xl")
+      |> String.replace("text-4xl", "text-xl")
+      |> String.replace("text-3xl", "text-lg")
+      |> String.replace("text-2xl", "text-base")
+    else
+      size
+    end
+  end
+
   defp embed_at_position(%{assigns: %{event: event, state: state}} = socket) do
     with embed <-
            Claper.Embeds.get_embed_current_position(
@@ -777,7 +881,14 @@ defmodule ClaperWeb.EventLive.Presenter do
       )
     end
 
-    {:noreply, assign(socket, :current_question_idx, idx)}
+    # When the timer starts, for a quiz that has one. Stamped here rather than
+    # when a block loads, because a block on a slide is loaded long before the
+    # presenter reaches it: PowerPoint builds the add-ins on the slide ahead of
+    # showing them. Moving to the question is the moment the room is asked.
+    {:noreply,
+     socket
+     |> assign(:current_question_idx, idx)
+     |> assign(:question_started_at, DateTime.utc_now() |> DateTime.to_unix())}
   end
 
   defp quiz_component_mounted?(%{assigns: %{current_quiz: %Quiz{} = quiz} = assigns}) do
@@ -794,13 +905,13 @@ defmodule ClaperWeb.EventLive.Presenter do
         quiz_questions: :quiz_question_opts
       ])
 
-    socket |> assign(:current_quiz, quiz) |> assign(:current_question_idx, 0)
+    socket |> assign_quiz(quiz) |> assign(:current_question_idx, 0)
   end
 
   # The other half of the pair above: a link that names a poll shows that poll
   # alone.
   defp quiz_at_position(%{assigns: %{pinned_poll_id: id}} = socket) when is_integer(id) do
-    socket |> assign(:current_quiz, nil) |> assign(:current_question_idx, 0)
+    socket |> assign_quiz(nil) |> assign(:current_question_idx, 0)
   end
 
   defp quiz_at_position(%{assigns: %{event: event, state: state}} = socket) do
@@ -809,7 +920,7 @@ defmodule ClaperWeb.EventLive.Presenter do
              event.presentation_file.id,
              state.position
            ) do
-      socket |> assign(:current_quiz, quiz) |> assign(:current_question_idx, 0)
+      socket |> assign_quiz(quiz) |> assign(:current_question_idx, 0)
     end
   end
 

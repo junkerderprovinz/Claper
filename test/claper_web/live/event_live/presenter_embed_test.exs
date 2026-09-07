@@ -587,6 +587,45 @@ defmodule ClaperWeb.EventLive.PresenterEmbedTest do
       refute answered =~ "Waiting for the first answer"
     end
 
+    # What makes an open question worth putting on a wall: eleven people writing
+    # "tired" become one large "tired" rather than eleven identical lines.
+    test "the answers are counted into a cloud, and the same word said twice is one word", %{
+      conn: conn,
+      token: token,
+      presentation_file: presentation_file
+    } do
+      form =
+        Claper.FormsFixtures.form_fixture(%{
+          presentation_file_id: presentation_file.id,
+          position: 0,
+          title: "one word please"
+        })
+
+      for {who, said} <- [{"a", "Tired"}, {"b", "tired"}, {"c", "TIRED"}, {"d", "curious"}] do
+        Claper.Forms.create_form_submit(%{
+          "form_id" => form.id,
+          "attendee_identifier" => who,
+          "response" => %{"Name" => said}
+        })
+      end
+
+      cloud = get(conn, "/embed/interaction/#{token}?form=#{form.id}") |> html_response(200)
+
+      # Three spellings of one word, so it appears once, in the spelling most
+      # people used, and larger than the word only one person said.
+      assert length(Regex.scan(~r/(?i)tired/, cloud)) == 1
+      assert cloud =~ "Tired"
+      assert cloud =~ "curious"
+      assert cloud =~ "text-5xl"
+
+      list =
+        get(conn, "/embed/interaction/#{token}?form=#{form.id}&layout=list")
+        |> html_response(200)
+
+      assert length(Regex.scan(~r/(?i)tired/, list)) == 3
+      refute list =~ "text-5xl"
+    end
+
     # The pinned pair, same as polls and quizzes: a link that names one
     # interaction named one, not two.
     test "a pinned open question leaves the poll behind", %{
@@ -613,6 +652,81 @@ defmodule ClaperWeb.EventLive.PresenterEmbedTest do
 
       assert html =~ "the open question"
       refute html =~ "the poll on this page"
+    end
+
+    # The board on the wall, which is the half of a quiz an average score does
+    # not cover.
+    test "a quiz block can carry the leaderboard, and only when asked", %{
+      conn: conn,
+      token: token,
+      presentation_file: presentation_file
+    } do
+      quiz =
+        Claper.QuizzesFixtures.quiz_fixture(%{
+          presentation_file: presentation_file,
+          title: "who was listening",
+          show_results: true
+        })
+
+      right =
+        quiz.quiz_questions |> List.first() |> Map.get(:quiz_question_opts) |> List.first()
+
+      Claper.Quizzes.submit_quiz("ada", presentation_file.event.uuid, [right], quiz.id, "Ada")
+
+      with_board =
+        get(conn, "/embed/interaction/#{token}?quiz=#{quiz.id}&board=on") |> html_response(200)
+
+      assert with_board =~ "Ada"
+      assert with_board =~ "1/1"
+
+      without = get(conn, "/embed/interaction/#{token}?quiz=#{quiz.id}") |> html_response(200)
+      refute without =~ "Ada"
+    end
+
+    # While the question is open, the board says who has the right answer, which
+    # is the answer.
+    test "the board waits for the results like everything else", %{
+      conn: conn,
+      token: token,
+      presentation_file: presentation_file
+    } do
+      quiz =
+        Claper.QuizzesFixtures.quiz_fixture(%{
+          presentation_file: presentation_file,
+          title: "still running",
+          show_results: false
+        })
+
+      right =
+        quiz.quiz_questions |> List.first() |> Map.get(:quiz_question_opts) |> List.first()
+
+      Claper.Quizzes.submit_quiz("ada", presentation_file.event.uuid, [right], quiz.id, "Ada")
+
+      html =
+        get(conn, "/embed/interaction/#{token}?quiz=#{quiz.id}&board=on") |> html_response(200)
+
+      refute html =~ "Ada"
+    end
+
+    # PowerPoint builds the add-ins on a slide well before it shows them, so a
+    # clock started on load would already be at zero when the room sees it. It
+    # only appears once the presenter has moved to the question.
+    test "the clock stays off until a question is actually asked", %{
+      conn: conn,
+      token: token,
+      presentation_file: presentation_file
+    } do
+      quiz =
+        Claper.QuizzesFixtures.quiz_fixture(%{
+          presentation_file: presentation_file,
+          title: "timed",
+          show_results: false,
+          seconds_per_question: 45
+        })
+
+      html = get(conn, "/embed/interaction/#{token}?quiz=#{quiz.id}") |> html_response(200)
+
+      refute html =~ "quiz-clock"
     end
 
     test "the same token opens both views", %{conn: conn, token: token} do

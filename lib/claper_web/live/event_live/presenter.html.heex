@@ -238,6 +238,24 @@ not reasoned about. --%>
       {quiz_heading(@current_quiz, @current_question_idx)}
     </p>
 
+    <%!-- The clock, for a quiz that was given a time per question. It counts
+    from the moment the presenter moved to the question, not from the moment
+    this block loaded: PowerPoint builds the add-ins on a slide well before it
+    shows them, so a clock started on load would already be at zero.
+
+    It counts down in the browser rather than through a message a second, which
+    would be one message per second per block on the wall. --%>
+    <div
+      :if={@current_quiz.seconds_per_question && @question_started_at && !@current_quiz.show_results}
+      id={"quiz-clock-#{@current_quiz.id}"}
+      phx-hook="Countdown"
+      phx-update="ignore"
+      data-seconds={@current_quiz.seconds_per_question}
+      data-started={@question_started_at}
+      class={"claper-ink mb-4 text-center text-2xl font-bold tabular-nums #{if @embed_style.theme == "dark", do: "text-white", else: "text-gray-900"}"}
+    >
+    </div>
+
     <%!-- No claper-ink on the option rows: once the results are out, right and
     wrong are told apart by their own colours, and a chosen text colour that
     overrode those would take the answer away with it. --%>
@@ -258,6 +276,27 @@ not reasoned about. --%>
           {opt.percentage}% ({opt.response_count})
         </span>
       </div>
+    </div>
+
+    <%!-- Who is winning. A quiz told the room an average and nothing else,
+    which is the one number nobody in it is interested in.
+
+    Behind show_results like everything else: while the question is still open
+    the board would say who has the right answer, which is the answer. --%>
+    <div :if={@embed_style.board == "on" && @current_quiz.show_results && @quiz_board != []} class="mt-5">
+      <p class={"claper-ink text-sm font-bold mb-2 #{if @embed_style.theme == "dark", do: "text-gray-300", else: "text-gray-500"}"}>
+        {gettext("Leaderboard")}
+      </p>
+      <ol class="flex flex-col gap-1">
+        <li
+          :for={{{name, score, total, _at}, place} <- Enum.with_index(@quiz_board, 1)}
+          class={"claper-ink flex items-baseline gap-3 px-3 py-1 #{bar_radius(@embed_style.radius)} #{if @embed_style.theme == "dark", do: "bg-white/10 text-white", else: "bg-gray-100 text-gray-900"}"}
+        >
+          <span class="text-sm font-bold tabular-nums w-6">{place}.</span>
+          <span class="text-base flex-1 truncate">{name}</span>
+          <span class="text-base font-bold tabular-nums">{score}/{total}</span>
+        </li>
+      </ol>
     </div>
   </div>
 
@@ -300,7 +339,25 @@ not reasoned about. --%>
       {gettext("Waiting for the first answer.")}
     </p>
 
-    <div :if={@form_answers != []} class="flex flex-wrap gap-2 justify-center">
+    <%!-- A cloud, which is what makes an open question worth putting on a wall:
+    eleven people writing "tired" become one large "tired" rather than eleven
+    identical lines. The list is still there for answers that are sentences. --%>
+    <div
+      :if={@form_answers != [] && @embed_style.layout == "cloud"}
+      class="flex flex-wrap gap-x-4 gap-y-2 items-baseline justify-center"
+    >
+      <span
+        :for={{answer, count} <- Enum.take(@form_cloud, 30)}
+        class={"claper-ink #{cloud_class(answer, count, @form_cloud |> List.first() |> elem(1))} #{if @embed_style.theme == "dark", do: "text-white", else: "text-gray-900"}"}
+      >
+        {answer}
+      </span>
+    </div>
+
+    <div
+      :if={@form_answers != [] && @embed_style.layout == "list"}
+      class="flex flex-wrap gap-2 justify-center"
+    >
       <span
         :for={answer <- Enum.take(@form_answers, 24)}
         class={"claper-ink px-3 py-1.5 text-base #{bar_radius(@embed_style.radius)} #{if @embed_style.theme == "dark", do: "bg-white/15 text-white", else: "bg-gray-200 text-gray-900"}"}

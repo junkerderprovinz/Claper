@@ -231,4 +231,112 @@ defmodule Claper.QuizzesTest do
                Quizzes.submit_quiz(user, event_uuid, duplicate_opts, quiz.id)
     end
   end
+
+  # A quiz told the room an average and nothing else, which is the one number
+  # nobody in it is interested in. This is the other thing a quiz is for.
+  describe "leaderboard/2" do
+    setup do
+      quiz = quiz_fixture()
+      question = List.first(quiz.quiz_questions)
+      [right, wrong] = question.quiz_question_opts
+
+      %{quiz: quiz, right: right, wrong: wrong, uuid: Ecto.UUID.generate()}
+    end
+
+    test "an unanswered quiz has an empty board", %{quiz: quiz} do
+      assert Quizzes.leaderboard(quiz.id) == []
+    end
+
+    test "counts right answers per person, not per response", %{
+      quiz: quiz,
+      right: right,
+      wrong: wrong,
+      uuid: uuid
+    } do
+      Quizzes.submit_quiz("ada", uuid, [right], quiz.id, "Ada")
+      Quizzes.submit_quiz("grace", uuid, [wrong], quiz.id, "Grace")
+
+      assert [{"Ada", 1, 1, _}, {"Grace", 0, 1, _}] = Quizzes.leaderboard(quiz.id)
+    end
+
+    # The identifier is opaque on purpose, so a row carrying it is a row nobody
+    # in the room can claim. Better to leave it off the wall.
+    test "somebody who never gave a name is left off the board", %{
+      quiz: quiz,
+      right: right,
+      uuid: uuid
+    } do
+      Quizzes.submit_quiz("anonymous", uuid, [right], quiz.id, nil)
+      Quizzes.submit_quiz("named", uuid, [right], quiz.id, "Ada")
+
+      assert [{"Ada", 1, 1, _}] = Quizzes.leaderboard(quiz.id)
+    end
+
+    test "the board is capped, so a full room does not fill the slide", %{
+      quiz: quiz,
+      right: right,
+      uuid: uuid
+    } do
+      for n <- 1..15 do
+        Quizzes.submit_quiz("person#{n}", uuid, [right], quiz.id, "Person #{n}")
+      end
+
+      assert length(Quizzes.leaderboard(quiz.id)) == 10
+      assert length(Quizzes.leaderboard(quiz.id, 3)) == 3
+    end
+
+    # Answering quickly has to be worth something, or the board is alphabetical
+    # luck among everyone who got it right.
+    test "equal scores are ordered by who finished first", %{
+      quiz: quiz,
+      right: right,
+      uuid: uuid
+    } do
+      Quizzes.submit_quiz("first", uuid, [right], quiz.id, "First")
+      # The stamps have a one second resolution, so the second answer needs to
+      # land in a later second for the order to mean anything.
+      Process.sleep(1100)
+      Quizzes.submit_quiz("second", uuid, [right], quiz.id, "Second")
+
+      assert [{"First", _, _, _}, {"Second", _, _, _}] = Quizzes.leaderboard(quiz.id)
+    end
+
+    test "a logged in person is named from their account", %{quiz: quiz, right: right, uuid: uuid} do
+      user = user_fixture(%{first_name: "Alan", last_name: "Turing"})
+
+      Quizzes.submit_quiz(user, uuid, [right], quiz.id)
+
+      assert [{"Alan Turing", 1, 1, _}] = Quizzes.leaderboard(quiz.id)
+    end
+  end
+
+  # Null means no clock, which is what every quiz had before there was one.
+  describe "the question timer" do
+    test "a quiz has no time limit unless it is given one" do
+      assert quiz_fixture().seconds_per_question == nil
+    end
+
+    test "a limit is kept" do
+      quiz = quiz_fixture(%{seconds_per_question: 30})
+      assert Quizzes.get_quiz!(quiz.id).seconds_per_question == 30
+    end
+
+    # Refused rather than clamped: an author who typed a wrong number is told,
+    # instead of quietly given a different one.
+    test "five seconds is not a question and an hour is not a timer" do
+      assert {:error, _} =
+               Quizzes.update_quiz(
+                 Ecto.UUID.generate(),
+                 quiz_fixture(),
+                 %{"seconds_per_question" => 2}
+               )
+
+      assert {:error, _} =
+               Quizzes.update_quiz(
+                 Ecto.UUID.generate(),
+                 quiz_fixture(),
+                 %{"seconds_per_question" => 4000}
+               )
+    end
+  end
 end

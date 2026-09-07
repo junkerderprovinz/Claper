@@ -250,6 +250,14 @@
         <label for="quizTitle">Quiz name</label>
         <input id="quizTitle" type="text" placeholder="Round one" />
 
+        <label for="quizSeconds">Seconds per question</label>
+        <input id="quizSeconds" type="number" min="5" max="600" placeholder="No limit" />
+        <p class="help">
+          Leave it empty for no clock. The count starts when you move to the question in
+          Claper, and it shows on the slide. It does not lock anyone out: you end the
+          question by releasing the results.
+        </p>
+
         <div id="questions" style="margin-top:.7rem"></div>
         <button class="link" id="addQuestion" type="button">Add another question</button>
 
@@ -1028,6 +1036,18 @@
         field.value = quiz.title;
         card.appendChild(field);
 
+        var clockLabel = document.createElement("label");
+        clockLabel.textContent = t("Seconds per question");
+        card.appendChild(clockLabel);
+
+        var clock = document.createElement("input");
+        clock.type = "number";
+        clock.min = "5";
+        clock.max = "600";
+        clock.placeholder = t("No limit");
+        clock.value = quiz.seconds_per_question || "";
+        card.appendChild(clock);
+
         var holder = document.createElement("div");
         holder.style.marginTop = ".55rem";
         (quiz.questions || []).forEach(function (q) { holder.appendChild(questionEditor(q)); });
@@ -1068,7 +1088,11 @@
           save.disabled = true;
           api("/api/addin/quizzes/" + quiz.id, {
             method: "PATCH",
-            body: JSON.stringify({ title: field.value.trim(), questions: questions })
+            body: JSON.stringify({
+              title: field.value.trim(),
+              questions: questions,
+              seconds_per_question: clock.value.trim()
+            })
           })
             .then(loadQuizzes)
             .catch(function (e) { say($("quizListMsg"), e.message, "err"); save.disabled = false; });
@@ -1841,9 +1865,17 @@
           $("createQuiz").disabled = true;
           say($("quizCreateMsg"), t("Creating…"));
 
-          api("/api/addin/quizzes", { method: "POST", body: JSON.stringify({ title: title, questions: questions }) })
+          api("/api/addin/quizzes", {
+            method: "POST",
+            body: JSON.stringify({
+              title: title,
+              questions: questions,
+              seconds_per_question: $("quizSeconds").value.trim()
+            })
+          })
             .then(function () {
               $("quizTitle").value = "";
+              $("quizSeconds").value = "";
               $("questions").innerHTML = "";
               $("questions").appendChild(questionEditor(null));
               say($("quizCreateMsg"), t("Created. Put it on a slide below."), "ok");

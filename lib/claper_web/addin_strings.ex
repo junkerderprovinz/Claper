@@ -172,6 +172,12 @@ defmodule ClaperWeb.AddinStrings do
         ),
       "Quiz name" => gettext("Quiz name"),
       "Round one" => gettext("Round one"),
+      "Seconds per question" => gettext("Seconds per question"),
+      "No limit" => gettext("No limit"),
+      "Leave it empty for no clock. The count starts when you move to the question in Claper, and it shows on the slide. It does not lock anyone out: you end the question by releasing the results." =>
+        gettext(
+          "Leave it empty for no clock. The count starts when you move to the question in Claper, and it shows on the slide. It does not lock anyone out: you end the question by releasing the results."
+        ),
       "What is the capital of France?" => gettext("What is the capital of France?"),
       "Add another question" => gettext("Add another question"),
       "Create quiz" => gettext("Create quiz"),
@@ -285,6 +291,12 @@ defmodule ClaperWeb.AddinStrings do
       "Shadow" => gettext("Shadow"),
       "None" => gettext("None"),
       "Soft shadow" => gettext("Soft shadow"),
+      "Open answers" => gettext("Open answers"),
+      "Word cloud" => gettext("Word cloud"),
+      "One after another" => gettext("One after another"),
+      "Quiz leaderboard" => gettext("Quiz leaderboard"),
+      "Do not show" => gettext("Do not show"),
+      "Under the answers" => gettext("Under the answers"),
       "Use my own colours" => gettext("Use my own colours"),
       "Text colour" => gettext("Text colour"),
       "Bar colour" => gettext("Bar colour"),

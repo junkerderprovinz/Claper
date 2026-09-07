@@ -986,6 +986,48 @@ Hooks.QRCode = {
   destroyed() {},
 };
 
+// How long the room still has on a quiz question.
+//
+// Counted in the browser from a start the server stamped, rather than by a
+// message a second: a wall can carry a dozen of these blocks at once, and one
+// message per second per block is a lot of traffic for a number.
+//
+// Reading the start from the server rather than from load time is what makes
+// it survive a reload: a block that reconnects mid-question picks the clock up
+// where it actually is instead of starting over.
+Hooks.Countdown = {
+  tick() {
+    const total = parseInt(this.el.dataset.seconds || "0", 10);
+    const started = parseInt(this.el.dataset.started || "0", 10);
+    if (!total || !started) return;
+
+    const left = Math.max(0, total - (Math.floor(Date.now() / 1000) - started));
+    const minutes = Math.floor(left / 60);
+    const seconds = left % 60;
+
+    this.el.textContent =
+      minutes > 0 ? `${minutes}:${String(seconds).padStart(2, "0")}` : `${seconds}`;
+
+    // The last ten seconds are the ones anybody looks at.
+    this.el.classList.toggle("text-red-600", left <= 10 && left > 0);
+
+    if (left === 0 && this.timer) {
+      clearInterval(this.timer);
+      this.timer = null;
+    }
+  },
+  mounted() {
+    this.tick();
+    this.timer = setInterval(() => this.tick(), 250);
+  },
+  updated() {
+    this.tick();
+  },
+  destroyed() {
+    if (this.timer) clearInterval(this.timer);
+  },
+};
+
 Hooks.TicketTilt = {
   // Writes tilt/glare values as CSS vars on <html> rather than inline
   // styles on the ticket: the countdown patches this subtree every
