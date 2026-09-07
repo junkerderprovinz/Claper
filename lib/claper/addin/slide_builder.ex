@@ -48,27 +48,40 @@ defmodule Claper.Addin.SlideBuilder do
   rather than reporting as a fault.
   """
   def one_slide(pptx, choice) when is_binary(pptx) and is_map(choice) do
-    with {:ok, parts} <- unzip(pptx),
+    with {:ok, parts, order} <- unzip(pptx),
          {:ok, slide, webext} <- find_block(parts) do
       parts
       |> patch_settings(webext, choice)
       |> keep_only(slide, webext)
-      |> zip()
+      |> zip(order)
     end
   end
 
+  # The order the parts came in is kept, because a package is not just a bag of
+  # files. Rebuilt out of a map it comes back in whatever order the map felt
+  # like, and PowerPoint then offers to repair the file.
   defp unzip(pptx) do
     case :zip.unzip(pptx, [:memory]) do
       {:ok, files} ->
-        {:ok, Map.new(files, fn {name, data} -> {List.to_string(name), data} end)}
+        named = Enum.map(files, fn {name, data} -> {List.to_string(name), data} end)
+        {:ok, Map.new(named), Enum.map(named, &elem(&1, 0))}
 
       _ ->
         {:error, :not_a_presentation}
     end
   end
 
-  defp zip(parts) do
-    files = Enum.map(parts, fn {name, data} -> {String.to_charlist(name), data} end)
+  @content_types "[Content_Types].xml"
+
+  defp zip(parts, order) do
+    # The content types part first, which is what an OPC reader looks for before
+    # it knows what anything else is. Measured: with it at position 35 of 40,
+    # PowerPoint refused the file and offered to repair it.
+    names =
+      [@content_types | Enum.reject(order, &(&1 == @content_types))]
+      |> Enum.filter(&Map.has_key?(parts, &1))
+
+    files = Enum.map(names, fn name -> {String.to_charlist(name), parts[name]} end)
 
     case :zip.create(~c"slide.pptx", files, [:memory]) do
       {:ok, {_name, binary}} -> {:ok, binary}

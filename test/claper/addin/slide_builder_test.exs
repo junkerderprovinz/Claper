@@ -64,8 +64,10 @@ defmodule Claper.Addin.SlideBuilderTest do
       |> Enum.join()
 
     base = %{
+      # The defaults a real file carries, so the "everything has a content type"
+      # check measures the module rather than a gap in this fixture.
       "[Content_Types].xml" =>
-        ~s(<?xml version="1.0"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">#{overrides}<Override PartName="/ppt/webextensions/taskpanes.xml" ContentType="application/vnd.ms-office.webextensiontaskpanes+xml"/></Types>),
+        ~s(<?xml version="1.0"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/>#{overrides}<Override PartName="/ppt/webextensions/taskpanes.xml" ContentType="application/vnd.ms-office.webextensiontaskpanes+xml"/></Types>),
       "_rels/.rels" =>
         ~s(<?xml version="1.0"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="ppt/presentation.xml"/><Relationship Id="rId1" Type="http://schemas.microsoft.com/office/2011/relationships/webextensiontaskpanes" Target="ppt/webextensions/taskpanes.xml"/></Relationships>),
       "ppt/presentation.xml" =>
@@ -76,7 +78,42 @@ defmodule Claper.Addin.SlideBuilderTest do
       # Every slide points at a layout, and the check below insists that every
       # pointer resolves, so the fixture has to carry one.
       "ppt/slideLayouts/slideLayout1.xml" => "<p:sldLayout/>",
+      "ppt/slideLayouts/slideLayout2.xml" => "<p:sldLayout/>",
+      "ppt/slideLayouts/slideLayout3.xml" => "<p:sldLayout/>",
+      "ppt/slideLayouts/slideLayout4.xml" => "<p:sldLayout/>",
+      "ppt/slideLayouts/slideLayout5.xml" => "<p:sldLayout/>",
+      "ppt/slideLayouts/slideLayout6.xml" => "<p:sldLayout/>",
+      "ppt/slideLayouts/slideLayout7.xml" => "<p:sldLayout/>",
+      "ppt/slideLayouts/slideLayout8.xml" => "<p:sldLayout/>",
+      "ppt/slideLayouts/slideLayout9.xml" => "<p:sldLayout/>",
+      "ppt/slideLayouts/slideLayout10.xml" => "<p:sldLayout/>",
+      "ppt/slideLayouts/slideLayout11.xml" => "<p:sldLayout/>",
+      "ppt/slideLayouts/slideLayout12.xml" => "<p:sldLayout/>",
+      "ppt/slideLayouts/slideLayout13.xml" => "<p:sldLayout/>",
+      "ppt/slideLayouts/slideLayout14.xml" => "<p:sldLayout/>",
+      "ppt/slideLayouts/slideLayout15.xml" => "<p:sldLayout/>",
+      "ppt/slideLayouts/slideLayout16.xml" => "<p:sldLayout/>",
+      "ppt/slideLayouts/slideLayout17.xml" => "<p:sldLayout/>",
+      "ppt/slideLayouts/slideLayout18.xml" => "<p:sldLayout/>",
+      "ppt/slideLayouts/slideLayout19.xml" => "<p:sldLayout/>",
+      "ppt/slideLayouts/slideLayout20.xml" => "<p:sldLayout/>",
+      "ppt/slideLayouts/slideLayout21.xml" => "<p:sldLayout/>",
+      "ppt/slideLayouts/slideLayout22.xml" => "<p:sldLayout/>",
+      "ppt/slideLayouts/slideLayout23.xml" => "<p:sldLayout/>",
+      "ppt/slideLayouts/slideLayout24.xml" => "<p:sldLayout/>",
+      "ppt/slideLayouts/slideLayout25.xml" => "<p:sldLayout/>",
       "ppt/webextensions/taskpanes.xml" => "<wetp:taskpanes/>",
+      # Filler, and it earns its place: below 32 entries Erlang keeps a map
+      # sorted, and "[Content_Types].xml" then comes out first by luck even when
+      # the code does not put it there. A real presentation has 40-odd parts and
+      # a map that size hands them back in whatever order it likes, which is how
+      # the defect reached PowerPoint in the first place.
+      "ppt/theme/theme1.xml" => "<a:theme/>",
+      "ppt/presProps.xml" => "<p:presentationPr/>",
+      "ppt/viewProps.xml" => "<p:viewPr/>",
+      "ppt/tableStyles.xml" => "<a:tblStyleLst/>",
+      "docProps/app.xml" => "<Properties/>",
+      "docProps/core.xml" => "<cp:coreProperties/>",
       "ppt/webextensions/webextension1.xml" =>
         ~s(<?xml version="1.0"?><we:webextension xmlns:we="http://schemas.microsoft.com/office/webextensions/webextension/2010/11" id="{X}"><we:reference id="#{addin}" version="1.0.0.0" store="\\\\MACHINE\\share" storeType="Filesystem"/><we:properties><we:property name="claper.slide" value="#{value}"/></we:properties></we:webextension>)
     }
@@ -105,6 +142,43 @@ defmodule Claper.Addin.SlideBuilderTest do
     |> String.replace("&amp;", "&")
     |> Jason.decode!()
     |> Jason.decode!()
+  end
+
+  # PowerPoint refused the first file this module produced and offered to repair
+  # it. The package was otherwise sound: valid zip, every relationship resolved,
+  # no orphaned content type. What was wrong was the ORDER. Rebuilt out of a map,
+  # the content types part came out at position 35 of 40, and an OPC reader looks
+  # for it before it knows what anything else in the package is.
+  #
+  # Worth stating plainly because it is why this is a test rather than a check
+  # run once by hand: python-pptx opens the broken file without complaint, so a
+  # library that reads the format does not stand in for the application that
+  # wrote it.
+  test "the content types part comes first, which is where a reader looks for it" do
+    {:ok, built} = SlideBuilder.one_slide(deck(slides: 3), %{"kind" => "poll", "id" => 7})
+
+    {:ok, files} = :zip.unzip(built, [:memory])
+    [first | _] = Enum.map(files, fn {name, _} -> List.to_string(name) end)
+
+    assert first == "[Content_Types].xml"
+  end
+
+  # The direction the first round of checks missed. Orphaned content types were
+  # checked, parts without one were not.
+  test "every part in the package has a content type" do
+    {:ok, built} = SlideBuilder.one_slide(deck(slides: 3), %{"kind" => "poll", "id" => 7})
+    kept = parts(built)
+
+    types = kept["[Content_Types].xml"]
+    defaults = Regex.scan(~r{Extension="([^"]+)"}, types) |> Enum.map(&Enum.at(&1, 1))
+    overrides = Regex.scan(~r{PartName="/([^"]+)"}, types) |> Enum.map(&Enum.at(&1, 1))
+
+    for name <- Map.keys(kept), name != "[Content_Types].xml" do
+      extension = name |> String.split(".") |> List.last()
+
+      assert name in overrides or extension in defaults,
+             "#{name} has no content type, so a reader cannot tell what it is"
+    end
   end
 
   test "the add-in id comes from the manifest, not from a second copy of it" do
