@@ -1118,15 +1118,18 @@
         button.disabled = true;
         say(msgEl, t("Building the slide…"));
 
-        var payload = { kind: kind, id: id };
-
+        // What comes back is itself a one-slide presentation carrying a block,
+        // so it is also the template for next time. Only the first slide of a
+        // sitting costs an upload of the whole file.
         Promise.resolve(deckTemplate || readDeck())
-          .then(function (source) {
-            payload[deckTemplate ? "template" : "deck"] = source;
-            return api("/api/addin/slide", { method: "POST", body: JSON.stringify(payload) });
+          .then(function (deck) {
+            return api("/api/addin/slide", {
+              method: "POST",
+              body: JSON.stringify({ kind: kind, id: id, deck: deck })
+            });
           })
           .then(function (body) {
-            if (body.template) deckTemplate = body.template;
+            deckTemplate = body.slide;
             return insertDeck(body.slide);
           })
           .then(function () { say(msgEl, t("Added as a new slide at the end."), "ok"); })

@@ -300,6 +300,67 @@ defmodule ClaperWeb.AddinController do
 
   defp deck_length(event), do: (event.presentation_file && event.presentation_file.length) || 0
 
+  @doc """
+  Builds a one-slide presentation showing the named question, from a
+  presentation the caller sends.
+
+  The caller's own deck is the template on purpose. A slide that already carries
+  a Claper block records how that machine reaches the add-in, and for a
+  sideloaded install that is a path on the presenter's own computer. A template
+  shipped with Claper would be right for one way of installing and silently
+  wrong for the others.
+
+  The answer is itself a valid one-slide deck, so the caller keeps it and sends
+  that back next time instead of the whole presentation.
+  """
+  def slide(%{assigns: %{addin_event: event}} = conn, params) do
+    with {:ok, choice} <- fetch_choice(event, params),
+         {:ok, deck} <- fetch_deck(params),
+         {:ok, built} <- Claper.Addin.SlideBuilder.one_slide(deck, choice) do
+      json(conn, %{slide: Base.encode64(built)})
+    else
+      {:error, :no_block} ->
+        error(
+          conn,
+          409,
+          "put one Claper block on a slide first, every slide after that is copied from it"
+        )
+
+      {:error, :not_a_presentation} ->
+        error(conn, 422, "that was not a presentation")
+
+      {:error, status, message} ->
+        error(conn, status, message)
+
+      _ ->
+        error(conn, 422, "the slide could not be built")
+    end
+  end
+
+  # The id is checked against this event before it is written into a file that
+  # travels, so a slide cannot be built pointing at somebody else's question.
+  defp fetch_choice(event, %{"kind" => "poll", "id" => id}) do
+    with {:ok, poll} <- find_poll(event, id), do: {:ok, %{"kind" => "poll", "id" => poll.id}}
+  end
+
+  defp fetch_choice(event, %{"kind" => "quiz", "id" => id}) do
+    with {:ok, quiz} <- find_quiz(event, id), do: {:ok, %{"kind" => "quiz", "id" => quiz.id}}
+  end
+
+  defp fetch_choice(_event, %{"kind" => kind}) when kind in ~w(join messages),
+    do: {:ok, %{"kind" => kind}}
+
+  defp fetch_choice(_event, _params), do: {:error, 422, "say what the slide should show"}
+
+  defp fetch_deck(%{"deck" => deck}) when is_binary(deck) do
+    case Base.decode64(deck) do
+      {:ok, binary} -> {:ok, binary}
+      :error -> {:error, 422, "the presentation could not be read"}
+    end
+  end
+
+  defp fetch_deck(_params), do: {:error, 422, "send the presentation to copy a slide from"}
+
   defp find_poll(event, id) do
     with {parsed, ""} <- Integer.parse(to_string(id)),
          poll when not is_nil(poll) <- Polls.get_poll_for_event(parsed, event.id) do

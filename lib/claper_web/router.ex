@@ -164,6 +164,7 @@ defmodule ClaperWeb.Router do
     delete("/quizzes/:id", AddinController, :quiz_delete)
 
     post("/embed_token", AddinController, :embed_token)
+    post("/slide", AddinController, :slide)
   end
 
   # The manifest files themselves. Their whole point is being fetched by a
