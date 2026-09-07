@@ -203,7 +203,8 @@ defmodule Claper.PollsTest do
     end
 
     test "a poll is bars unless it is asked to be a scale" do
-      assert poll_fixture().style == "bars"
+      file = presentation_file_fixture()
+      assert poll_fixture(%{presentation_file_id: file.id}).style == "bars"
     end
 
     test "the average is the position in the row, so labels can be words" do
@@ -217,7 +218,8 @@ defmodule Claper.PollsTest do
     end
 
     test "a poll drawn as bars has no average to print" do
-      assert Poll.average(poll_fixture()) == nil
+      file = presentation_file_fixture()
+      assert Poll.average(poll_fixture(%{presentation_file_id: file.id})) == nil
     end
 
     # Ticking three boxes on a scale from one to five is not a rating, and the

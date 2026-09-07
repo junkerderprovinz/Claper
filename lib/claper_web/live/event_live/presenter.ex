@@ -800,20 +800,21 @@ defmodule ClaperWeb.EventLive.Presenter do
     answers
     |> Enum.reduce({%{}, []}, fn answer, {seen, order} ->
       key = answer |> String.downcase() |> String.trim()
-      entry = Map.get(seen, key, %{count: 0, spellings: %{}})
+      # Kept in the order they arrived, not counted into a map: when two
+      # spellings are equally common the choice between them still has to be
+      # the same one every time, and a map has no order to fall back on.
+      spellings = Map.get(seen, key, []) ++ [answer]
 
-      entry = %{
-        count: entry.count + 1,
-        spellings: Map.update(entry.spellings, answer, 1, &(&1 + 1))
-      }
-
-      {Map.put(seen, key, entry), if(key in order, do: order, else: order ++ [key])}
+      {Map.put(seen, key, spellings), if(key in order, do: order, else: order ++ [key])}
     end)
     |> then(fn {seen, order} ->
       order
       |> Enum.map(fn key ->
-        entry = seen[key]
-        {entry.spellings |> Enum.max_by(fn {_text, n} -> n end) |> elem(0), entry.count}
+        spellings = seen[key]
+        counts = Enum.frequencies(spellings)
+        most = counts |> Map.values() |> Enum.max()
+
+        {Enum.find(spellings, &(counts[&1] == most)), length(spellings)}
       end)
       |> Enum.sort_by(fn {_text, count} -> -count end)
     end)

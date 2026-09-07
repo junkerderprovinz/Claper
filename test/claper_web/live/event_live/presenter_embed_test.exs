@@ -601,7 +601,9 @@ defmodule ClaperWeb.EventLive.PresenterEmbedTest do
           title: "one word please"
         })
 
-      for {who, said} <- [{"a", "Tired"}, {"b", "tired"}, {"c", "TIRED"}, {"d", "curious"}] do
+      # Two say it one way and one the other, so the spelling most people used
+      # is the one on the wall and there is nothing to break a tie about.
+      for {who, said} <- [{"a", "tired"}, {"b", "tired"}, {"c", "TIRED"}, {"d", "curious"}] do
         Claper.Forms.create_form_submit(%{
           "form_id" => form.id,
           "attendee_identifier" => who,
@@ -614,7 +616,8 @@ defmodule ClaperWeb.EventLive.PresenterEmbedTest do
       # Three spellings of one word, so it appears once, in the spelling most
       # people used, and larger than the word only one person said.
       assert length(Regex.scan(~r/(?i)tired/, cloud)) == 1
-      assert cloud =~ "Tired"
+      assert cloud =~ "tired"
+      refute cloud =~ "TIRED"
       assert cloud =~ "curious"
       assert cloud =~ "text-5xl"
 
@@ -1204,6 +1207,39 @@ defmodule ClaperWeb.EventLive.PresenterEmbedTest do
       html = get(conn, ~p"/embed/interaction/#{token}?quiz=#{quiz.id}") |> html_response(200)
 
       refute html =~ "the deck's own poll"
+    end
+  end
+
+  # Counting the answers is its own thing, worth testing without a browser in
+  # the way.
+  describe "form_cloud/1" do
+    alias ClaperWeb.EventLive.Presenter
+
+    test "nothing said is nothing to draw" do
+      assert Presenter.form_cloud([]) == []
+    end
+
+    test "the same word twice is one word, said twice" do
+      assert Presenter.form_cloud(["tired", "curious", "tired"]) ==
+               [{"tired", 2}, {"curious", 1}]
+    end
+
+    test "spelling and stray spaces do not split a word in two" do
+      assert Presenter.form_cloud(["Tired", " tired ", "TIRED"]) == [{"Tired", 3}]
+    end
+
+    # Three spellings used once each is a tie, and a tie has to resolve the
+    # same way every time or the wall reshuffles itself while people read it.
+    # It came out of a map before, which has no order to fall back on.
+    test "an even tie between spellings resolves the same way every time" do
+      said = ["beta", "Beta", "BETA"]
+
+      assert Presenter.form_cloud(said) == [{"beta", 3}]
+      assert Presenter.form_cloud(said) == Presenter.form_cloud(said)
+    end
+
+    test "the spelling most people used is the one shown" do
+      assert [{"tired", 3}] = Presenter.form_cloud(["TIRED", "tired", "tired"])
     end
   end
 end
