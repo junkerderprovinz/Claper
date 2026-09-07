@@ -179,7 +179,46 @@ not reasoned about. --%>
           {@current_poll.title}
         </p>
 
-        <div class={"#{if @iframe, do: "space-y-5", else: "space-y-8"} flex flex-col"}>
+        <%!-- A scale is the same poll drawn as a row rather than a stack: the
+        options are ordered, so left to right carries meaning that a list of
+        bars throws away, and an average is worth printing underneath. Each
+        column grows from the bottom in proportion to its share. --%>
+        <div :if={@current_poll.style == "scale"} class="w-full">
+          <div class="flex items-end gap-2 h-40">
+            <div
+              :for={opt <- @current_poll.poll_opts}
+              class="flex-1 flex flex-col justify-end items-center h-full gap-1"
+            >
+              <span
+                :if={!@presenter_embed || @current_poll.show_results}
+                class="claper-ink text-sm font-bold tabular-nums"
+              >
+                {opt.vote_count}
+              </span>
+              <div
+                style={"height: #{if !@presenter_embed || @current_poll.show_results, do: max(opt.percentage, 2), else: 2}%;"}
+                class={"claper-bar bg-primary w-full transition-all #{bar_radius(@embed_style.radius)}"}
+              >
+              </div>
+              <span class="claper-ink text-sm text-center truncate w-full">{opt.content}</span>
+            </div>
+          </div>
+
+          <p
+            :if={
+              (!@presenter_embed || @current_poll.show_results) &&
+                Claper.Polls.Poll.average(@current_poll)
+            }
+            class="claper-ink mt-4 text-center text-2xl font-bold tabular-nums"
+          >
+            {gettext("Average")}: {Claper.Polls.Poll.average(@current_poll)}
+          </p>
+        </div>
+
+        <div
+          :if={@current_poll.style != "scale"}
+          class={"#{if @iframe, do: "space-y-5", else: "space-y-8"} flex flex-col"}
+        >
           <%= if (length @current_poll.poll_opts) > 0 do %>
             <%= for opt <- @current_poll.poll_opts do %>
               <div class={"claper-ink #{if @iframe, do: "py-1", else: "py-4"} #{if @interaction_only, do: (if @embed_style.theme == "dark", do: "bg-white/15 text-white", else: "bg-gray-200 text-gray-900"), else: "bg-gray-500 text-white"} #{if @interaction_only, do: bar_radius(@embed_style.radius), else: "rounded-3xl"} px-6 flex justify-between items-center relative overflow-hidden"}>

@@ -69,14 +69,26 @@ defmodule ClaperWeb.EventLive.PollComponent do
 
           <p class="mb-1 text-xs font-semibold text-gray-400">{gettext("Current poll")}</p>
           <p class="mb-1 text-lg font-bold leading-snug text-white">{@poll.title}</p>
-          <%= if @poll.multiple do %>
-            <p class="mb-4 text-sm text-gray-400">{gettext("Select one or multiple options")}</p>
-          <% else %>
-            <p class="mb-4 text-sm text-gray-400">{gettext("Select one option")}</p>
+          <%= cond do %>
+            <% @poll.style == "scale" -> %>
+              <p class="mb-4 text-sm text-gray-400">{gettext("Tap where you stand")}</p>
+            <% @poll.multiple -> %>
+              <p class="mb-4 text-sm text-gray-400">{gettext("Select one or multiple options")}</p>
+            <% true -> %>
+              <p class="mb-4 text-sm text-gray-400">{gettext("Select one option")}</p>
           <% end %>
         </div>
         <div>
-          <div id="poll-options" class="flex flex-col gap-2">
+          <%!-- A scale reads left to right, because that is the whole of what
+          separates it from a list of options: the order carries meaning. --%>
+          <div
+            id="poll-options"
+            class={[
+              "flex gap-2",
+              @poll.style == "scale" && "flex-row [&>*]:flex-1 [&>*]:min-w-0",
+              @poll.style != "scale" && "flex-col"
+            ]}
+          >
             <%= if (length @poll.poll_opts) > 0 do %>
               <%= for {opt, idx} <- Enum.with_index(@poll.poll_opts) do %>
                 <%= if (length @current_poll_vote) > 0 do %>

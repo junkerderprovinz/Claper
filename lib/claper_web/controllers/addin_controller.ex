@@ -117,6 +117,7 @@ defmodule ClaperWeb.AddinController do
         "position" => next_position(file),
         "enabled" => true,
         "show_results" => Map.get(params, "show_results", true),
+        "style" => style(params),
         "poll_opts" => Enum.map(options, &%{"content" => &1, "vote_count" => 0})
       }
 
@@ -478,20 +479,31 @@ defmodule ClaperWeb.AddinController do
         _ -> poll.title
       end
 
+    base =
+      case params do
+        %{"style" => _} -> %{"title" => title, "style" => style(params)}
+        _ -> %{"title" => title}
+      end
+
     case params do
       %{"options" => _} ->
         with {:ok, options} <- fetch_options(params) do
           {:ok,
-           %{
-             "title" => title,
-             "poll_opts" => Enum.map(options, &%{"content" => &1, "vote_count" => 0})
-           }}
+           Map.put(
+             base,
+             "poll_opts",
+             Enum.map(options, &%{"content" => &1, "vote_count" => 0})
+           )}
         end
 
       _ ->
-        {:ok, %{"title" => title}}
+        {:ok, base}
     end
   end
+
+  # Bars or a scale. Anything else is bars, which is what a poll has always
+  # been, rather than a value the changeset would then have to refuse.
+  defp style(params), do: if(Map.get(params, "style") == "scale", do: "scale", else: "bars")
 
   defp find_form(event, id) do
     with {parsed, ""} <- Integer.parse(to_string(id)),
@@ -718,6 +730,7 @@ defmodule ClaperWeb.AddinController do
       position: poll.position,
       enabled: poll.enabled,
       show_results: poll.show_results,
+      style: poll.style,
       options:
         Enum.map(poll.poll_opts || [], fn opt ->
           %{id: opt.id, content: opt.content, votes: opt.vote_count}

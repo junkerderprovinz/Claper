@@ -176,4 +176,81 @@ defmodule Claper.PollsTest do
                )
     end
   end
+
+  # A scale IS a poll: the same question, the same options, the same one vote
+  # each. What changes is that the options are ordered, so they are drawn as a
+  # row and an average is worth printing. Giving it a column rather than a
+  # table of its own is what lets everything a poll already has apply to it.
+  describe "a poll drawn as a scale" do
+    import Claper.{PollsFixtures, PresentationsFixtures}
+
+    alias Claper.Polls.Poll
+
+    defp scale(votes) do
+      file = presentation_file_fixture()
+
+      {:ok, poll} =
+        Polls.create_poll(%{
+          "title" => "how much do you agree",
+          "presentation_file_id" => file.id,
+          "position" => 1,
+          "style" => "scale",
+          "poll_opts" =>
+            Enum.map(votes, fn {label, count} -> %{"content" => label, "vote_count" => count} end)
+        })
+
+      Polls.get_poll!(poll.id)
+    end
+
+    test "a poll is bars unless it is asked to be a scale" do
+      assert poll_fixture().style == "bars"
+    end
+
+    test "the average is the position in the row, so labels can be words" do
+      poll = scale([{"never", 1}, {"sometimes", 0}, {"always", 1}])
+
+      assert Poll.average(poll) == 2.0
+    end
+
+    test "nobody having answered is not an average of zero" do
+      assert Poll.average(scale([{"never", 0}, {"always", 0}])) == nil
+    end
+
+    test "a poll drawn as bars has no average to print" do
+      assert Poll.average(poll_fixture()) == nil
+    end
+
+    # Ticking three boxes on a scale from one to five is not a rating, and the
+    # average underneath would be arithmetic on nothing.
+    test "a scale cannot also take several answers" do
+      file = presentation_file_fixture()
+
+      assert {:error, changeset} =
+               Polls.create_poll(%{
+                 "title" => "both at once",
+                 "presentation_file_id" => file.id,
+                 "position" => 1,
+                 "style" => "scale",
+                 "multiple" => true,
+                 "poll_opts" => [%{"content" => "1"}, %{"content" => "5"}]
+               })
+
+      assert %{multiple: ["a scale takes one answer"]} = errors_on(changeset)
+    end
+
+    test "a style that is neither is refused" do
+      file = presentation_file_fixture()
+
+      assert {:error, changeset} =
+               Polls.create_poll(%{
+                 "title" => "what is this",
+                 "presentation_file_id" => file.id,
+                 "position" => 1,
+                 "style" => "pie chart",
+                 "poll_opts" => [%{"content" => "a"}, %{"content" => "b"}]
+               })
+
+      assert errors_on(changeset)[:style]
+    end
+  end
 end

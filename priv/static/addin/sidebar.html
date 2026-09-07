@@ -204,6 +204,8 @@
             <dl>
               <dt>Poll</dt>
               <dd>You give the answers, the room picks one. No answer is right, and the bars grow while people vote. For opinions, warm-ups and getting a decision out of a room.</dd>
+              <dt>Scale</dt>
+              <dd>The same thing, drawn as a row from left to right with an average underneath. For "how much do you agree" and anything else where the order of the answers means something.</dd>
               <dt>Quiz</dt>
               <dd>Looks like a poll, but one answer is the right one and nobody sees which until you release it. For checking whether something landed.</dd>
               <dt>Open question</dt>
@@ -218,6 +220,17 @@
 
         <label for="title">Question</label>
         <input id="title" type="text" placeholder="How was it?" />
+
+        <label for="pollStyle">How it is shown</label>
+        <select id="pollStyle">
+          <option value="bars">Bars, one per answer</option>
+          <option value="scale">A scale from left to right</option>
+        </select>
+        <p class="help" id="scaleHint" hidden>
+          The answers become a row in the order you write them, and the slide also shows the
+          average. Write the ends first if you want words: "never" through to "always".
+        </p>
+
         <label>Answers</label>
         <div id="options"></div>
         <button class="link" id="addOption" type="button">Add answer</button>
@@ -659,6 +672,15 @@
         // for a PowerPoint slide. Saying which is which is the difference
         // between a list that makes sense and one that looks like someone
         // else's questions.
+        // A scale and a poll are the same record shown two ways, so the list
+        // has to say which of the two this one is.
+        if (poll.style === "scale") {
+          var kind = document.createElement("span");
+          kind.className = "tag own";
+          kind.textContent = t("Scale");
+          top.appendChild(kind);
+        }
+
         var tag = document.createElement("span");
         var onDeck = deckLength > 0 && poll.position <= deckLength;
         tag.className = "tag " + (onDeck ? "deck" : "own");
@@ -752,6 +774,21 @@
         field.value = poll.title;
         card.appendChild(field);
 
+        var styleLabel = document.createElement("label");
+        styleLabel.textContent = t("How it is shown");
+        card.appendChild(styleLabel);
+
+        var style = document.createElement("select");
+        [["bars", t("Bars, one per answer")], ["scale", t("A scale from left to right")]]
+          .forEach(function (pair) {
+            var o = document.createElement("option");
+            o.value = pair[0];
+            o.textContent = pair[1];
+            style.appendChild(o);
+          });
+        style.value = poll.style === "scale" ? "scale" : "bars";
+        card.appendChild(style);
+
         var label = document.createElement("label");
         label.textContent = t("Answers");
         card.appendChild(label);
@@ -795,6 +832,7 @@
           save.disabled = true;
           var changed = options.join("\n") !== poll.options.map(function (x) { return x.content; }).join("\n");
           var body = changed ? { title: field.value.trim(), options: options } : { title: field.value.trim() };
+          body.style = style.value;
 
           api("/api/addin/polls/" + poll.id, { method: "PATCH", body: JSON.stringify(body) })
             .then(loadPolls)
@@ -1792,6 +1830,9 @@
           store(LS.domain, $("qrDomain").checked ? "1" : "0");
         });
         $("addOption").addEventListener("click", function () { $("options").addRow(""); });
+        $("pollStyle").addEventListener("change", function () {
+          $("scaleHint").hidden = $("pollStyle").value !== "scale";
+        });
         $("addField").addEventListener("click", function () { $("formFields").addRow(""); });
 
         $("copyLink").addEventListener("click", function () {
@@ -1840,7 +1881,10 @@
           $("create").disabled = true;
           say($("createMsg"), t("Creating…"));
 
-          api("/api/addin/polls", { method: "POST", body: JSON.stringify({ title: title, options: options }) })
+          api("/api/addin/polls", {
+            method: "POST",
+            body: JSON.stringify({ title: title, options: options, style: $("pollStyle").value })
+          })
             .then(function () {
               $("title").value = "";
               answerList($("options"), null, t("Answer"));

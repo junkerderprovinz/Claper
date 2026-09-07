@@ -134,6 +134,18 @@ defmodule ClaperWeb.AddinStrings do
         gettext(
           "You give the answers, the room picks one. No answer is right, and the bars grow while people vote. For opinions, warm-ups and getting a decision out of a room."
         ),
+      "Scale" => gettext("Scale"),
+      "The same thing, drawn as a row from left to right with an average underneath. For \"how much do you agree\" and anything else where the order of the answers means something." =>
+        gettext(
+          "The same thing, drawn as a row from left to right with an average underneath. For \"how much do you agree\" and anything else where the order of the answers means something."
+        ),
+      "How it is shown" => gettext("How it is shown"),
+      "Bars, one per answer" => gettext("Bars, one per answer"),
+      "A scale from left to right" => gettext("A scale from left to right"),
+      "The answers become a row in the order you write them, and the slide also shows the average. Write the ends first if you want words: \"never\" through to \"always\"." =>
+        gettext(
+          "The answers become a row in the order you write them, and the slide also shows the average. Write the ends first if you want words: \"never\" through to \"always\"."
+        ),
       "Quiz" => gettext("Quiz"),
       "Looks like a poll, but one answer is the right one and nobody sees which until you release it. For checking whether something landed." =>
         gettext(
