@@ -70,9 +70,14 @@ defmodule Claper.Polls.Poll do
   # made.
   defp forbid_multiple_where_it_makes_no_sense(changeset) do
     style = get_field(changeset, :style)
+    # Compared rather than negated: the field is nil on a poll that never set
+    # it, and `not nil` raises in Elixir. The earlier version got away with it
+    # because `and` short-circuits, so the nil was only ever reached on a scale,
+    # where it is always set. A cond evaluates it every time.
+    multiple = get_field(changeset, :multiple) == true
 
     cond do
-      not get_field(changeset, :multiple) -> changeset
+      not multiple -> changeset
       style == "scale" -> add_error(changeset, :multiple, "a scale takes one answer")
       style == "ranking" -> add_error(changeset, :multiple, "a ranking uses every answer")
       true -> changeset
