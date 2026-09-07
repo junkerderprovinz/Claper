@@ -257,6 +257,70 @@ defmodule Claper.Polls do
     )
   end
 
+  @doc """
+  Records an order somebody put the options in, best first.
+
+  A ranking is one row per option rather than one row per person, each carrying
+  the place it was given. That is what lets the result be an average place, and
+  it is why this does not go through `vote/4`: there an answer is a choice, here
+  it is a position, and every option gets one.
+
+  Nothing is counted into `vote_count`. A ranking has no winner by frequency,
+  and a count that says "everyone picked all of them" is a number without a
+  meaning.
+
+  ## Examples
+
+      iex> rank("abc123", event_uuid, [opt_b, opt_a], poll_id)
+      {:ok, %Poll{}}
+
+  """
+  def rank(who, event_uuid, ordered_opts, poll_id) when is_list(ordered_opts) do
+    ordered_opts = Enum.uniq_by(ordered_opts, & &1.id)
+
+    multi =
+      ordered_opts
+      |> Enum.with_index(1)
+      |> Enum.reduce(Ecto.Multi.new(), fn {opt, place}, multi ->
+        attrs = %{
+          poll_opt_id: opt.id,
+          poll_id: poll_id,
+          rank: place
+        }
+
+        attrs =
+          if is_number(who),
+            do: Map.put(attrs, :user_id, who),
+            else: Map.put(attrs, :attendee_identifier, who)
+
+        Ecto.Multi.insert(
+          multi,
+          {:insert_rank, opt.id},
+          PollVote.changeset(%PollVote{}, attrs)
+        )
+      end)
+
+    case Repo.transaction(multi) do
+      {:ok, _} ->
+        poll = get_poll!(poll_id)
+        broadcast({:ok, poll, event_uuid}, :poll_updated)
+
+      {:error, _, changeset, _} ->
+        {:error, changeset}
+    end
+  end
+
+  @doc """
+  Every vote cast on one poll, which for a ranking is every place given.
+
+  Read as a whole rather than aggregated in the database: the result is an
+  average place per option, and the poll is on a slide that redraws whenever
+  somebody answers, so the rows are wanted anyway.
+  """
+  def list_poll_votes(poll_id) do
+    from(v in PollVote, where: v.poll_id == ^poll_id) |> Repo.all()
+  end
+
   def vote(user_id, event_uuid, poll_opts, poll_id)
       when is_number(user_id) and is_list(poll_opts) do
     case Enum.reduce(poll_opts, Ecto.Multi.new(), fn opt, multi ->

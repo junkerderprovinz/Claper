@@ -206,6 +206,8 @@
               <dd>You give the answers, the room picks one. No answer is right, and the bars grow while people vote. For opinions, warm-ups and getting a decision out of a room.</dd>
               <dt>Scale</dt>
               <dd>The same thing, drawn as a row from left to right with an average underneath. For "how much do you agree" and anything else where the order of the answers means something.</dd>
+              <dt>Ranking</dt>
+              <dd>Everyone puts all the answers in their own order, and the slide shows the order the room agreed on. For priorities and for "what should we do first".</dd>
               <dt>Quiz</dt>
               <dd>Looks like a poll, but one answer is the right one and nobody sees which until you release it. For checking whether something landed.</dd>
               <dt>Open question</dt>
@@ -225,10 +227,15 @@
         <select id="pollStyle">
           <option value="bars">Bars, one per answer</option>
           <option value="scale">A scale from left to right</option>
+          <option value="ranking">A ranking people put in order</option>
         </select>
         <p class="help" id="scaleHint" hidden>
           The answers become a row in the order you write them, and the slide also shows the
           average. Write the ends first if you want words: "never" through to "always".
+        </p>
+        <p class="help" id="rankingHint" hidden>
+          Everyone puts all the answers in their own order. The slide shows the order the
+          room agreed on, with the average place next to each one.
         </p>
 
         <label>Answers</label>
@@ -484,12 +491,16 @@
         return keys.filter(function (k) { return k.toLowerCase().split("-")[0] === base; })[0] || null;
       }
 
-      function loadLanguage(base) {
+      // From this page's own address, not from the Claper address the author
+      // typed. Claper serves this file, so the address is known before anything
+      // is connected, and the welcome screen is in the right language on the
+      // first load rather than after the first connection.
+      function loadLanguage() {
         var wanted;
         try { wanted = Office.context.displayLanguage; } catch (e) { wanted = null; }
-        if (!wanted || !base) return Promise.resolve();
+        if (!wanted) return Promise.resolve();
 
-        return fetch(base.replace(/\/+$/, "") + "/addin/strings.json")
+        return fetch(window.location.origin + "/addin/strings.json")
           .then(function (r) { return r.ok ? r.json() : null; })
           .then(function (all) {
             if (!all) return;
@@ -674,10 +685,10 @@
         // else's questions.
         // A scale and a poll are the same record shown two ways, so the list
         // has to say which of the two this one is.
-        if (poll.style === "scale") {
+        if (poll.style === "scale" || poll.style === "ranking") {
           var kind = document.createElement("span");
           kind.className = "tag own";
-          kind.textContent = t("Scale");
+          kind.textContent = poll.style === "scale" ? t("Scale") : t("Ranking");
           top.appendChild(kind);
         }
 
@@ -779,14 +790,18 @@
         card.appendChild(styleLabel);
 
         var style = document.createElement("select");
-        [["bars", t("Bars, one per answer")], ["scale", t("A scale from left to right")]]
+        [
+          ["bars", t("Bars, one per answer")],
+          ["scale", t("A scale from left to right")],
+          ["ranking", t("A ranking people put in order")]
+        ]
           .forEach(function (pair) {
             var o = document.createElement("option");
             o.value = pair[0];
             o.textContent = pair[1];
             style.appendChild(o);
           });
-        style.value = poll.style === "scale" ? "scale" : "bars";
+        style.value = ["scale", "ranking"].indexOf(poll.style) >= 0 ? poll.style : "bars";
         card.appendChild(style);
 
         var label = document.createElement("label");
@@ -1335,16 +1350,41 @@
           .catch(function () { return offerEvents(false); });
       }
 
+      // Pointing the presentation at an event also has to point its blocks
+      // there. The slide link belongs to whichever event issued it, and it is
+      // what every block on every slide reads: leaving the old one in the
+      // document is why a fresh presentation still offered the questions of the
+      // talk before it. The link goes with the event, always.
       function useEvent(code) {
         cfg.event = code;
-        return writeTag(EVENT_TAG, code).then(function (saved) {
-          show("work");
-          return loadPolls().then(function () {
-            if (!saved) {
-              say($("listMsg"), t("This presentation could not remember its event. Save the file, then reconnect."), "err");
-            }
+
+        return writeTag(EVENT_TAG, code)
+          .then(function (saved) {
+            show("work");
+            return newDeckLink().then(function () { return saved; });
+          })
+          .then(function (saved) {
+            return loadPolls().then(function () {
+              if (!saved) {
+                say($("listMsg"), t("This presentation could not remember its event. Save the file, then reconnect."), "err");
+              }
+            });
           });
-        });
+      }
+
+      // A link for the event this presentation now belongs to, written into the
+      // document so the blocks pick it up. Failing is not fatal: the author can
+      // still make one by hand from the slides tab, and saying so beats leaving
+      // a link that quietly points somewhere else.
+      function newDeckLink() {
+        return api("/api/addin/embed_token", { method: "POST" })
+          .then(function (body) {
+            cfg.embed = body.token;
+            docSet(DOC_EMBED, body.token, function () {});
+            return writeDeckLink(embedUrl());
+          })
+          .then(function () { showLink(); })
+          .catch(function () { showLink(); });
       }
 
       function offerEvents(canCancel) {
@@ -1777,7 +1817,7 @@
 
         // Before anything is shown, so nothing appears in English and then
         // changes under the reader.
-        loadLanguage(cfg.base).then(start);
+        loadLanguage().then(start);
       });
 
       function start() {
@@ -1832,6 +1872,7 @@
         $("addOption").addEventListener("click", function () { $("options").addRow(""); });
         $("pollStyle").addEventListener("change", function () {
           $("scaleHint").hidden = $("pollStyle").value !== "scale";
+          $("rankingHint").hidden = $("pollStyle").value !== "ranking";
         });
         $("addField").addEventListener("click", function () { $("formFields").addRow(""); });
 
@@ -1859,9 +1900,7 @@
           store(LS.seen, "1");
 
           say($("connectMsg"), "");
-          // The address was unknown at load, so this is the first chance to ask
-          // which language Claper speaks.
-          loadLanguage(cfg.base).then(begin);
+          begin();
         });
 
         $("changeEvent").addEventListener("click", function () { offerEvents(true); });

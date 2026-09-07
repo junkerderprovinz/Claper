@@ -139,6 +139,16 @@ defmodule ClaperWeb.AddinStrings do
         gettext(
           "The same thing, drawn as a row from left to right with an average underneath. For \"how much do you agree\" and anything else where the order of the answers means something."
         ),
+      "Ranking" => gettext("Ranking"),
+      "Everyone puts all the answers in their own order, and the slide shows the order the room agreed on. For priorities and for \"what should we do first\"." =>
+        gettext(
+          "Everyone puts all the answers in their own order, and the slide shows the order the room agreed on. For priorities and for \"what should we do first\"."
+        ),
+      "A ranking people put in order" => gettext("A ranking people put in order"),
+      "Everyone puts all the answers in their own order. The slide shows the order the room agreed on, with the average place next to each one." =>
+        gettext(
+          "Everyone puts all the answers in their own order. The slide shows the order the room agreed on, with the average place next to each one."
+        ),
       "How it is shown" => gettext("How it is shown"),
       "Bars, one per answer" => gettext("Bars, one per answer"),
       "A scale from left to right" => gettext("A scale from left to right"),
@@ -289,7 +299,14 @@ defmodule ClaperWeb.AddinStrings do
       "Slide link" => gettext("Slide link"),
       "Continue" => gettext("Continue"),
       "Show on this slide" => gettext("Show on this slide"),
-      "Change how it looks" => gettext("Change how it looks"),
+      "Colours, background and more" => gettext("Colours, background and more"),
+      "Back to the standard look" => gettext("Back to the standard look"),
+      "Set back to the standard look. Save it below to apply." =>
+        gettext("Set back to the standard look. Save it below to apply."),
+      "This presentation now belongs to a different event. Choose what this slide shows." =>
+        gettext(
+          "This presentation now belongs to a different event. Choose what this slide shows."
+        ),
       "Text" => gettext("Text"),
       "Dark text" => gettext("Dark text"),
       "Light text" => gettext("Light text"),

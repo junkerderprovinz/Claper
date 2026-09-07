@@ -183,7 +183,7 @@ not reasoned about. --%>
         options are ordered, so left to right carries meaning that a list of
         bars throws away, and an average is worth printing underneath. Each
         column grows from the bottom in proportion to its share. --%>
-        <div :if={@current_poll.style == "scale"} class="w-full">
+        <div :if={@current_poll.style == "scale"} class="w-full" id="poll-scale">
           <div class="flex items-end gap-2 h-40">
             <div
               :for={opt <- @current_poll.poll_opts}
@@ -215,8 +215,28 @@ not reasoned about. --%>
           </p>
         </div>
 
+        <%!-- A ranking's result is not how often something was picked but where
+        it landed, so the options stand in the order the room put them, with
+        their average place beside them. An option nobody ranked keeps its spot
+        at the end: missing from the slide would read as a mistake. --%>
+        <div :if={@current_poll.style == "ranking"} class="flex flex-col gap-2">
+          <div
+            :for={{{opt, place}, at} <- Enum.with_index(@poll_ranked, 1)}
+            class={"claper-ink flex items-baseline gap-3 px-4 py-2 #{bar_radius(@embed_style.radius)} #{if @interaction_only, do: (if @embed_style.theme == "dark", do: "bg-white/15 text-white", else: "bg-gray-200 text-gray-900"), else: "bg-gray-500 text-white"}"}
+          >
+            <span class="text-xl font-bold tabular-nums w-8">{at}.</span>
+            <span class="flex-1 text-lg font-bold">{opt.content}</span>
+            <span
+              :if={(!@presenter_embed || @current_poll.show_results) && place}
+              class="text-sm tabular-nums opacity-80"
+            >
+              {gettext("place")} {place}
+            </span>
+          </div>
+        </div>
+
         <div
-          :if={@current_poll.style != "scale"}
+          :if={@current_poll.style not in ["scale", "ranking"]}
           class={"#{if @iframe, do: "space-y-5", else: "space-y-8"} flex flex-col"}
         >
           <%= if (length @current_poll.poll_opts) > 0 do %>

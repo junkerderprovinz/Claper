@@ -5,6 +5,7 @@ defmodule Claper.Polls.PollVote do
   @type t :: %__MODULE__{
           id: integer(),
           attendee_identifier: String.t() | nil,
+          rank: integer() | nil,
           poll_id: integer() | nil,
           poll_opt_id: integer() | nil,
           user_id: integer() | nil,
@@ -14,6 +15,9 @@ defmodule Claper.Polls.PollVote do
 
   schema "poll_votes" do
     field :attendee_identifier, :string
+    # Where this person put the option when asked to order them, counted from
+    # one. Null for a poll and a scale, where a vote is a choice, not a place.
+    field :rank, :integer
 
     belongs_to :poll, Claper.Polls.Poll
     belongs_to :poll_opt, Claper.Polls.PollOpt
@@ -25,7 +29,7 @@ defmodule Claper.Polls.PollVote do
   @doc false
   def changeset(poll_vote, attrs) do
     poll_vote
-    |> cast(attrs, [:attendee_identifier, :user_id, :poll_opt_id, :poll_id])
+    |> cast(attrs, [:attendee_identifier, :user_id, :poll_opt_id, :poll_id, :rank])
     |> validate_required([:poll_opt_id, :poll_id])
   end
 end

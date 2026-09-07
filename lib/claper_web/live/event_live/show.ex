@@ -99,6 +99,9 @@ defmodule ClaperWeb.EventLive.Show do
       |> assign(:love_posts, reacted_posts(socket, event.id, "❤️"))
       |> assign(:lol_posts, reacted_posts(socket, event.id, "😂"))
       |> assign(:selected_poll_opt, [])
+      # The order somebody has put a ranking in, as option ids. Empty means
+      # "the order the author wrote them", which is where everyone starts.
+      |> assign(:poll_ranking, [])
       |> assign(:selected_quiz_question_opts, [])
       |> assign(:current_quiz_question_idx, 0)
       |> assign(:event, event)
@@ -652,6 +655,48 @@ defmodule ClaperWeb.EventLive.Show do
     {:noreply, socket |> assign(:selected_poll_opt, [opt])}
   end
 
+  # Ordering a ranking, one step at a time. Up and down buttons rather than
+  # dragging: dragging a list on a phone fights the page's own scrolling, and
+  # this has to work on whatever the room is holding.
+  @impl true
+  def handle_event("rank-move", %{"from" => from, "dir" => dir}, socket) do
+    order = ranking_order(socket)
+    from = String.to_integer(from)
+    to = if dir == "up", do: from - 1, else: from + 1
+
+    if to < 0 or to >= length(order) do
+      {:noreply, socket}
+    else
+      moved = Enum.at(order, from)
+
+      order =
+        order
+        |> List.delete_at(from)
+        |> List.insert_at(to, moved)
+
+      {:noreply, assign(socket, :poll_ranking, order)}
+    end
+  end
+
+  @impl true
+  def handle_event("submit-ranking", _params, socket) do
+    poll = socket.assigns.current_interaction
+
+    ordered =
+      socket
+      |> ranking_order()
+      |> Enum.map(fn id -> Enum.find(poll.poll_opts, &(&1.id == id)) end)
+      |> Enum.reject(&is_nil/1)
+
+    who = socket.assigns[:current_user] || socket.assigns.attendee_identifier
+    who = if is_map(who), do: who.id, else: who
+
+    case Claper.Polls.rank(who, socket.assigns.event.uuid, ordered, poll.id) do
+      {:ok, saved} -> {:noreply, socket |> get_current_vote(saved.id)}
+      _ -> {:noreply, socket}
+    end
+  end
+
   @impl true
   def handle_event(
         "vote",
@@ -1043,8 +1088,19 @@ defmodule ClaperWeb.EventLive.Show do
   end
 
   defp maybe_reset_selected_poll_opt(socket, _same_interaction) do
-    socket |> assign(:selected_poll_opt, [])
+    socket |> assign(:selected_poll_opt, []) |> assign(:poll_ranking, [])
   end
+
+  # The order this person currently has the options in, which starts as the
+  # order the author wrote them. Kept as ids rather than positions, so a poll
+  # that changes underneath does not silently reorder somebody's answer.
+  defp ranking_order(%{assigns: %{poll_ranking: order}}) when is_list(order) and order != [],
+    do: order
+
+  defp ranking_order(%{assigns: %{current_interaction: %Claper.Polls.Poll{} = poll}}),
+    do: Enum.map(poll.poll_opts, & &1.id)
+
+  defp ranking_order(_socket), do: []
 
   defp update_stats(%{assigns: %{current_user: current_user}}, event) when is_map(current_user) do
     Stats.create_stat(event, %{

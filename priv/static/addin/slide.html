@@ -39,8 +39,21 @@
       .stage:hover .change, .change:focus-visible { opacity: 1; }
 
       /* The one place that may scroll, and only when the object is too small for
-         the form. Never the stage, which is what people look at. */
-      .setup { margin: auto; padding: 1.25rem; max-width: 24rem; width: 100%; max-height: 100%; overflow-y: auto; }
+         the form. Never the stage, which is what people look at.
+
+         It brings its own white ground, and that is not a style choice. The
+         page is transparent so the finished block sits on the slide's own
+         background, but the setup form has dark text on it, and on a dark
+         slide that is dark on dark: measured in PowerPoint, the whole form was
+         unreadable. Transparency is right for what the room sees and wrong for
+         what the author fills in. */
+      .setup {
+        margin: auto; padding: 1.25rem; max-width: 24rem; width: 100%;
+        max-height: 100%; overflow-y: auto;
+        background: #fff; color: var(--ink);
+        border-radius: .75rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,.2), 0 8px 24px rgba(0,0,0,.25);
+      }
       .setup h1 { font-size: 1rem; margin: 0 0 .25rem; }
       .setup p { margin: 0 0 .9rem; color: var(--muted); font-size: .8rem; }
       label { display: block; font-weight: 600; font-size: .78rem; margin: .75rem 0 .2rem; }
@@ -62,8 +75,16 @@
       .switch { display: flex; align-items: center; gap: .45rem; margin: .7rem 0 .2rem; font-size: .78rem; font-weight: 600; }
       .switch input { width: auto; }
       input[type="color"] { padding: .15rem; height: 2.1rem; cursor: pointer; }
-      details { margin-top: .7rem; }
-      details summary { cursor: pointer; font-weight: 600; font-size: .78rem; color: var(--muted); }
+      /* Looks like the button it is. As a bare line of muted text it read as a
+         caption and got skipped, and the colours nobody could find were all
+         behind it. */
+      details { margin-top: .8rem; border: 1px solid var(--line); border-radius: .5rem; }
+      details summary {
+        cursor: pointer; font-weight: 600; font-size: .8rem; color: var(--brand);
+        padding: .5rem .65rem; list-style-position: inside;
+      }
+      details[open] summary { border-bottom: 1px solid var(--line); }
+      details > .grid2, details > .switch, details > div { margin: .55rem .65rem; }
       .err { color: var(--danger); font-size: .78rem; margin-top: .6rem; min-height: 1rem; }
       .err.ok { color: #146c43; }
       [hidden] { display: none !important; }
@@ -96,7 +117,7 @@
              tall against an object 420px high, which is the scrollbar the
              author then sees. Measured, not guessed. -->
         <details id="look">
-          <summary>Change how it looks</summary>
+          <summary>Colours, background and more</summary>
           <div class="grid2" style="margin-top:.5rem">
             <div>
               <label for="theme">Text</label>
@@ -162,6 +183,13 @@
               <label for="bar">Bar colour</label>
               <input id="bar" type="color" value="#140553" />
             </div>
+          </div>
+
+          <!-- A block placed before the defaults changed keeps what it was
+               given, which is right for a choice and wrong for a default it was
+               never asked about. This is the one click back. -->
+          <div>
+            <button class="plain" id="resetLook" type="button">Back to the standard look</button>
           </div>
         </details>
 
@@ -271,15 +299,17 @@
         return keys.filter(function (k) { return k.toLowerCase().split("-")[0] === base; })[0] || null;
       }
 
-      // The origin comes from the block's own link, which is the only address
-      // this page knows. Without one there is nothing to translate against yet.
+      // From this page's own address, not from the block's link. Claper serves
+      // this file, so the address is known before anything is configured. Taking
+      // it from the link was why the very first screen, the one asking for a
+      // link, was always English: at that moment there is no link to take it
+      // from, and that is exactly the screen a new author sees first.
       function loadLanguage() {
-        var parts = parseLink(state.link);
         var wanted;
         try { wanted = Office.context.displayLanguage; } catch (e) { wanted = null; }
-        if (!parts || !wanted) return Promise.resolve();
+        if (!wanted) return Promise.resolve();
 
-        return fetch(parts.origin + "/addin/strings.json")
+        return fetch(window.location.origin + "/addin/strings.json")
           .then(function (r) { return r.ok ? r.json() : null; })
           .then(function (all) {
             if (!all) return;
@@ -538,20 +568,37 @@
         // sitting on slides instead of leaving them pointing at a dead one.
         readDeckLink().then(function (deckLink) {
           var fromDeck = deckLink && parseLink(deckLink);
+          // A different link is a different event, and the question this block
+          // remembers lives in the old one. Its id means nothing in the new
+          // event, or worse, means a different question, so the choice is
+          // dropped and the block asks again rather than showing the wrong
+          // thing. The look the author picked is theirs and stays.
+          var moved = fromDeck && saved && saved.link && saved.link !== fromDeck.base;
+
           if (fromDeck) state.link = fromDeck.base;
 
-          // The address is only known now, and it is where the words come from.
-          return loadLanguage().then(function () { decide(saved); });
+          if (moved) {
+            state.poll = null;
+            state.quiz = null;
+            state.form = null;
+            state.show = "interaction";
+            saved = null;
+          }
+
+          return loadLanguage().then(function () { decide(saved, moved); });
         });
 
-        function decide(saved) {
+        function decide(saved, moved) {
           if (saved && saved.link && state.link) {
             // Configured before: show it, using the deck's current link.
             present();
           } else if (state.link) {
             // The deck knows the link but this block has never been told what to
-            // show. Skip the pasting and go straight to the choice.
+            // show, or it was told something that belongs to another event.
             reconfigure();
+            if (moved) {
+              say(t("This presentation now belongs to a different event. Choose what this slide shows."));
+            }
           } else {
             openSetup(false);
           }
@@ -560,6 +607,18 @@
         $("change").addEventListener("click", reconfigure);
         $("ownColours").addEventListener("change", function () {
           $("colours").hidden = !$("ownColours").checked;
+        });
+
+        $("resetLook").addEventListener("click", function () {
+          $("theme").value = "light";
+          $("panel").value = "off";
+          $("radius").value = "soft";
+          $("shadow").value = "off";
+          $("layout").value = "cloud";
+          $("board").value = "off";
+          $("ownColours").checked = false;
+          $("colours").hidden = true;
+          say(t("Set back to the standard look. Save it below to apply."), true);
         });
         $("connect").addEventListener("click", goToStep2);
         $("url").addEventListener("keydown", function (e) { if (e.key === "Enter") goToStep2(); });

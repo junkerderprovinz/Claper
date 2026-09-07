@@ -501,9 +501,14 @@ defmodule ClaperWeb.AddinController do
     end
   end
 
-  # Bars or a scale. Anything else is bars, which is what a poll has always
-  # been, rather than a value the changeset would then have to refuse.
-  defp style(params), do: if(Map.get(params, "style") == "scale", do: "scale", else: "bars")
+  # Bars, a scale or a ranking. Anything else is bars, which is what a poll has
+  # always been, rather than a value the changeset would then have to refuse.
+  defp style(params) do
+    case Map.get(params, "style") do
+      value when value in ~w(scale ranking) -> value
+      _ -> "bars"
+    end
+  end
 
   defp find_form(event, id) do
     with {parsed, ""} <- Integer.parse(to_string(id)),

@@ -369,11 +369,11 @@ defmodule ClaperWeb.EventLive.Presenter do
     if poll.enabled do
       {:noreply,
        socket
-       |> update(:current_poll, fn _current_poll -> poll end)}
+       |> assign_poll(poll)}
     else
       {:noreply,
        socket
-       |> update(:current_poll, fn _current_poll -> nil end)}
+       |> assign_poll(nil)}
     end
   end
 
@@ -381,7 +381,7 @@ defmodule ClaperWeb.EventLive.Presenter do
   def handle_info({:poll_deleted, _poll}, socket) do
     {:noreply,
      socket
-     |> update(:current_poll, fn _current_poll -> nil end)}
+     |> assign_poll(nil)}
   end
 
   # A block pinned to one form is not following the event, so a change to a
@@ -523,7 +523,7 @@ defmodule ClaperWeb.EventLive.Presenter do
       ) do
     {:noreply,
      socket
-     |> assign(:current_poll, interaction)
+     |> assign_poll(interaction)
      |> assign(:current_embed, nil)
      |> assign(:current_form, nil)
      |> assign_quiz(nil)}
@@ -537,7 +537,7 @@ defmodule ClaperWeb.EventLive.Presenter do
     {:noreply,
      socket
      |> assign(:current_embed, interaction)
-     |> assign(:current_poll, nil)
+     |> assign_poll(nil)
      |> assign(:current_form, nil)
      |> assign_quiz(nil)}
   end
@@ -550,7 +550,7 @@ defmodule ClaperWeb.EventLive.Presenter do
     {:noreply,
      socket
      |> assign(:current_form, interaction)
-     |> assign(:current_poll, nil)
+     |> assign_poll(nil)
      |> assign(:current_embed, nil)
      |> assign_quiz(nil)}
   end
@@ -563,7 +563,7 @@ defmodule ClaperWeb.EventLive.Presenter do
     {:noreply,
      socket
      |> assign_quiz(interaction)
-     |> assign(:current_poll, nil)
+     |> assign_poll(nil)
      |> assign(:current_embed, nil)
      |> assign(:current_form, nil)}
   end
@@ -575,7 +575,7 @@ defmodule ClaperWeb.EventLive.Presenter do
       ) do
     {:noreply,
      socket
-     |> assign(:current_poll, nil)
+     |> assign_poll(nil)
      |> assign(:current_embed, nil)
      |> assign(:current_form, nil)
      |> assign_quiz(nil)}
@@ -684,7 +684,7 @@ defmodule ClaperWeb.EventLive.Presenter do
   # presenter moving through Claper cannot change what a PowerPoint slide shows.
   defp poll_at_position(%{assigns: %{pinned_poll_id: id, event: event}} = socket)
        when is_integer(id) do
-    assign(socket, :current_poll, Claper.Polls.get_poll_for_event(id, event.id))
+    assign_poll(socket, Claper.Polls.get_poll_for_event(id, event.id))
   end
 
   # A link that names a quiz named one interaction, not two, so the poll the
@@ -703,7 +703,7 @@ defmodule ClaperWeb.EventLive.Presenter do
              event.presentation_file.id,
              state.position
            ) do
-      socket |> assign(:current_poll, poll)
+      assign_poll(socket, poll)
     end
   end
 
@@ -731,6 +731,21 @@ defmodule ClaperWeb.EventLive.Presenter do
            ) do
       assign_form(socket, form)
     end
+  end
+
+  # The poll and, for a ranking, the order the room has put its options in.
+  # Only read for a ranking: a poll and a scale carry their result in the option
+  # counts already, and reading every vote for them would be a query per update
+  # for a number that is right there.
+  defp assign_poll(socket, poll) do
+    ranked =
+      if poll && poll.style == "ranking" do
+        Claper.Polls.Poll.ranked(poll, Claper.Polls.list_poll_votes(poll.id))
+      else
+        []
+      end
+
+    socket |> assign(:current_poll, poll) |> assign(:poll_ranked, ranked)
   end
 
   # The quiz and the board that goes under it. Only queried when a link asked
