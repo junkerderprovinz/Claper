@@ -102,6 +102,13 @@ defmodule ClaperWeb.AddinStrings do
       "Cancel" => gettext("Cancel"),
       "For PowerPoint" => gettext("For PowerPoint"),
       "Claper slide" => gettext("Claper slide"),
+      "Put on its own slide" => gettext("Put on its own slide"),
+      "Building the slide…" => gettext("Building the slide…"),
+      "Added as a new slide at the end." => gettext("Added as a new slide at the end."),
+      "Put one Claper block on a slide first. Every slide after that is copied from it." =>
+        gettext(
+          "Put one Claper block on a slide first. Every slide after that is copied from it."
+        ),
       "already on the deck inside Claper" => gettext("already on the deck inside Claper"),
       "answers so far" => gettext("answers so far"),
       "Delete this question? The answers already given go with it." =>

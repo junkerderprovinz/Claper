@@ -519,6 +519,14 @@
         editBtn.textContent = t("Edit");
         editBtn.addEventListener("click", function () { editPoll(poll, wrap); });
 
+        var slideBtn = document.createElement("button");
+        slideBtn.className = "link";
+        slideBtn.type = "button";
+        slideBtn.textContent = t("Put on its own slide");
+        slideBtn.addEventListener("click", function () {
+          putOnOwnSlide("poll", poll.id, slideBtn, $("listMsg"));
+        });
+
         var delBtn = document.createElement("button");
         delBtn.className = "link danger";
         delBtn.type = "button";
@@ -536,6 +544,7 @@
           );
         });
 
+        actions.appendChild(slideBtn);
         actions.appendChild(editBtn);
         actions.appendChild(delBtn);
         wrap.appendChild(actions);
@@ -809,6 +818,14 @@
         editBtn.textContent = t("Edit");
         editBtn.addEventListener("click", function () { editQuiz(quiz, wrap); });
 
+        var slideBtn = document.createElement("button");
+        slideBtn.className = "link";
+        slideBtn.type = "button";
+        slideBtn.textContent = t("Put on its own slide");
+        slideBtn.addEventListener("click", function () {
+          putOnOwnSlide("quiz", quiz.id, slideBtn, $("quizListMsg"));
+        });
+
         var delBtn = document.createElement("button");
         delBtn.className = "link danger";
         delBtn.type = "button";
@@ -826,6 +843,7 @@
           );
         });
 
+        actions.appendChild(slideBtn);
         actions.appendChild(editBtn);
         actions.appendChild(delBtn);
         wrap.appendChild(actions);
@@ -1016,6 +1034,108 @@
           .then(function (body) { return useEvent(body.event.code); })
           .catch(function (e) { say($("pickMsg"), e.message, "err"); })
           .then(function () { $("createEvent").disabled = false; });
+      }
+
+      /* ---------- putting a question on its own slide ---------- */
+
+      // Slido's trick, without Slido's architecture: a question becomes a real
+      // slide in the deck instead of something the author has to place. The
+      // slide is built from a slide this deck already has, so the block on it
+      // resolves the same way there as it does everywhere else in this file.
+      //
+      // Reading the deck is what makes that possible: Office hands it over in
+      // slices, and the server takes the first slide carrying a Claper block,
+      // points its copy at the chosen question, and hands back a one-slide file.
+      function readDeck() {
+        return new Promise(function (resolve, reject) {
+          Office.context.document.getFileAsync(
+            Office.FileType.Compressed,
+            { sliceSize: 4194304 },
+            function (result) {
+              if (result.status !== Office.AsyncResultStatus.Succeeded) {
+                reject(new Error((result.error && result.error.message) || "PowerPoint would not hand over the file."));
+                return;
+              }
+
+              var file = result.value;
+              var slices = [];
+              var next = 0;
+
+              function take() {
+                if (next >= file.sliceCount) {
+                  file.closeAsync(function () {});
+                  var total = slices.reduce(function (n, s) { return n + s.length; }, 0);
+                  var all = new Uint8Array(total);
+                  var at = 0;
+                  slices.forEach(function (s) { all.set(s, at); at += s.length; });
+                  resolve(toBase64(all));
+                  return;
+                }
+
+                file.getSliceAsync(next, function (slice) {
+                  if (slice.status !== Office.AsyncResultStatus.Succeeded) {
+                    file.closeAsync(function () {});
+                    reject(new Error("PowerPoint stopped handing over the file."));
+                    return;
+                  }
+                  slices.push(new Uint8Array(slice.value.data));
+                  next++;
+                  take();
+                });
+              }
+
+              take();
+            }
+          );
+        });
+      }
+
+      // In chunks, because String.fromCharCode.apply blows the call stack on a
+      // presentation-sized array.
+      function toBase64(bytes) {
+        var binary = "";
+        var CHUNK = 0x8000;
+        for (var i = 0; i < bytes.length; i += CHUNK) {
+          binary += String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK));
+        }
+        return btoa(binary);
+      }
+
+      function insertDeck(base64) {
+        return PowerPoint.run(function (context) {
+          context.presentation.insertSlidesFromBase64(base64, {
+            formatting: PowerPoint.InsertSlideFormatting.useDestinationTheme
+          });
+          return context.sync();
+        });
+      }
+
+      // The extracted template is cached, so only the first slide of a session
+      // costs an upload of the whole presentation.
+      var deckTemplate = "";
+
+      function putOnOwnSlide(kind, id, button, msgEl) {
+        button.disabled = true;
+        say(msgEl, t("Building the slide…"));
+
+        var payload = { kind: kind, id: id };
+
+        Promise.resolve(deckTemplate || readDeck())
+          .then(function (source) {
+            payload[deckTemplate ? "template" : "deck"] = source;
+            return api("/api/addin/slide", { method: "POST", body: JSON.stringify(payload) });
+          })
+          .then(function (body) {
+            if (body.template) deckTemplate = body.template;
+            return insertDeck(body.slide);
+          })
+          .then(function () { say(msgEl, t("Added as a new slide at the end."), "ok"); })
+          .catch(function (e) {
+            // The one failure worth explaining rather than reporting: there is
+            // nothing to copy until one block exists in the deck.
+            say(msgEl, e.message, "err");
+          })
+          .then(function () { button.disabled = false; });
       }
 
       /* ---------- the joining picture ---------- */
