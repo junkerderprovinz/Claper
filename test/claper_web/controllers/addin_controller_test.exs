@@ -627,5 +627,150 @@ defmodule ClaperWeb.AddinControllerTest do
     test "the writing key is not a catalogue key", %{token: token} do
       assert build_conn() |> get(~p"/api/embed/#{token}/interactions") |> json_response(404)
     end
+
+    test "open questions are in it too, so a slide can name one", %{
+      conn: conn,
+      token: token,
+      embed: embed
+    } do
+      conn
+      |> auth(token)
+      |> post(~p"/api/addin/forms", %{title: "what now", fields: ["Your answer"]})
+      |> json_response(201)
+
+      body = build_conn() |> get(~p"/api/embed/#{embed}/interactions") |> json_response(200)
+
+      assert [%{"title" => "what now"}] = body["forms"]
+    end
+  end
+
+  # Claper's third kind of interaction, and the one the sidebar never offered:
+  # one or more named boxes people write into freely, rather than a list to pick
+  # from.
+  describe "open questions" do
+    test "an empty event has none", %{conn: conn, token: token} do
+      assert %{"forms" => []} =
+               conn |> auth(token) |> get(~p"/api/addin/forms") |> json_response(200)
+    end
+
+    test "one box is enough, and it defaults to a required text box", %{
+      conn: conn,
+      token: token
+    } do
+      body =
+        conn
+        |> auth(token)
+        |> post(~p"/api/addin/forms", %{title: "one word please", fields: ["Your answer"]})
+        |> json_response(201)
+
+      assert body["title"] == "one word please"
+      assert [%{"name" => "Your answer", "type" => "text", "required" => true}] = body["fields"]
+    end
+
+    test "a box can say it wants an address instead", %{conn: conn, token: token} do
+      body =
+        conn
+        |> auth(token)
+        |> post(~p"/api/addin/forms", %{
+          title: "leave your details",
+          fields: [%{"name" => "Email", "type" => "email", "required" => false}]
+        })
+        |> json_response(201)
+
+      assert [%{"name" => "Email", "type" => "email", "required" => false}] = body["fields"]
+    end
+
+    # The attendee view draws text and email and nothing else, so a third kind
+    # would render as an empty space where a question was meant to be.
+    test "a type the attendee view cannot draw becomes a text box", %{conn: conn, token: token} do
+      body =
+        conn
+        |> auth(token)
+        |> post(~p"/api/addin/forms", %{
+          title: "pick a colour",
+          fields: [%{"name" => "Colour", "type" => "color"}]
+        })
+        |> json_response(201)
+
+      assert [%{"type" => "text"}] = body["fields"]
+    end
+
+    test "a question with no boxes is refused", %{conn: conn, token: token} do
+      assert conn
+             |> auth(token)
+             |> post(~p"/api/addin/forms", %{title: "nothing to fill in", fields: []})
+             |> json_response(422)
+    end
+
+    test "renaming keeps the boxes", %{conn: conn, token: token} do
+      created =
+        conn
+        |> auth(token)
+        |> post(~p"/api/addin/forms", %{title: "before", fields: ["Your answer"]})
+        |> json_response(201)
+
+      body =
+        conn
+        |> auth(token)
+        |> patch(~p"/api/addin/forms/#{created["id"]}", %{title: "after"})
+        |> json_response(200)
+
+      assert body["title"] == "after"
+      assert [%{"name" => "Your answer"}] = body["fields"]
+    end
+
+    test "the boxes can be replaced", %{conn: conn, token: token} do
+      created =
+        conn
+        |> auth(token)
+        |> post(~p"/api/addin/forms", %{title: "two things", fields: ["One"]})
+        |> json_response(201)
+
+      body =
+        conn
+        |> auth(token)
+        |> patch(~p"/api/addin/forms/#{created["id"]}", %{fields: ["Name", "Question"]})
+        |> json_response(200)
+
+      assert [%{"name" => "Name"}, %{"name" => "Question"}] = body["fields"]
+    end
+
+    test "deleting one removes it from the list", %{conn: conn, token: token} do
+      created =
+        conn
+        |> auth(token)
+        |> post(~p"/api/addin/forms", %{title: "gone soon", fields: ["Your answer"]})
+        |> json_response(201)
+
+      assert conn |> auth(token) |> delete(~p"/api/addin/forms/#{created["id"]}") |> response(204)
+
+      assert %{"forms" => []} =
+               conn |> auth(token) |> get(~p"/api/addin/forms") |> json_response(200)
+    end
+
+    # The same rule as polls and quizzes: the token is the whole authorisation,
+    # so an id belonging to another event is simply not found.
+    test "an open question of another event is not found", %{conn: conn, token: token} do
+      other_user = user_fixture()
+      other_file = presentation_file_fixture(%{user: other_user}, [:event])
+
+      {:ok, other_form} =
+        Claper.Forms.create_form(%{
+          "title" => "somebody else's",
+          "presentation_file_id" => other_file.id,
+          "position" => 1,
+          "fields" => [%{"name" => "Your answer", "type" => "text", "required" => true}]
+        })
+
+      assert conn
+             |> auth(token)
+             |> patch(~p"/api/addin/forms/#{other_form.id}", %{title: "mine now"})
+             |> json_response(404)
+
+      assert conn
+             |> auth(token)
+             |> delete(~p"/api/addin/forms/#{other_form.id}")
+             |> json_response(404)
+    end
   end
 end

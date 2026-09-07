@@ -452,7 +452,13 @@ defmodule ClaperWeb.EventLive.PresenterEmbedTest do
     # The first live test in PowerPoint showed nothing at all: the ground had
     # been made transparent while the text stayed white, which is invisible on a
     # white slide. Nothing in the markup was wrong, so no test could catch it.
-    test "brings its own light ground so the text is not white on white", %{
+    #
+    # The card is gone from the default now, which does not bring that failure
+    # back: what made the block invisible was white text, and the text still
+    # turns dark with the light theme whether or not there is a card behind it.
+    # A slide brings its own background; a white rectangle on top of it is one
+    # more thing the author has to design around.
+    test "the text stays dark, so it is never white on white", %{
       conn: conn,
       token: token,
       presentation_file: presentation_file
@@ -469,9 +475,9 @@ defmodule ClaperWeb.EventLive.PresenterEmbedTest do
       html = get(conn, ~p"/embed/interaction/#{token}") |> html_response(200)
       poll_block = html |> String.split(~s(id="poll")) |> Enum.at(1) |> String.slice(0, 1200)
 
-      assert poll_block =~ "bg-white"
       assert poll_block =~ "text-gray-900"
       refute poll_block =~ "text-white"
+      refute poll_block =~ "bg-white", "the card is not the default any more"
     end
 
     # The block sits on someone else's slide, so its look belongs to the link.
@@ -500,20 +506,113 @@ defmodule ClaperWeb.EventLive.PresenterEmbedTest do
       end
 
       default = block.("")
-      assert default =~ "bg-white"
+      refute default =~ "bg-white/95"
+      assert default =~ "text-gray-900"
       assert default =~ "rounded-md"
       refute default =~ "shadow-lg"
 
-      transparent = block.("?panel=off&theme=dark&radius=sharp&shadow=on")
-      refute transparent =~ "bg-white/95"
-      assert transparent =~ "text-white"
-      assert transparent =~ "rounded-none"
-      assert transparent =~ "shadow-lg"
+      carded = block.("?panel=on&theme=dark&radius=sharp&shadow=on")
+      assert carded =~ "bg-gray-900/95"
+      assert carded =~ "text-white"
+      assert carded =~ "rounded-none"
+      assert carded =~ "shadow-lg"
 
       nonsense = block.("?theme=neon&panel=maybe&radius=blob&shadow=yes")
-      assert nonsense =~ "bg-white"
+      refute nonsense =~ "bg-white/95"
       assert nonsense =~ "text-gray-900"
       assert nonsense =~ "rounded-md"
+    end
+
+    # Two colours the author picked outright, for a deck whose palette is
+    # neither of the two themes. Written as a rule rather than an inline style
+    # on each element, because they are spread over a dozen places.
+    test "the link can carry the text and bar colours themselves", %{
+      conn: conn,
+      token: token,
+      presentation_file: presentation_file
+    } do
+      Claper.PollsFixtures.poll_fixture(%{
+        presentation_file_id: presentation_file.id,
+        position: 0,
+        title: "coloured poll",
+        show_results: true
+      })
+
+      show_poll(presentation_file)
+
+      page = fn query ->
+        get(conn, "/embed/interaction/#{token}#{query}") |> html_response(200)
+      end
+
+      chosen = page.("?text=%23ff8800&bar=112233")
+      assert chosen =~ ".claper-ink { color: #ff8800 !important; }"
+      assert chosen =~ ".claper-bar { background-color: #112233 !important; }"
+
+      # The value arrives from a URL held by a document Claper does not own and
+      # is written straight into a stylesheet, so anything that is not exactly
+      # six hex digits is no colour at all rather than a colour of its own.
+      refute page.("?text=red;}body{display:none") =~ "claper-ink { color"
+      refute page.("?bar=<script>") =~ "claper-bar { background"
+      refute page.("") =~ "claper-ink { color"
+    end
+
+    # Nothing drew Claper's open questions on a presentation screen before: the
+    # deck carried the wording and the answers were read afterwards. A slide has
+    # to show both, so this is the question and what the room is writing.
+    test "an open question shows its wording and the answers as they arrive", %{
+      conn: conn,
+      token: token,
+      presentation_file: presentation_file
+    } do
+      form =
+        Claper.FormsFixtures.form_fixture(%{
+          presentation_file_id: presentation_file.id,
+          position: 0,
+          title: "what should we build",
+          fields: [%{name: "Your answer", type: "text"}]
+        })
+
+      empty = get(conn, "/embed/interaction/#{token}?form=#{form.id}") |> html_response(200)
+      assert empty =~ "what should we build"
+      assert empty =~ "Waiting for the first answer"
+
+      Claper.Forms.create_form_submit(%{
+        "form_id" => form.id,
+        "attendee_identifier" => "someone",
+        "response" => %{"Your answer" => "a bigger boat"}
+      })
+
+      answered = get(conn, "/embed/interaction/#{token}?form=#{form.id}") |> html_response(200)
+      assert answered =~ "a bigger boat"
+      refute answered =~ "Waiting for the first answer"
+    end
+
+    # The pinned pair, same as polls and quizzes: a link that names one
+    # interaction named one, not two.
+    test "a pinned open question leaves the poll behind", %{
+      conn: conn,
+      token: token,
+      presentation_file: presentation_file
+    } do
+      Claper.PollsFixtures.poll_fixture(%{
+        presentation_file_id: presentation_file.id,
+        position: 0,
+        title: "the poll on this page"
+      })
+
+      form =
+        Claper.FormsFixtures.form_fixture(%{
+          presentation_file_id: presentation_file.id,
+          position: 0,
+          title: "the open question"
+        })
+
+      show_poll(presentation_file)
+
+      html = get(conn, "/embed/interaction/#{token}?form=#{form.id}") |> html_response(200)
+
+      assert html =~ "the open question"
+      refute html =~ "the poll on this page"
     end
 
     test "the same token opens both views", %{conn: conn, token: token} do
