@@ -157,7 +157,7 @@ defmodule Claper.Tasks.Converter do
     File.rm_rf!(thumbs_dir)
     File.mkdir_p!(thumbs_dir)
 
-    files = Path.wildcard("#{path}/*.jpg")
+    files = Claper.Files.jpgs_in(path)
 
     with [_ | _] <- files,
          {:ok, imagemagick_command} <- get_imagemagick_command() do
@@ -200,8 +200,8 @@ defmodule Claper.Tasks.Converter do
   end
 
   defp jpg_upload(%Result{status: 0}, hash, path, presentation, user_id, is_copy) do
-    files = Path.wildcard("#{path}/*.jpg")
-    thumb_files = Path.wildcard("#{path}/thumbs/*.jpg")
+    files = Claper.Files.jpgs_in(path)
+    thumb_files = Claper.Files.jpgs_in(Path.join(path, "thumbs"))
 
     # assign new hash to avoid cache issues
     new_hash = :erlang.phash2("#{hash}-#{System.system_time(:second)}")
@@ -344,8 +344,8 @@ defmodule Claper.Tasks.Converter do
 
   defp upload_s3_thumbnails(path, hash) do
     path
-    |> Path.join("thumbs/*.jpg")
-    |> Path.wildcard()
+    |> Path.join("thumbs")
+    |> Claper.Files.jpgs_in()
     |> Enum.reduce_while(:ok, fn file, _acc ->
       key = "presentations/#{hash}/thumbs/#{Path.basename(file)}"
 

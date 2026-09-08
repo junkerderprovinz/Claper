@@ -380,8 +380,8 @@ defmodule Claper.Presentations do
 
     case Keyword.fetch!(config, :storage) do
       "local" ->
-        thumbnails_glob(hash)
-        |> Path.wildcard()
+        thumbnails_dir(hash)
+        |> Claper.Files.jpgs_in()
         |> Enum.any?()
 
       "s3" ->
@@ -397,13 +397,14 @@ defmodule Claper.Presentations do
     _ -> false
   end
 
-  defp thumbnails_glob(hash) do
+  # A directory, not a glob. Claper.Files.jpgs_in explains why the difference
+  # matters.
+  defp thumbnails_dir(hash) do
     Path.join([
       get_presentation_storage_dir(),
       "uploads",
       hash,
-      "thumbs",
-      "*.jpg"
+      "thumbs"
     ])
   end
 
