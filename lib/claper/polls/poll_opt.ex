@@ -7,6 +7,7 @@ defmodule Claper.Polls.PollOpt do
           content: String.t(),
           vote_count: integer(),
           percentage: float(),
+          image: String.t() | nil,
           poll_id: integer(),
           poll: Claper.Polls.Poll.t(),
           poll_votes: [Claper.Polls.PollVote.t()],
@@ -19,6 +20,10 @@ defmodule Claper.Polls.PollOpt do
     field :content, :string
     field :vote_count, :integer
     field :percentage, :float, virtual: true
+    # A picture beside the wording, never instead of it: an option with no
+    # words cannot be read aloud, cannot be searched and cannot be answered by
+    # somebody using a screen reader.
+    field :image, :string
 
     belongs_to :poll, Claper.Polls.Poll
     has_many :poll_votes, Claper.Polls.PollVote, on_replace: :delete
@@ -29,7 +34,7 @@ defmodule Claper.Polls.PollOpt do
   @doc false
   def changeset(poll_opt, attrs) do
     poll_opt
-    |> cast(attrs, [:content, :vote_count, :poll_id])
+    |> cast(attrs, [:content, :vote_count, :poll_id, :image])
     |> validate_required([:content])
     |> validate_length(:content, max: 255)
   end

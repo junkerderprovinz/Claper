@@ -759,15 +759,45 @@ defmodule ClaperWeb.EventLive.Presenter do
   # counts already, and reading every vote for them would be a query per update
   # for a number that is right there.
   defp assign_poll(socket, poll) do
-    ranked =
-      if poll && poll.style == "ranking" do
-        Claper.Polls.Poll.ranked(poll, Claper.Polls.list_poll_votes(poll.id))
+    # Three of the shapes are results the vote rows have to be read for; the
+    # rest are answered by the counter on the option and need nothing. One
+    # query serves whichever of the three this is, rather than one per shape.
+    votes =
+      if poll && poll.style in ~w(ranking points pins) do
+        Claper.Polls.list_poll_votes(poll.id)
       else
         []
       end
 
-    socket |> assign(:current_poll, poll) |> assign(:poll_ranked, ranked)
+    socket
+    |> assign(:current_poll, poll)
+    |> assign(
+      :poll_ranked,
+      if(poll && poll.style == "ranking", do: ranked(poll, votes), else: [])
+    )
+    |> assign(:poll_spent, if(poll && poll.style == "points", do: spent(poll, votes), else: []))
+    |> assign(:poll_pins, if(poll && poll.style == "pins", do: pins(votes), else: []))
+    |> assign(:wheel_opt, wheel_opt(socket, poll))
   end
+
+  # Looked up in the poll rather than trusted from the state, which holds a
+  # bare id: a poll edited since the spin may no longer have that option, and a
+  # slide is not the place to find that out.
+  defp wheel_opt(socket, %Claper.Polls.Poll{style: "wheel"} = poll) do
+    case socket.assigns[:state] do
+      %{wheel_opt_id: id} when is_integer(id) ->
+        Enum.find(poll.poll_opts || [], &(&1.id == id))
+
+      _ ->
+        nil
+    end
+  end
+
+  defp wheel_opt(_socket, _poll), do: nil
+
+  defdelegate ranked(poll, votes), to: Claper.Polls.Poll
+  defdelegate spent(poll, votes), to: Claper.Polls.Poll
+  defdelegate pins(votes), to: Claper.Polls.Poll
 
   # The quiz and the board that goes under it. Only queried when a link asked
   # for the board: it reads every response of the quiz, and quiz_updated

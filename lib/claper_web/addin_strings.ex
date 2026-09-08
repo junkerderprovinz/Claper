@@ -147,6 +147,41 @@ defmodule ClaperWeb.AddinStrings do
           "Everyone puts all the answers in their own order, and the slide shows the order the room agreed on. For priorities and for \"what should we do first\"."
         ),
       "A ranking people put in order" => gettext("A ranking people put in order"),
+      "Points to spend across the answers" => gettext("Points to spend across the answers"),
+      "A picture people tap" => gettext("A picture people tap"),
+      "A wheel you spin" => gettext("A wheel you spin"),
+      "Points" => gettext("Points"),
+      "Picture" => gettext("Picture"),
+      "Wheel" => gettext("Wheel"),
+      "Everyone gets the same budget and decides how much of it each answer is worth. It forces a trade-off that ticking boxes does not, which is why the result reads differently from a poll." =>
+        gettext(
+          "Everyone gets the same budget and decides how much of it each answer is worth. It forces a trade-off that ticking boxes does not, which is why the result reads differently from a poll."
+        ),
+      "Everyone gets the same budget and decides how much of it each answer is worth. It forces a trade-off that ticking boxes does not, which is why the result reads differently from a poll. For budgets, priorities and \"what would you give up\"." =>
+        gettext(
+          "Everyone gets the same budget and decides how much of it each answer is worth. It forces a trade-off that ticking boxes does not, which is why the result reads differently from a poll. For budgets, priorities and \"what would you give up\"."
+        ),
+      "Points each person gets" => gettext("Points each person gets"),
+      "No answers to write: people tap the picture and every tap appears on your slide. For \"where does this go wrong\", floor plans, screenshots and maps." =>
+        gettext(
+          "No answers to write: people tap the picture and every tap appears on your slide. For \"where does this go wrong\", floor plans, screenshots and maps."
+        ),
+      "No answers at all: people tap a picture and every tap appears on your slide. For floor plans, screenshots, maps and anything where the answer is a place rather than a word." =>
+        gettext(
+          "No answers at all: people tap a picture and every tap appears on your slide. For floor plans, screenshots, maps and anything where the answer is a place rather than a word."
+        ),
+      "The picture" => gettext("The picture"),
+      "PNG, JPEG, GIF or WebP, up to 2 MB." => gettext("PNG, JPEG, GIF or WebP, up to 2 MB."),
+      "Nobody answers a wheel. You write what is on it, and a button in Claper spins it and shows what it landed on. For picking a name, a topic or who goes next." =>
+        gettext(
+          "Nobody answers a wheel. You write what is on it, and a button in Claper spins it and shows what it landed on. For picking a name, a topic or who goes next."
+        ),
+      "Nobody answers it. You write what is on it and spin it from Claper. For picking a name, a topic or who goes next." =>
+        gettext(
+          "Nobody answers it. You write what is on it and spin it from Claper. For picking a name, a topic or who goes next."
+        ),
+      "Give each answer a picture" => gettext("Give each answer a picture"),
+      "Choose a picture first." => gettext("Choose a picture first."),
       "Everyone puts all the answers in their own order. The slide shows the order the room agreed on, with the average place next to each one." =>
         gettext(
           "Everyone puts all the answers in their own order. The slide shows the order the room agreed on, with the average place next to each one."

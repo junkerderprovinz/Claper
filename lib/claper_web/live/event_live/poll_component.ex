@@ -12,6 +12,11 @@ defmodule ClaperWeb.EventLive.PollComponent do
       |> assign_new(:ranked_opts, fn -> [] end)
       |> then(fn a -> assign(a, :ranked_opts, ranked_opts(a)) end)
       |> then(fn a -> assign(a, :already_voted, length(a.current_poll_vote) > 0) end)
+      |> assign_new(:poll_points, fn -> %{} end)
+      |> then(fn a -> assign(a, :budget, a.poll.points_budget || 100) end)
+      |> then(fn a -> assign(a, :spent_so_far, a.poll_points |> Map.values() |> Enum.sum()) end)
+      |> assign_new(:wheel_opt_id, fn -> nil end)
+      |> then(fn a -> assign(a, :wheel_opt, wheel_opt(a)) end)
 
     ~H"""
     <div class="font-display">
@@ -84,6 +89,18 @@ defmodule ClaperWeb.EventLive.PollComponent do
               </p>
             <% @poll.style == "scale" -> %>
               <p class="mb-4 text-sm text-gray-400">{gettext("Tap where you stand")}</p>
+            <% @poll.style == "points" -> %>
+              <p class="mb-4 text-sm text-gray-400">
+                {gettext("Spend %{budget} points. Put more on what matters more.",
+                  budget: @budget
+                )}
+              </p>
+            <% @poll.style == "pins" -> %>
+              <p class="mb-4 text-sm text-gray-400">{gettext("Tap the spot on the picture")}</p>
+            <% @poll.style == "wheel" -> %>
+              <p class="mb-4 text-sm text-gray-400">
+                {gettext("Nothing to answer here. The wheel is spun at the front.")}
+              </p>
             <% @poll.multiple -> %>
               <p class="mb-4 text-sm text-gray-400">{gettext("Select one or multiple options")}</p>
             <% true -> %>
@@ -147,7 +164,102 @@ defmodule ClaperWeb.EventLive.PollComponent do
           </button>
         </div>
 
-        <div :if={@poll.style != "ranking"}>
+        <%!-- Points. One box per option and a counter above them, because the
+        question this shape asks is "what would you give up for this" and the
+        person has to see what is left while they decide. The send button stays
+        out of reach while more than the budget is on the table: trimming it
+        quietly would hand the room a split nobody chose. --%>
+        <div :if={@poll.style == "points"}>
+          <div class={[
+            "mb-3 rounded-xl px-3 py-2 text-sm font-bold",
+            @spent_so_far > @budget && "bg-red-900/40 text-red-200",
+            @spent_so_far <= @budget && "bg-gray-800 text-gray-200"
+          ]}>
+            {gettext("%{left} of %{budget} points left",
+              left: @budget - @spent_so_far,
+              budget: @budget
+            )}
+          </div>
+
+          <div class="flex flex-col gap-2">
+            <div
+              :for={opt <- @poll.poll_opts}
+              class="flex items-center gap-2 rounded-xl border border-gray-700 bg-gray-800 px-3 py-2 text-sm font-semibold text-white"
+            >
+              <img
+                :if={opt.image}
+                src={opt.image}
+                alt=""
+                class="h-10 w-10 shrink-0 rounded-lg object-cover"
+              />
+              <span class="min-w-0 flex-1">{opt.content}</span>
+              <input
+                type="number"
+                min="0"
+                max={@budget}
+                inputmode="numeric"
+                disabled={@already_voted}
+                value={Map.get(@poll_points, opt.id, 0)}
+                phx-keyup="points-change"
+                phx-change="points-change"
+                phx-value-opt={opt.id}
+                aria-label={opt.content}
+                class="w-20 shrink-0 rounded-lg border border-gray-600 bg-gray-900 px-2 py-1 text-right tabular-nums text-white disabled:opacity-40"
+              />
+            </div>
+          </div>
+
+          <button
+            :if={!@already_voted}
+            phx-click="submit-points"
+            phx-disable-with="..."
+            disabled={@spent_so_far > @budget || @spent_so_far == 0}
+            class="btn-gradient mt-4 w-full rounded-lg px-3 py-2 text-sm font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {gettext("Send my points")}
+          </button>
+          <button
+            :if={@already_voted}
+            type="button"
+            disabled
+            data-submitted
+            class="mt-4 w-full cursor-not-allowed rounded-lg bg-gray-700 px-3 py-2 text-sm font-bold text-gray-400"
+          >
+            {gettext("Sent")}
+          </button>
+        </div>
+
+        <%!-- Pins. The picture is the answer surface, so it is the thing that
+        takes the tap. The hook divides by the picture's own size before the
+        numbers leave the browser, because this is the only place that knows how
+        big the person's copy of it was. --%>
+        <div :if={@poll.style == "pins"}>
+          <div
+            id={"pin-image-#{@poll.id}"}
+            phx-hook="PinOnImage"
+            data-answered={to_string(@already_voted)}
+            class={[
+              "relative overflow-hidden rounded-xl border border-gray-700",
+              !@already_voted && "cursor-crosshair"
+            ]}
+          >
+            <img src={@poll.image} alt={@poll.title} class="block w-full select-none" />
+          </div>
+          <p :if={@already_voted} class="mt-3 text-sm font-bold text-gray-400">
+            {gettext("Your spot is in.")}
+          </p>
+        </div>
+
+        <%!-- A wheel has nothing to answer. It still shows what it landed on,
+        so the room is looking at the same thing as the slide. --%>
+        <div :if={@poll.style == "wheel"}>
+          <div class="rounded-xl border border-gray-700 bg-gray-800 px-3 py-4 text-center">
+            <p :if={@wheel_opt} class="text-lg font-bold text-white">{@wheel_opt.content}</p>
+            <p :if={!@wheel_opt} class="text-sm text-gray-400">{gettext("Not spun yet.")}</p>
+          </div>
+        </div>
+
+        <div :if={@poll.style not in ["ranking", "points", "pins", "wheel"]}>
           <%!-- A scale reads left to right, because that is the whole of what
           separates it from a list of options: the order carries meaning. --%>
           <div
@@ -193,6 +305,12 @@ defmodule ClaperWeb.EventLive.PollComponent do
                         >
                         </span>
                       </span>
+                      <img
+                        :if={opt.image}
+                        src={opt.image}
+                        alt=""
+                        class="h-10 w-10 shrink-0 rounded-lg object-cover"
+                      />
                       <span class="min-w-0 flex-1 pr-2">{opt.content}</span>
                     </div>
                     <span :if={@show_results} class="z-10 shrink-0 text-xs font-bold text-white">
@@ -236,6 +354,12 @@ defmodule ClaperWeb.EventLive.PollComponent do
                         >
                         </span>
                       </span>
+                      <img
+                        :if={opt.image}
+                        src={opt.image}
+                        alt=""
+                        class="h-10 w-10 shrink-0 rounded-lg object-cover"
+                      />
                       <span class="min-w-0 flex-1 pr-2">{opt.content}</span>
                     </div>
                     <span :if={@show_results} class="z-10 shrink-0 text-xs font-bold text-white">
@@ -311,6 +435,15 @@ defmodule ClaperWeb.EventLive.PollComponent do
   end
 
   defp ranked_opts(_assigns), do: []
+
+  # The option the wheel landed on, looked up in this poll rather than trusted
+  # from the state: the state holds a bare id, and a poll edited since the spin
+  # may no longer have it.
+  defp wheel_opt(%{poll: poll, wheel_opt_id: id}) when is_integer(id) do
+    Enum.find(poll.poll_opts || [], &(&1.id == id))
+  end
+
+  defp wheel_opt(_assigns), do: nil
 
   def toggle_poll(js \\ %JS{}) do
     js

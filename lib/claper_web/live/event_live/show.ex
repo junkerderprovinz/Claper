@@ -102,6 +102,9 @@ defmodule ClaperWeb.EventLive.Show do
       # The order somebody has put a ranking in, as option ids. Empty means
       # "the order the author wrote them", which is where everyone starts.
       |> assign(:poll_ranking, [])
+      # What somebody has put on each option of a points poll so far, as
+      # %{poll_opt_id => points}. Empty means nothing spent yet.
+      |> assign(:poll_points, %{})
       |> assign(:selected_quiz_question_opts, [])
       |> assign(:current_quiz_question_idx, 0)
       |> assign(:event, event)
@@ -118,6 +121,7 @@ defmodule ClaperWeb.EventLive.Show do
       |> assign(:post_count, Enum.count(posts))
       |> starting_soon_assigns(event)
       |> get_current_interaction(event, current_position)
+      |> assign_self_paced(event)
       |> check_leader(event)
       |> leader_list(event)
 
@@ -233,7 +237,7 @@ defmodule ClaperWeb.EventLive.Show do
         socket
       end
 
-    {:noreply, if(position_changed, do: refresh_current_interaction(socket), else: socket)}
+    {:noreply, if(position_changed, do: refresh_current_interaction(socket, false), else: socket)}
   end
 
   @impl true
@@ -291,7 +295,28 @@ defmodule ClaperWeb.EventLive.Show do
         {:current_interaction, _interaction},
         socket
       ) do
-    {:noreply, refresh_current_interaction(socket)}
+    {:noreply, refresh_current_interaction(socket, false)}
+  end
+
+  # The owner switched the room between following the presenter and working
+  # through the list. Everyone already in the room has to be moved over, or
+  # they sit on a page that no longer matches how the talk is being run.
+  @impl true
+  def handle_info({:self_paced_changed, self_paced}, socket) do
+    event = %{socket.assigns.event | self_paced: self_paced}
+
+    socket = assign(socket, :event, event)
+
+    socket =
+      if self_paced do
+        assign_self_paced(socket, event)
+      else
+        socket
+        |> assign_self_paced(event)
+        |> get_current_interaction(event, socket.assigns.state.position)
+      end
+
+    {:noreply, socket}
   end
 
   @impl true
@@ -698,6 +723,96 @@ defmodule ClaperWeb.EventLive.Show do
   end
 
   @impl true
+  def handle_event("choose-interaction", %{"kind" => kind, "id" => id}, socket) do
+    # Looked up in the list this person was just shown rather than fetched by
+    # id: that list is already filtered to the enabled questions of this event,
+    # so nothing here can open a question belonging to another talk or one the
+    # presenter has not released.
+    chosen =
+      Enum.find(socket.assigns.self_paced_list, fn interaction ->
+        to_string(interaction.id) == id and interaction_kind(interaction) == kind
+      end)
+
+    if chosen do
+      {:noreply,
+       socket |> assign(:current_interaction, chosen) |> load_current_interaction(chosen, false)}
+    else
+      {:noreply, socket}
+    end
+  end
+
+  @impl true
+  def handle_event("back-to-list", _params, socket) do
+    {:noreply, assign(socket, :current_interaction, nil)}
+  end
+
+  # Typed into one option's box. Kept in the socket rather than in the form,
+  # because the counter above the boxes has to say what is left the moment a
+  # number changes, and that sum lives here.
+  @impl true
+  def handle_event("points-change", %{"opt" => opt_id, "value" => value}, socket) do
+    opt_id = String.to_integer(opt_id)
+    poll = socket.assigns.current_interaction
+    budget = poll.points_budget || 100
+
+    spent =
+      case Integer.parse(String.trim(value)) do
+        {number, ""} when number >= 0 -> min(number, budget)
+        # An empty box means nothing on this option, which is different from a
+        # zero the person typed only in that nobody has to type it.
+        _ -> 0
+      end
+
+    points = Map.put(socket.assigns.poll_points, opt_id, spent)
+    {:noreply, assign(socket, :poll_points, points)}
+  end
+
+  @impl true
+  def handle_event("submit-points", _params, socket) do
+    poll = socket.assigns.current_interaction
+    budget = poll.points_budget || 100
+    points = socket.assigns.poll_points
+
+    total = points |> Map.values() |> Enum.sum()
+
+    # Refused rather than trimmed. Spending more than the budget is the whole
+    # thing this shape is asking a person not to do, and quietly taking some of
+    # it away would hand the room a result nobody chose.
+    if total > budget do
+      {:noreply, socket}
+    else
+      who = socket.assigns[:current_user] || socket.assigns.attendee_identifier
+      who = if is_map(who), do: who.id, else: who
+
+      case Claper.Polls.allocate(who, socket.assigns.event.uuid, points, poll.id) do
+        {:ok, saved} -> {:noreply, socket |> get_current_vote(saved.id)}
+        _ -> {:noreply, socket}
+      end
+    end
+  end
+
+  # The tap comes from the browser with the picture's own size already divided
+  # out, so what arrives is two fractions between zero and one. Checked again in
+  # the changeset, because this is the one number here a person can hand-edit.
+  @impl true
+  def handle_event("pin", %{"x" => x, "y" => y}, socket) do
+    poll = socket.assigns.current_interaction
+
+    with {x, _} <- Float.parse(to_string(x)),
+         {y, _} <- Float.parse(to_string(y)) do
+      who = socket.assigns[:current_user] || socket.assigns.attendee_identifier
+      who = if is_map(who), do: who.id, else: who
+
+      case Claper.Polls.pin(who, socket.assigns.event.uuid, {x, y}, poll.id) do
+        {:ok, saved} -> {:noreply, socket |> get_current_vote(saved.id)}
+        _ -> {:noreply, socket}
+      end
+    else
+      _ -> {:noreply, socket}
+    end
+  end
+
+  @impl true
   def handle_event(
         "vote",
         _params,
@@ -1004,6 +1119,29 @@ defmodule ClaperWeb.EventLive.Show do
     |> assign(:page_title, "##{socket.assigns.event.code} - #{socket.assigns.event.name}")
   end
 
+  # A room answering at its own pace gets the whole list and picks from it,
+  # instead of being handed whichever question the presenter is standing on.
+  #
+  # Picking from a list rather than showing every question at once is what
+  # keeps every answer handler working unchanged: they all act on "the question
+  # in front of me", and in this mode that is the one this person opened rather
+  # than the one the presenter released. Showing all of them at once would mean
+  # threading a question id through every vote, every rank and every tap, for
+  # no gain a reader of the page would notice.
+  defp assign_self_paced(socket, %{self_paced: true} = event) do
+    socket
+    |> assign(:self_paced, true)
+    |> assign(:self_paced_list, Interactions.list_enabled_interactions(event))
+    # Nothing opened yet, so the list is what this person sees first.
+    |> assign(:current_interaction, nil)
+  end
+
+  defp assign_self_paced(socket, _event) do
+    socket
+    |> assign(:self_paced, false)
+    |> assign(:self_paced_list, [])
+  end
+
   defp get_current_interaction(socket, event, position) do
     with interaction <- Interactions.get_active_interaction(event, position) do
       socket
@@ -1012,7 +1150,20 @@ defmodule ClaperWeb.EventLive.Show do
     end
   end
 
-  defp refresh_current_interaction(socket, preserve_state \\ false) do
+  # The presenter moving on does not move a room that is answering at its own
+  # pace. The list is refreshed, because the presenter may have released another
+  # question while people were working, but whatever this person has open stays
+  # open: being thrown out of a half-answered question by somebody else's click
+  # is the whole thing this mode exists to avoid.
+  defp refresh_current_interaction(%{assigns: %{self_paced: true}} = socket, _preserve_state) do
+    assign(
+      socket,
+      :self_paced_list,
+      Interactions.list_enabled_interactions(socket.assigns.event)
+    )
+  end
+
+  defp refresh_current_interaction(socket, preserve_state) do
     interaction =
       Interactions.get_active_interaction(socket.assigns.event, socket.assigns.state.position)
 
@@ -1026,6 +1177,36 @@ defmodule ClaperWeb.EventLive.Show do
 
   defp same_interaction?(%{id: current_id}, %{id: next_id}), do: current_id == next_id
   defp same_interaction?(_, _), do: false
+
+  # Ids are unique per table, not across them, so a poll and a quiz can both be
+  # number seven. The kind travels with the id wherever one is sent from the
+  # page.
+  def interaction_kind(%Polls.Poll{}), do: "poll"
+  def interaction_kind(%Forms.Form{}), do: "form"
+  def interaction_kind(%Quizzes.Quiz{}), do: "quiz"
+  def interaction_kind(_), do: "other"
+
+  @doc """
+  A short line saying what this question is, for the list a self-paced room
+  picks from.
+  """
+  def interaction_label(%Polls.Poll{style: "wheel"}), do: gettext("Wheel")
+  def interaction_label(%Polls.Poll{style: "ranking"}), do: gettext("Ranking")
+  def interaction_label(%Polls.Poll{style: "scale"}), do: gettext("Scale")
+  def interaction_label(%Polls.Poll{style: "points"}), do: gettext("Points")
+  def interaction_label(%Polls.Poll{style: "pins"}), do: gettext("Picture")
+  def interaction_label(%Polls.Poll{}), do: gettext("Poll")
+  def interaction_label(%Forms.Form{}), do: gettext("Open question")
+  def interaction_label(%Quizzes.Quiz{}), do: gettext("Quiz")
+  def interaction_label(_), do: ""
+
+  @doc """
+  The wording to show for a question in the list, whatever kind it is.
+  """
+  def interaction_title(%Polls.Poll{title: title}), do: title
+  def interaction_title(%Quizzes.Quiz{title: title}), do: title
+  def interaction_title(%Forms.Form{title: title}), do: title
+  def interaction_title(_), do: ""
 
   defp assign_current_slide(socket, position) do
     presentation_file =
@@ -1088,7 +1269,10 @@ defmodule ClaperWeb.EventLive.Show do
   end
 
   defp maybe_reset_selected_poll_opt(socket, _same_interaction) do
-    socket |> assign(:selected_poll_opt, []) |> assign(:poll_ranking, [])
+    socket
+    |> assign(:selected_poll_opt, [])
+    |> assign(:poll_ranking, [])
+    |> assign(:poll_points, %{})
   end
 
   # The order this person currently has the options in, which starts as the

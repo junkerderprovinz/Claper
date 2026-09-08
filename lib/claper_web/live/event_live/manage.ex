@@ -674,6 +674,27 @@ defmodule ClaperWeb.EventLive.Manage do
     end
   end
 
+  # A wheel is the one shape nobody answers, so the only thing that can move it
+  # is this. The result goes into the presentation state rather than only over
+  # the wire: somebody who joins after the spin has to see what it landed on,
+  # and a broadcast is gone by then.
+  def handle_event("spin-wheel", _params, socket) do
+    case socket.assigns.current_interaction do
+      %Claper.Polls.Poll{style: "wheel", poll_opts: [_ | _] = opts} ->
+        chosen = Enum.random(opts)
+
+        {:ok, state} =
+          Claper.Presentations.update_presentation_state(socket.assigns.state, %{
+            wheel_opt_id: chosen.id
+          })
+
+        {:noreply, assign(socket, :state, state)}
+
+      _ ->
+        {:noreply, socket}
+    end
+  end
+
   def handle_event("poll-set-inactive", %{"id" => id}, socket) do
     case Polls.get_poll_for_event(id, event_id(socket)) do
       nil ->
@@ -811,6 +832,32 @@ defmodule ClaperWeb.EventLive.Manage do
     Claper.Posts.delete_all_posts(:user_id, user_id, event)
 
     ban(String.to_integer(user_id), socket)
+  end
+
+  # Self-paced sits on the event, not on the presentation state: it is a
+  # property of the talk rather than of where the presenter is standing in it,
+  # and it has to survive a new deck being uploaded into the same event.
+  @impl true
+  def handle_event(
+        "checked",
+        %{"key" => "self_paced", "value" => value},
+        %{assigns: %{event: event}} = socket
+      ) do
+    case Claper.Events.update_event(event, %{"self_paced" => value}) do
+      {:ok, updated} ->
+        # Everyone in the room has to be told, because this changes what their
+        # page is: a list to work through instead of whatever slide is up.
+        Phoenix.PubSub.broadcast(
+          Claper.PubSub,
+          "event:#{event.uuid}",
+          {:self_paced_changed, updated.self_paced}
+        )
+
+        {:noreply, assign(socket, :event, updated)}
+
+      {:error, _changeset} ->
+        {:noreply, socket}
+    end
   end
 
   @impl true

@@ -38,6 +38,33 @@ defmodule Claper.Interactions do
     )
   end
 
+  @doc """
+  Every enabled question in the whole deck, in slide order.
+
+  For a room answering at its own pace rather than following the presenter.
+  Ordered by the slide the question sits on, because that is the order the
+  author wrote them in and the only order a reader would expect; questions
+  sharing a slide keep the order they were created in, the same tie-break the
+  per-slide list already uses.
+
+  Embeds are left out on purpose. An embed is a web page put on a slide for the
+  room to look at, not a question with an answer, so a list of things still to
+  answer is the wrong place for it.
+  """
+  def list_enabled_interactions(%Events.Event{
+        presentation_file: %Presentations.PresentationFile{id: presentation_file_id}
+      }) do
+    polls = Polls.list_polls(presentation_file_id)
+    forms = Forms.list_forms(presentation_file_id)
+    quizzes = Quizzes.list_quizzes(presentation_file_id)
+
+    (polls ++ forms ++ quizzes)
+    |> Enum.filter(&(&1.enabled == true))
+    |> Enum.sort_by(&{&1.position, &1.inserted_at}, :asc)
+  end
+
+  def list_enabled_interactions(_event), do: []
+
   def get_active_interaction(event, position) do
     with {:ok, interactions} <- get_interactions_at_position(event, position) do
       interactions |> Enum.filter(&(&1.enabled == true)) |> List.first()

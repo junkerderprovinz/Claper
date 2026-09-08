@@ -235,6 +235,12 @@
               <dd>The same thing, drawn as a row from left to right with an average underneath. For "how much do you agree" and anything else where the order of the answers means something.</dd>
               <dt>Ranking</dt>
               <dd>Everyone puts all the answers in their own order, and the slide shows the order the room agreed on. For priorities and for "what should we do first".</dd>
+              <dt>Points</dt>
+              <dd>Everyone gets the same budget and decides how much of it each answer is worth. It forces a trade-off that ticking boxes does not, which is why the result reads differently from a poll. For budgets, priorities and "what would you give up".</dd>
+              <dt>Picture</dt>
+              <dd>No answers at all: people tap a picture and every tap appears on your slide. For floor plans, screenshots, maps and anything where the answer is a place rather than a word.</dd>
+              <dt>Wheel</dt>
+              <dd>Nobody answers it. You write what is on it and spin it from Claper. For picking a name, a topic or who goes next.</dd>
               <dt>Quiz</dt>
               <dd>Looks like a poll, but one answer is the right one and nobody sees which until you release it. For checking whether something landed.</dd>
               <dt>Open question</dt>
@@ -255,6 +261,9 @@
           <option value="bars">Bars, one per answer</option>
           <option value="scale">A scale from left to right</option>
           <option value="ranking">A ranking people put in order</option>
+          <option value="points">Points to spend across the answers</option>
+          <option value="pins">A picture people tap</option>
+          <option value="wheel">A wheel you spin</option>
         </select>
         <p class="help" id="scaleHint" hidden>
           The answers become a row in the order you write them, and the slide also shows the
@@ -264,10 +273,36 @@
           Everyone puts all the answers in their own order. The slide shows the order the
           room agreed on, with the average place next to each one.
         </p>
+        <div id="pointsHint" hidden>
+          <p class="help">
+            Everyone gets the same budget and decides how much of it each answer is worth.
+            It forces a trade-off that ticking boxes does not, which is why the result reads
+            differently from a poll.
+          </p>
+          <label for="pointsBudget">Points each person gets</label>
+          <input id="pointsBudget" type="number" min="1" max="1000" value="100" />
+        </div>
+        <div id="pinsHint" hidden>
+          <p class="help">
+            No answers to write: people tap the picture and every tap appears on your slide.
+            For "where does this go wrong", floor plans, screenshots and maps.
+          </p>
+          <label for="pollImage">The picture</label>
+          <input id="pollImage" type="file" accept="image/png,image/jpeg,image/gif,image/webp" />
+          <p class="help">PNG, JPEG, GIF or WebP, up to 2 MB.</p>
+        </div>
+        <p class="help" id="wheelHint" hidden>
+          Nobody answers a wheel. You write what is on it, and a button in Claper spins it
+          and shows what it landed on. For picking a name, a topic or who goes next.
+        </p>
 
         <label>Answers</label>
         <div id="options"></div>
         <button class="link" id="addOption" type="button">Add answer</button>
+        <label class="switch">
+          <input id="optionPictures" type="checkbox" />
+          <span>Give each answer a picture</span>
+        </label>
         <div style="margin-top:.65rem"><button id="create" type="button">Create poll</button></div>
         <div class="msg" id="createMsg"></div>
 
@@ -809,8 +844,19 @@
             next.querySelector("input").focus();
           });
 
+          // One picture per answer, hidden until the author asks for pictures.
+          // Beside the wording rather than instead of it: an answer with no
+          // words cannot be read aloud and cannot be answered by somebody
+          // using a screen reader.
+          var picture = document.createElement("input");
+          picture.type = "file";
+          picture.className = "answerPicture";
+          picture.accept = "image/png,image/jpeg,image/gif,image/webp";
+          picture.hidden = !box.withPictures;
+
           row.appendChild(field);
           row.appendChild(drop);
+          row.appendChild(picture);
           box.appendChild(row);
         }
 
@@ -825,9 +871,59 @@
             .map(function (i) { return i.value.trim(); })
             .filter(Boolean);
         };
+
+        box.showPictures = function (on) {
+          box.withPictures = !!on;
+          Array.prototype.slice
+            .call(box.querySelectorAll(".answerPicture"))
+            .forEach(function (input) { input.hidden = !on; });
+        };
+
+        // The pictures in the same order as the answers above, so the nth
+        // picture belongs to the nth answer. Rows whose wording is empty are
+        // dropped by values(), so they are dropped here too or the two lists
+        // would line up differently.
+        box.pictures = function () {
+          return Promise.all(
+            Array.prototype.slice
+              .call(box.querySelectorAll(".answer"))
+              .filter(function (row) { return row.querySelector('input[type="text"]').value.trim(); })
+              .map(function (row) { return readPicture(row.querySelector(".answerPicture")); })
+          );
+        };
+      }
+
+      // A file input as base64, or null when nothing was chosen. Base64 because
+      // the sidebar has no way to reach Claper's disk and the picture travels in
+      // the same request as the question it belongs to.
+      function readPicture(input) {
+        return new Promise(function (resolve) {
+          if (!input || !input.files || !input.files[0]) { resolve(null); return; }
+          var reader = new FileReader();
+          reader.onerror = function () { resolve(null); };
+          reader.onload = function () { resolve(String(reader.result)); };
+          reader.readAsDataURL(input.files[0]);
+        });
       }
 
       /* ---------- polls ---------- */
+
+      // Which explanation and which extra field belong to the shape now chosen.
+      // A pins poll has no answers to write at all, so the list of answer boxes
+      // goes away with them rather than sitting there asking to be filled in.
+      function showPollStyle() {
+        var style = $("pollStyle").value;
+        $("scaleHint").hidden = style !== "scale";
+        $("rankingHint").hidden = style !== "ranking";
+        $("pointsHint").hidden = style !== "points";
+        $("pinsHint").hidden = style !== "pins";
+        $("wheelHint").hidden = style !== "wheel";
+
+        var needsAnswers = style !== "pins";
+        $("options").hidden = !needsAnswers;
+        $("addOption").hidden = !needsAnswers;
+        $("optionPictures").parentNode.hidden = !needsAnswers;
+      }
 
       function pollCard(poll) {
         var wrap = document.createElement("div");
@@ -847,10 +943,17 @@
         // else's questions.
         // A scale and a poll are the same record shown two ways, so the list
         // has to say which of the two this one is.
-        if (poll.style === "scale" || poll.style === "ranking") {
+        var kinds = {
+          scale: t("Scale"),
+          ranking: t("Ranking"),
+          points: t("Points"),
+          pins: t("Picture"),
+          wheel: t("Wheel")
+        };
+        if (kinds[poll.style]) {
           var kind = document.createElement("span");
           kind.className = "tag own";
-          kind.textContent = poll.style === "scale" ? t("Scale") : t("Ranking");
+          kind.textContent = kinds[poll.style];
           top.appendChild(kind);
         }
 
@@ -952,18 +1055,29 @@
         card.appendChild(styleLabel);
 
         var style = document.createElement("select");
-        [
+        var shapes = [
           ["bars", t("Bars, one per answer")],
           ["scale", t("A scale from left to right")],
-          ["ranking", t("A ranking people put in order")]
-        ]
-          .forEach(function (pair) {
-            var o = document.createElement("option");
-            o.value = pair[0];
-            o.textContent = pair[1];
-            style.appendChild(o);
-          });
-        style.value = ["scale", "ranking"].indexOf(poll.style) >= 0 ? poll.style : "bars";
+          ["ranking", t("A ranking people put in order")],
+          ["points", t("Points to spend across the answers")],
+          ["wheel", t("A wheel you spin")]
+        ];
+        // A picture question is not offered here. Changing an existing question
+        // into one would need a picture, and a question that already has one
+        // cannot become anything else without throwing the taps away. Both are
+        // better done by writing a new question than by a dropdown that quietly
+        // deletes answers.
+        if (poll.style === "pins") shapes = [["pins", t("A picture people tap")]];
+        shapes.forEach(function (pair) {
+          var o = document.createElement("option");
+          o.value = pair[0];
+          o.textContent = pair[1];
+          style.appendChild(o);
+        });
+        style.value = shapes.map(function (s) { return s[0]; }).indexOf(poll.style) >= 0
+          ? poll.style
+          : "bars";
+        style.disabled = poll.style === "pins";
         card.appendChild(style);
 
         var label = document.createElement("label");
@@ -2171,6 +2285,7 @@
         $("qrDomain").checked = read(LS.domain) === "1";
 
         answerList($("options"), null, t("Answer"));
+        showPollStyle();
         fieldList($("formFields"), null);
         $("questions").appendChild(questionEditor(null));
 
@@ -2223,9 +2338,9 @@
           store(LS.domain, $("qrDomain").checked ? "1" : "0");
         });
         $("addOption").addEventListener("click", function () { $("options").addRow(""); });
-        $("pollStyle").addEventListener("change", function () {
-          $("scaleHint").hidden = $("pollStyle").value !== "scale";
-          $("rankingHint").hidden = $("pollStyle").value !== "ranking";
+        $("pollStyle").addEventListener("change", showPollStyle);
+        $("optionPictures").addEventListener("change", function () {
+          $("options").showPictures($("optionPictures").checked);
         });
         $("addField").addEventListener("click", function () { $("formFields").addRow(""); });
 
@@ -2265,21 +2380,43 @@
 
         $("create").addEventListener("click", function () {
           var title = $("title").value.trim();
+          var style = $("pollStyle").value;
           var options = $("options").values();
 
           if (!title) { say($("createMsg"), t("The question is missing."), "err"); return; }
-          if (options.length < 2) { say($("createMsg"), t("At least two answers."), "err"); return; }
+          // A picture question has no answers to write: the picture is what
+          // people answer on.
+          if (style !== "pins" && options.length < 2) {
+            say($("createMsg"), t("At least two answers."), "err");
+            return;
+          }
+          if (style === "pins" && !$("pollImage").files[0]) {
+            say($("createMsg"), t("Choose a picture first."), "err");
+            return;
+          }
 
           $("create").disabled = true;
           say($("createMsg"), t("Creating…"));
 
-          api("/api/addin/polls", {
-            method: "POST",
-            body: JSON.stringify({ title: title, options: options, style: $("pollStyle").value })
-          })
+          Promise.all([readPicture($("pollImage")), $("options").pictures()])
+            .then(function (parts) {
+              return api("/api/addin/polls", {
+                method: "POST",
+                body: JSON.stringify({
+                  title: title,
+                  options: options,
+                  style: style,
+                  points_budget: $("pointsBudget").value,
+                  image: parts[0],
+                  option_images: parts[1]
+                })
+              });
+            })
             .then(function () {
               $("title").value = "";
+              $("pollImage").value = "";
               answerList($("options"), null, t("Answer"));
+              $("options").showPictures($("optionPictures").checked);
               say($("createMsg"), t("Created. Put it on a slide below."), "ok");
               return loadPolls();
             })

@@ -108,17 +108,23 @@ defmodule ClaperWeb.AddinController do
   owner placed on the deck itself.
   """
   def create(%{assigns: %{addin_event: event}} = conn, params) do
+    chosen = style(params)
+
     with {:ok, file} <- presentation_file(event),
          {:ok, title} <- fetch_title(params),
-         {:ok, options} <- fetch_options(params) do
+         {:ok, options} <- fetch_options(params, chosen, title),
+         {:ok, picture} <- picture(params, chosen),
+         {:ok, options} <- pictures_for_options(options, params) do
       attrs = %{
         "title" => title,
         "presentation_file_id" => file.id,
         "position" => next_position(file),
         "enabled" => true,
         "show_results" => Map.get(params, "show_results", true),
-        "style" => style(params),
-        "poll_opts" => Enum.map(options, &%{"content" => &1, "vote_count" => 0})
+        "style" => chosen,
+        "points_budget" => points_budget(params),
+        "image" => picture,
+        "poll_opts" => options
       }
 
       case Polls.create_poll(attrs) do
@@ -127,7 +133,38 @@ defmodule ClaperWeb.AddinController do
       end
     else
       {:error, status, message} -> error(conn, status, message)
+      {:error, message} when is_binary(message) -> error(conn, 422, message)
     end
+  end
+
+  # Only a pins poll has a picture of its own. Sending one with any other shape
+  # is a mistake worth naming rather than storing a file nothing will show.
+  defp picture(params, "pins") do
+    case Claper.Addin.Pictures.store(Map.get(params, "image")) do
+      {:ok, nil} -> {:error, 422, "a picture question needs a picture"}
+      {:ok, path} -> {:ok, path}
+      {:error, message} -> {:error, 422, message}
+    end
+  end
+
+  defp picture(_params, _style), do: {:ok, nil}
+
+  # A picture beside an option, never instead of its wording. The list is
+  # positional: the nth picture belongs to the nth option, and a shorter list
+  # simply means the rest have none.
+  defp pictures_for_options(options, params) do
+    pictures = Map.get(params, "option_images", [])
+    pictures = if is_list(pictures), do: pictures, else: []
+
+    options
+    |> Enum.with_index()
+    |> Enum.reduce_while({:ok, []}, fn {option, index}, {:ok, acc} ->
+      case Claper.Addin.Pictures.store(Enum.at(pictures, index)) do
+        {:ok, nil} -> {:cont, {:ok, acc ++ [option]}}
+        {:ok, path} -> {:cont, {:ok, acc ++ [Map.put(option, "image", path)]}}
+        {:error, message} -> {:halt, {:error, 422, message}}
+      end
+    end)
   end
 
   @doc """
@@ -487,13 +524,9 @@ defmodule ClaperWeb.AddinController do
 
     case params do
       %{"options" => _} ->
-        with {:ok, options} <- fetch_options(params) do
-          {:ok,
-           Map.put(
-             base,
-             "poll_opts",
-             Enum.map(options, &%{"content" => &1, "vote_count" => 0})
-           )}
+        with {:ok, options} <- fetch_options(params, Map.get(base, "style", poll.style), title),
+             {:ok, options} <- pictures_for_options(options, params) do
+          {:ok, Map.put(base, "poll_opts", options)}
         end
 
       _ ->
@@ -505,8 +538,18 @@ defmodule ClaperWeb.AddinController do
   # always been, rather than a value the changeset would then have to refuse.
   defp style(params) do
     case Map.get(params, "style") do
-      value when value in ~w(scale ranking) -> value
+      value when value in ~w(scale ranking points pins wheel) -> value
       _ -> "bars"
+    end
+  end
+
+  # One to a thousand, and a bad number falls back to a hundred rather than
+  # refusing the whole question: the budget is a detail of one shape, and the
+  # author is in PowerPoint with no good place to be told about it.
+  defp points_budget(params) do
+    case params |> Map.get("points_budget") |> to_string() |> Integer.parse() do
+      {number, ""} when number > 0 and number <= 1000 -> number
+      _ -> 100
     end
   end
 
@@ -710,7 +753,14 @@ defmodule ClaperWeb.AddinController do
 
   defp fetch_title(_params, key), do: {:error, 422, "#{key} is required"}
 
-  defp fetch_options(%{"options" => options}) when is_list(options) do
+  # A pins poll is answered on a picture, not by picking, so it has no options
+  # to write. It still gets one, created here and named after the question,
+  # because every vote in this schema hangs off an option and a vote without one
+  # would mean teaching everything downstream about a second kind of vote.
+  defp fetch_options(_params, "pins", title),
+    do: {:ok, [%{"content" => String.slice(title, 0, 255), "vote_count" => 0}]}
+
+  defp fetch_options(%{"options" => options}, _style, _title) when is_list(options) do
     cleaned =
       options
       |> Enum.filter(&is_binary/1)
@@ -718,11 +768,11 @@ defmodule ClaperWeb.AddinController do
       |> Enum.reject(&(&1 == ""))
 
     if length(cleaned) >= 2,
-      do: {:ok, cleaned},
+      do: {:ok, Enum.map(cleaned, &%{"content" => &1, "vote_count" => 0})},
       else: {:error, 422, "at least two options are required"}
   end
 
-  defp fetch_options(_), do: {:error, 422, "options must be a list"}
+  defp fetch_options(_params, _style, _title), do: {:error, 422, "options must be a list"}
 
   # Past the end of the deck, so it never collides with a poll the owner placed
   # on a slide of the presentation Claper itself stores.
@@ -736,9 +786,11 @@ defmodule ClaperWeb.AddinController do
       enabled: poll.enabled,
       show_results: poll.show_results,
       style: poll.style,
+      points_budget: poll.points_budget,
+      image: poll.image,
       options:
         Enum.map(poll.poll_opts || [], fn opt ->
-          %{id: opt.id, content: opt.content, votes: opt.vote_count}
+          %{id: opt.id, content: opt.content, votes: opt.vote_count, image: opt.image}
         end)
     }
   end

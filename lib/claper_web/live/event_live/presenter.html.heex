@@ -235,8 +235,83 @@ not reasoned about. --%>
           </div>
         </div>
 
+        <%!-- Points. The result is not how many people picked something but how
+        much of a limited budget the room put behind it, so the bar is the share
+        of everything spent and the number beside it is the points themselves.
+        The share alone would hide whether ten people answered or two hundred. --%>
+        <div :if={@current_poll.style == "points"} class="flex flex-col gap-2">
+          <div
+            :for={{opt, points, share} <- @poll_spent}
+            class={"claper-ink flex items-center gap-3 px-4 py-2 relative overflow-hidden #{bar_radius(@embed_style.radius)} #{if @interaction_only, do: (if @embed_style.theme == "dark", do: "bg-white/15 text-white", else: "bg-gray-200 text-gray-900"), else: "bg-gray-500 text-white"}"}
+          >
+            <div
+              style={"width: #{if !@presenter_embed || @current_poll.show_results, do: share, else: 0}%;"}
+              class={"claper-bar bg-primary h-full absolute left-0 transition-all #{bar_radius(@embed_style.radius)}"}
+            >
+            </div>
+            <img
+              :if={opt.image}
+              src={opt.image}
+              alt=""
+              class="z-10 h-10 w-10 shrink-0 rounded-lg object-cover"
+            />
+            <span class="claper-ink z-10 flex-1 text-lg font-bold">{opt.content}</span>
+            <span
+              :if={!@presenter_embed || @current_poll.show_results}
+              class="claper-ink z-10 text-lg font-bold tabular-nums"
+            >
+              {points}
+            </span>
+          </div>
+        </div>
+
+        <%!-- Pins. Every tap the room made, drawn over the picture it was made
+        on. The coordinates are fractions, so they land in the same place
+        whatever size the picture is here. --%>
+        <div :if={@current_poll.style == "pins"} class="w-full">
+          <div class="relative w-full overflow-hidden rounded-xl">
+            <img src={@current_poll.image} alt={@current_poll.title} class="block w-full" />
+            <span
+              :for={
+                {x, y} <-
+                  if(!@presenter_embed || @current_poll.show_results, do: @poll_pins, else: [])
+              }
+              style={"left: #{x * 100}%; top: #{y * 100}%;"}
+              class="claper-bar absolute h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary opacity-70 ring-2 ring-white"
+            >
+            </span>
+          </div>
+          <p
+            :if={!@presenter_embed || @current_poll.show_results}
+            class="claper-ink mt-3 text-center text-lg font-bold tabular-nums"
+          >
+            {gettext("%{count} spots", count: length(@poll_pins))}
+          </p>
+        </div>
+
+        <%!-- The wheel. Not answered, spun: the slide shows the options and,
+        once it has been spun, the one it landed on. --%>
+        <div :if={@current_poll.style == "wheel"} class="w-full text-center">
+          <div
+            :if={@wheel_opt}
+            class={"claper-ink inline-block px-8 py-6 #{bar_radius(@embed_style.radius)} #{if @interaction_only, do: (if @embed_style.theme == "dark", do: "bg-white/15 text-white", else: "bg-gray-200 text-gray-900"), else: "bg-gray-500 text-white"}"}
+          >
+            <span class={"claper-ink font-bold #{if @iframe, do: "text-2xl", else: "text-5xl"}"}>
+              {@wheel_opt.content}
+            </span>
+          </div>
+          <div :if={!@wheel_opt} class="flex flex-wrap justify-center gap-2">
+            <span
+              :for={opt <- @current_poll.poll_opts}
+              class={"claper-ink px-4 py-2 #{bar_radius(@embed_style.radius)} #{if @interaction_only, do: (if @embed_style.theme == "dark", do: "bg-white/15 text-white", else: "bg-gray-200 text-gray-900"), else: "bg-gray-500 text-white"}"}
+            >
+              {opt.content}
+            </span>
+          </div>
+        </div>
+
         <div
-          :if={@current_poll.style not in ["scale", "ranking"]}
+          :if={@current_poll.style not in ["scale", "ranking", "points", "pins", "wheel"]}
           class={"#{if @iframe, do: "space-y-5", else: "space-y-8"} flex flex-col"}
         >
           <%= if (length @current_poll.poll_opts) > 0 do %>
@@ -250,7 +325,13 @@ not reasoned about. --%>
                   class={"claper-bar bg-primary h-full absolute left-0 transition-all #{if @interaction_only, do: bar_radius(@embed_style.radius), else: "rounded-3xl"}"}
                 >
                 </div>
-                <div class="flex space-x-3 z-10 text-left">
+                <div class="flex space-x-3 z-10 text-left items-center">
+                  <img
+                    :if={opt.image}
+                    src={opt.image}
+                    alt=""
+                    class={"shrink-0 rounded-lg object-cover #{if @iframe, do: "h-10 w-10", else: "h-20 w-20"}"}
+                  />
                   <span class={"claper-ink #{if @iframe, do: "text-base", else: "text-2xl"} flex-1 font-bold pr-2"}>
                     {opt.content}
                   </span>

@@ -419,6 +419,24 @@ Hooks.CalendarLocalDate = {
     this.el.innerHTML = moment.utc(this.el.dataset.date).local().calendar();
   },
 };
+// A tap on the picture of a pins poll, as fractions of its width and height
+// rather than pixels. The picture is one size on a phone and another on a
+// slide, so a pixel measured here would mean nothing there. Dividing happens
+// on this side because this is the only side that knows the size the person
+// actually touched.
+Hooks.PinOnImage = {
+  mounted() {
+    this.el.addEventListener("click", (event) => {
+      if (this.el.dataset.answered === "true") return;
+      const box = this.el.getBoundingClientRect();
+      if (!box.width || !box.height) return;
+      const x = (event.clientX - box.left) / box.width;
+      const y = (event.clientY - box.top) / box.height;
+      if (x < 0 || x > 1 || y < 0 || y > 1) return;
+      this.pushEvent("pin", { x: x.toFixed(4), y: y.toFixed(4) });
+    });
+  },
+};
 Hooks.DateTimeLocal = DateTimeLocal;
 Hooks.UpdateAttendees = {
   mounted() {

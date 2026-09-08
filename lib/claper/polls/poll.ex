@@ -14,6 +14,8 @@ defmodule Claper.Polls.Poll do
           poll_votes: [Claper.Polls.PollVote.t()] | nil,
           show_results: boolean() | nil,
           style: String.t() | nil,
+          points_budget: integer() | nil,
+          image: String.t() | nil,
           inserted_at: NaiveDateTime.t(),
           updated_at: NaiveDateTime.t()
         }
@@ -26,11 +28,18 @@ defmodule Claper.Polls.Poll do
     field :enabled, :boolean
     field :multiple, :boolean
     field :show_results, :boolean
-    # "bars", "scale" or "ranking". All three ask one question with the same
-    # options; what differs is what an answer is. A poll picks one, a scale
-    # picks a place on an ordered row, and a ranking puts every option in an
-    # order of its own.
+    # All of these ask one question with the same options; what differs is what
+    # an answer is. A poll picks one, a scale picks a place on an ordered row, a
+    # ranking puts every option in an order of its own, a points poll spends a
+    # budget across them, a pins poll answers by tapping a picture, and a wheel
+    # is not answered at all - it is spun.
     field :style, :string, default: "bars"
+
+    # How many points there are to spend, for a points poll.
+    field :points_budget, :integer, default: 100
+
+    # The picture a pins poll is answered on.
+    field :image, :string
 
     belongs_to :presentation_file, Claper.Presentations.PresentationFile
 
@@ -54,14 +63,33 @@ defmodule Claper.Polls.Poll do
       :total,
       :multiple,
       :show_results,
-      :style
+      :style,
+      :points_budget,
+      :image
     ])
     |> cast_assoc(:poll_opts, required: true)
     |> validate_required([:title, :presentation_file_id, :position])
     |> validate_length(:title, max: 255)
-    |> validate_inclusion(:style, ~w(bars scale ranking))
+    |> validate_inclusion(:style, ~w(bars scale ranking points pins wheel))
+    |> validate_number(:points_budget, greater_than: 0, less_than_or_equal_to: 1000)
+    |> require_a_picture_to_pin_on()
     |> forbid_multiple_where_it_makes_no_sense()
   end
+
+  # A pins poll with no picture is a question with nothing to answer on. Caught
+  # here rather than left to the slide, where it would be an empty rectangle
+  # with no explanation in front of a room.
+  defp require_a_picture_to_pin_on(changeset) do
+    if get_field(changeset, :style) == "pins" and blank?(get_field(changeset, :image)) do
+      add_error(changeset, :image, "a pins poll needs a picture to pin on")
+    else
+      changeset
+    end
+  end
+
+  defp blank?(nil), do: true
+  defp blank?(value) when is_binary(value), do: String.trim(value) == ""
+  defp blank?(_), do: false
 
   # Ticking three boxes on a scale from one to five is not a rating, and the
   # average underneath would be arithmetic on nothing. A ranking already uses
@@ -80,6 +108,9 @@ defmodule Claper.Polls.Poll do
       not multiple -> changeset
       style == "scale" -> add_error(changeset, :multiple, "a scale takes one answer")
       style == "ranking" -> add_error(changeset, :multiple, "a ranking uses every answer")
+      style == "points" -> add_error(changeset, :multiple, "a points poll spends on every answer")
+      style == "pins" -> add_error(changeset, :multiple, "a pins poll is answered on the picture")
+      style == "wheel" -> add_error(changeset, :multiple, "a wheel is spun, not answered")
       true -> changeset
     end
   end
@@ -134,4 +165,62 @@ defmodule Claper.Polls.Poll do
   end
 
   def ranked(_poll, _votes), do: []
+
+  @doc """
+  What the room spent on each option, most first, with the share of the total.
+
+  The result of a points poll is not how many people picked something but how
+  much of a limited budget the room was willing to put behind it. That is the
+  whole reason to ask this way rather than with a poll: it forces a trade-off
+  where ticking boxes does not.
+
+  An option nobody spent on keeps its place at the end with zero, because an
+  option missing from the slide reads as a mistake.
+  """
+  def spent(%__MODULE__{poll_opts: opts}, votes) when is_list(opts) and is_list(votes) do
+    by_opt =
+      votes
+      |> Enum.filter(&(&1.points && &1.poll_opt_id))
+      |> Enum.group_by(& &1.poll_opt_id, & &1.points)
+      |> Map.new(fn {opt_id, points} -> {opt_id, Enum.sum(points)} end)
+
+    total = by_opt |> Map.values() |> Enum.sum()
+
+    opts
+    |> Enum.map(fn opt ->
+      points = Map.get(by_opt, opt.id, 0)
+      share = if total > 0, do: Float.round(points * 100 / total, 1), else: 0.0
+      {opt, points, share}
+    end)
+    # Most points first, and the option's own id breaks a tie so the order does
+    # not shuffle between updates while the room is reading it.
+    |> Enum.sort_by(fn {opt, points, _share} -> {-points, opt.id} end)
+  end
+
+  def spent(_poll, _votes), do: []
+
+  @doc """
+  Every tap on the picture, as `{x, y}` fractions of its width and height.
+
+  Fractions, because the picture is drawn at one size on a slide and another on
+  a phone, and a pixel measured on one means nothing on the other. Whoever
+  draws them multiplies by the size they have.
+  """
+  def pins(votes) when is_list(votes) do
+    votes
+    |> Enum.filter(&(&1.x && &1.y))
+    |> Enum.map(&{&1.x, &1.y})
+  end
+
+  def pins(_votes), do: []
+
+  @doc """
+  Whether this shape is answered by the room at all.
+
+  A wheel is not: it has options and it is shown on a slide like the others,
+  but it is spun by the presenter and nobody votes. Anything that offers a way
+  to answer has to ask this first, or the room gets a button that does nothing.
+  """
+  def answerable?(%__MODULE__{style: "wheel"}), do: false
+  def answerable?(%__MODULE__{}), do: true
 end

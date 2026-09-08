@@ -47,6 +47,9 @@ defmodule Claper.Events.Event do
     field :audience_peak, :integer, default: 0
     field :started_at, :naive_datetime
     field :expired_at, :naive_datetime
+    # Whether the room answers at its own pace instead of following whichever
+    # slide the presenter is on. Off by default: the ordinary case is a talk.
+    field :self_paced, :boolean, default: false
 
     has_many :posts, Claper.Posts.Post
     has_many :leaders, Claper.Events.ActivityLeader, on_replace: :delete
@@ -68,7 +71,8 @@ defmodule Claper.Events.Event do
       :started_at,
       :expired_at,
       :audience_peak,
-      :user_id
+      :user_id,
+      :self_paced
     ])
     |> cast_assoc(:presentation_file)
     |> cast_assoc(:leaders)
@@ -106,7 +110,15 @@ defmodule Claper.Events.Event do
 
   def update_changeset(event, attrs) do
     event
-    |> cast(attrs, [:name, :code, :started_at, :expired_at, :audience_peak, :user_id])
+    |> cast(attrs, [
+      :name,
+      :code,
+      :started_at,
+      :expired_at,
+      :audience_peak,
+      :user_id,
+      :self_paced
+    ])
     |> cast_assoc(:presentation_file)
     |> cast_assoc(:leaders)
     |> downcase_code
