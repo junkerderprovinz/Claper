@@ -224,4 +224,39 @@ defmodule ClaperWeb.AddinManifestControllerTest do
       refute body =~ ~s({"error")
     end
   end
+
+  # Everything else under priv/static carries a content hash in its name, so a
+  # browser may keep it forever. The add-in's two pages cannot: the manifest
+  # installed in Office points at them by name and cannot be re-pointed without
+  # reinstalling the add-in. Served with the default "public" and no expiry,
+  # Office kept a copy and went on showing text the file no longer contained -
+  # which read as "the fix did not work" through several rounds of fixing.
+  describe "the add-in pages are revalidated rather than kept" do
+    setup %{conn: conn} do
+      Application.put_env(:claper, :presenter_embed_frame_ancestors, ["https://example.test"])
+      on_exit(fn -> Application.delete_env(:claper, :presenter_embed_frame_ancestors) end)
+      %{conn: conn}
+    end
+
+    for page <- ~w(sidebar.html slide.html) do
+      test "#{page} says no-cache", %{conn: conn} do
+        conn = get(conn, "/addin/#{unquote(page)}")
+
+        assert conn.status == 200
+        assert get_resp_header(conn, "cache-control") == ["no-cache"]
+        # The ETag is what makes no-cache cheap: the browser asks, and almost
+        # every answer is a 304 with nothing but headers in it.
+        assert [_etag] = get_resp_header(conn, "etag")
+      end
+    end
+
+    # The hashed assets must keep their long cache. A fix that made everything
+    # revalidate would be a different bug wearing this one's clothes.
+    test "a hashed asset is still cached for as long as the browser likes", %{conn: conn} do
+      conn = get(conn, "/images/favicon.png")
+
+      assert conn.status == 200
+      assert get_resp_header(conn, "cache-control") == ["public"]
+    end
+  end
 end

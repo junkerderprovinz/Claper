@@ -101,7 +101,9 @@ defmodule ClaperWeb.AddinStrings do
       "Polls" => gettext("Polls"),
       "Quizzes" => gettext("Quizzes"),
       "Open" => gettext("Open"),
-      "Slides" => gettext("Slides"),
+      # Not "Slides". Every tab here puts things on slides, so the one named
+      # after them was the one that said least about itself.
+      "Join & look" => gettext("Join & look"),
       "Reload" => gettext("Reload"),
       "Loading…" => gettext("Loading…"),
       "Edit" => gettext("Edit"),
@@ -260,15 +262,70 @@ defmodule ClaperWeb.AddinStrings do
       "Putting it on the slide…" => gettext("Putting it on the slide…"),
       "Done. It landed on the slide you have open." =>
         gettext("Done. It landed on the slide you have open."),
-      "One link for the whole deck" => gettext("One link for the whole deck"),
-      "Made once, then every Claper object you put on a slide finds it by itself and only asks what that slide should show. The link only reads, so it is safe inside the file." =>
+      "Add a welcome slide" => gettext("Add a welcome slide"),
+      "The welcome slide is a whole slide made for you: the join code big enough to read from the back, the code as a picture beside it, and one line telling the room what to do. Yours afterwards, so move and restyle it as you like." =>
         gettext(
-          "Made once, then every Claper object you put on a slide finds it by itself and only asks what that slide should show. The link only reads, so it is safe inside the file."
+          "The welcome slide is a whole slide made for you: the join code big enough to read from the back, the code as a picture beside it, and one line telling the room what to do. Yours afterwards, so move and restyle it as you like."
+        ),
+      "This PowerPoint is too old to add a slide from here. Add one yourself and use the button above." =>
+        gettext(
+          "This PowerPoint is too old to add a slide from here. Add one yourself and use the button above."
+        ),
+      "PowerPoint did not add the slide." => gettext("PowerPoint did not add the slide."),
+      "Added at the end. Move it to the front and it is your opening slide." =>
+        gettext("Added at the end. Move it to the front and it is your opening slide."),
+      "Added at the end. This PowerPoint cannot write the text, so type the code beside the picture." =>
+        gettext(
+          "Added at the end. This PowerPoint cannot write the text, so type the code beside the picture."
+        ),
+      "Join in" => gettext("Join in"),
+      "Open the camera, point it at the code, answer on your phone." =>
+        gettext("Open the camera, point it at the code, answer on your phone."),
+
+      # The standard look for the whole deck
+      "How new blocks look" => gettext("How new blocks look"),
+      "Set once here and every block you add afterwards starts this way. A block you have already placed keeps what it has, and each one can still be changed on its own slide." =>
+        gettext(
+          "Set once here and every block you add afterwards starts this way. A block you have already placed keeps what it has, and each one can still be changed on its own slide."
+        ),
+      "Background behind a block" => gettext("Background behind a block"),
+      "PowerPoint always paints something behind a live block: a web object on a slide cannot be see-through, and Microsoft has turned that request down. So the block paints the colour you pick here instead. Set it to your slide's own colour and the edge disappears." =>
+        gettext(
+          "PowerPoint always paints something behind a live block: a web object on a slide cannot be see-through, and Microsoft has turned that request down. So the block paints the colour you pick here instead. Set it to your slide's own colour and the edge disappears."
+        ),
+      "Soft shadow under the block" => gettext("Soft shadow under the block"),
+      "Save as the standard" => gettext("Save as the standard"),
+      "Back to plain" => gettext("Back to plain"),
+      "Saving…" => gettext("Saving…"),
+      "Saved. New blocks start this way." => gettext("Saved. New blocks start this way."),
+      "This PowerPoint cannot store it in the file. Set it on each block instead." =>
+        gettext("This PowerPoint cannot store it in the file. Set it on each block instead."),
+      "Back to plain. New blocks look the way Claper draws them." =>
+        gettext("Back to plain. New blocks look the way Claper draws them."),
+
+      # Is this still the same talk?
+      "Is this the same talk?" => gettext("Is this the same talk?"),
+      "This file was set up as the event below, but it was called something else then. A presentation saved under a new name is usually a new talk, and a new talk with the old event would show the old talk's questions to the new room." =>
+        gettext(
+          "This file was set up as the event below, but it was called something else then. A presentation saved under a new name is usually a new talk, and a new talk with the old event would show the old talk's questions to the new room."
+        ),
+      "Same talk, keep it" => gettext("Same talk, keep it"),
+      "New talk, start fresh" => gettext("New talk, start fresh"),
+      "Starting fresh gives this file its own event and its own link. Nothing is deleted: the old talk keeps everything it had." =>
+        gettext(
+          "Starting fresh gives this file its own event and its own link. Nothing is deleted: the old talk keeps everything it had."
+        ),
+      "One link for the whole deck" => gettext("One link for the whole deck"),
+      "Made for you the moment this presentation gets its event, and stored in the file. A block placed by the buttons on a question is handed the link directly, so it never asks. A block you insert by hand asks once, and this is the link to paste." =>
+        gettext(
+          "Made for you the moment this presentation gets its event, and stored in the file. A block placed by the buttons on a question is handed the link directly, so it never asks. A block you insert by hand asks once, and this is the link to paste."
         ),
       "No link yet" => gettext("No link yet"),
       "Copy" => gettext("Copy"),
       "Copied" => gettext("Copied"),
-      "Create link" => gettext("Create link"),
+      "Make a new link" => gettext("Make a new link"),
+      "A new link replaces the old one everywhere. Only needed if the old one got out." =>
+        gettext("A new link replaces the old one everywhere. Only needed if the old one got out."),
       "Asking Claper…" => gettext("Asking Claper…"),
       "Ready. Blocks you put on slides pick it up on their own." =>
         gettext("Ready. Blocks you put on slides pick it up on their own."),
@@ -283,8 +340,12 @@ defmodule ClaperWeb.AddinStrings do
         ),
       "Insert > Add-ins > My Add-ins" => gettext("Insert > Add-ins > My Add-ins"),
       "Pick \"Claper on a slide\"." => gettext("Pick \"Claper on a slide\"."),
-      "Choose what it shows" => gettext("Choose what it shows"),
-      "It already knows the link." => gettext("It already knows the link."),
+      # Step two used to read "Choose what it shows / It already knows the link",
+      # which was not true for a block inserted by hand: nothing hands it the
+      # link, it asks. The step now says what the author actually does.
+      "Paste the link from above" => gettext("Paste the link from above"),
+      "Then pick what that slide should show." =>
+        gettext("Then pick what that slide should show."),
       "The frame around a live block, and the soft shadow along its top edge, are PowerPoint's own and cannot be turned off from here. A picture has neither, which is why the joining code is one." =>
         gettext(
           "The frame around a live block, and the soft shadow along its top edge, are PowerPoint's own and cannot be turned off from here. A picture has neither, which is why the joining code is one."
@@ -292,6 +353,9 @@ defmodule ClaperWeb.AddinStrings do
 
       # The block on a slide
       "Claper on this slide" => gettext("Claper on this slide"),
+      # The frame's accessible name. Nothing sees it but a screen reader, which
+      # is exactly why it was the one string nobody noticed was still English.
+      "Claper interaction" => gettext("Claper interaction"),
       "Paste the link from the Claper sidebar once. It is stored with this presentation, so everyone who opens the file sees the same thing." =>
         gettext(
           "Paste the link from the Claper sidebar once. It is stored with this presentation, so everyone who opens the file sees the same thing."
@@ -310,9 +374,18 @@ defmodule ClaperWeb.AddinStrings do
       "Text" => gettext("Text"),
       "Dark text" => gettext("Dark text"),
       "Light text" => gettext("Light text"),
-      "Background" => gettext("Background"),
+      # "Background" used to be a dropdown offering "Transparent", which a
+      # PowerPoint slide cannot honour. What the dropdown really picks is
+      # whether the block wears a card, so that is what it now says, and the
+      # background is a colour beside it.
+      "Shape" => gettext("Shape"),
+      "Plain" => gettext("Plain"),
       "Card" => gettext("Card"),
-      "Transparent" => gettext("Transparent"),
+      "Background behind this block" => gettext("Background behind this block"),
+      "PowerPoint always paints something behind a live block. Set this to your slide's colour and the edge disappears." =>
+        gettext(
+          "PowerPoint always paints something behind a live block. Set this to your slide's colour and the edge disappears."
+        ),
       "Bars" => gettext("Bars"),
       "Slightly rounded" => gettext("Slightly rounded"),
       "Square" => gettext("Square"),

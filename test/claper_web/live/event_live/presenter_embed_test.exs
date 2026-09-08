@@ -1242,4 +1242,47 @@ defmodule ClaperWeb.EventLive.PresenterEmbedTest do
       assert [{"tired", 3}] = Presenter.form_cloud(["TIRED", "tired", "tired"])
     end
   end
+
+  # A block on a PowerPoint slide cannot be see-through: Office paints an opaque
+  # ground under a web object whatever the page asks for, and the request to
+  # change that was closed as not planned. So the block paints the slide's own
+  # colour instead, and the link is where that colour comes from.
+  describe "embed_background/2" do
+    alias ClaperWeb.EventLive.Presenter
+
+    test "the projected deck is black, whatever the link says" do
+      assert Presenter.embed_background(false, %{bg: "#ff0000"}) == "black"
+    end
+
+    test "an embed with no colour named stays transparent" do
+      assert Presenter.embed_background(true, %{bg: nil}) == "transparent"
+    end
+
+    test "an embed paints the colour the link names" do
+      assert Presenter.embed_background(true, %{bg: "#102030"}) == "#102030"
+    end
+
+    # The style map is built before the socket has one on some paths, and a
+    # missing map must not take the page down with it.
+    test "no style at all is still a page that renders" do
+      assert Presenter.embed_background(true, nil) == "transparent"
+    end
+  end
+
+  # The value is written straight into a stylesheet and arrives from a link held
+  # by a document Claper does not own.
+  describe "embed_style/1 and the background colour" do
+    alias ClaperWeb.EventLive.Presenter
+
+    test "six hex digits are taken, with or without the hash" do
+      assert Presenter.embed_style(%{"bg" => "#AABBCC"}).bg == "#aabbcc"
+      assert Presenter.embed_style(%{"bg" => "aabbcc"}).bg == "#aabbcc"
+    end
+
+    test "anything that is not exactly a colour is no colour" do
+      assert Presenter.embed_style(%{"bg" => "red; } body { display: none"}).bg == nil
+      assert Presenter.embed_style(%{"bg" => "#abc"}).bg == nil
+      assert Presenter.embed_style(%{}).bg == nil
+    end
+  end
 end

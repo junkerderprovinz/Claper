@@ -127,9 +127,9 @@
               </select>
             </div>
             <div>
-              <label for="panel">Background</label>
+              <label for="panel">Shape</label>
               <select id="panel">
-                <option value="off">Transparent</option>
+                <option value="off">Plain</option>
                 <option value="on">Card</option>
               </select>
             </div>
@@ -185,6 +185,22 @@
             </div>
           </div>
 
+          <!-- Not a style choice, a platform fact. A web object on a slide
+               cannot be see-through: Office paints an opaque ground under it,
+               and Microsoft closed the request for transparency without
+               planning it. Promising transparency here was therefore a promise
+               nothing could keep, which is exactly what it looked like. The
+               honest version is a colour the author sets to their slide's own,
+               after which there is no visible edge either. -->
+          <div>
+            <label for="bg">Background behind this block</label>
+            <input id="bg" type="color" value="#ffffff" />
+            <p style="margin:.35rem 0 0; font-size:.72rem; color:var(--muted)">
+              PowerPoint always paints something behind a live block. Set this to your
+              slide's colour and the edge disappears.
+            </p>
+          </div>
+
           <!-- A block placed before the defaults changed keeps what it was
                given, which is right for a choice and wrong for a default it was
                never asked about. This is the one click back. -->
@@ -223,15 +239,37 @@
         }
       }
 
-      function readDeckLink() {
+      // The deck's standard look, set once in the sidebar. Same mechanism as the
+      // link and for the same reason: a block cannot read the sidebar's own bag.
+      var LOOK_TAG = "CLAPERLOOK";
+
+      function readTagValue(key) {
         if (!tagsUsable()) return Promise.resolve("");
         return PowerPoint.run(function (context) {
-          var tag = context.presentation.tags.getItemOrNullObject(DECK_TAG);
+          var tag = context.presentation.tags.getItemOrNullObject(key);
           tag.load("value");
           return context.sync().then(function () {
             return tag.isNullObject ? "" : tag.value || "";
           });
         }).catch(function () { return ""; });
+      }
+
+      function readDeckLink() { return readTagValue(DECK_TAG); }
+
+      function readDeckLook() {
+        return readTagValue(LOOK_TAG).then(function (raw) {
+          if (!raw) return null;
+          try {
+            var parsed = JSON.parse(raw);
+            var clean = {};
+            ["theme", "radius", "shadow", "text", "bar", "bg"].forEach(function (f) {
+              if (typeof parsed[f] === "string" && parsed[f]) clean[f] = parsed[f];
+            });
+            return clean;
+          } catch (e) {
+            return null;
+          }
+        });
       }
 
       var state = {
@@ -241,10 +279,14 @@
         quiz: null,
         form: null,
         theme: "light",
-        // Transparent by default. A block sits on a slide that already has a
-        // background, and a white card on top of it is a rectangle the author
-        // then has to design around.
+        // No card by default. A block sits on a slide that already has a
+        // background, and a card on top of it is a rectangle the author then
+        // has to design around.
         panel: "off",
+        // What Office paints behind the block. Empty means "leave it to
+        // Claper", which comes out white because that is what the host draws
+        // under a web object. Only a colour the author picked is sent.
+        bg: "",
         radius: "soft",
         shadow: "off",
         // How the answers to an open question are drawn. A cloud says at a
@@ -283,9 +325,13 @@
           var hit = dict[key];
           if (hit && hit !== key) node.nodeValue = node.nodeValue.replace(key, hit);
         });
-        root.querySelectorAll("[placeholder]").forEach(function (el) {
-          var hit = dict[el.getAttribute("placeholder")];
-          if (hit) el.setAttribute("placeholder", hit);
+        // A title is the tooltip and an aria-label is what a screen reader
+        // says. Both stayed English while every visible word was translated.
+        ["placeholder", "title", "aria-label"].forEach(function (attr) {
+          root.querySelectorAll("[" + attr + "]").forEach(function (el) {
+            var hit = dict[el.getAttribute(attr)];
+            if (hit) el.setAttribute(attr, hit);
+          });
         });
       }
 
@@ -353,6 +399,7 @@
         // block already sitting on a slide.
         if (state.text) q.push("text=" + encodeURIComponent(state.text));
         if (state.bar) q.push("bar=" + encodeURIComponent(state.bar));
+        if (state.bg) q.push("bg=" + encodeURIComponent(state.bg));
 
         if (state.show === "join" || state.show === "messages") {
           q.unshift("show=" + state.show);
@@ -518,6 +565,12 @@
         var own = $("ownColours").checked;
         state.text = own ? $("text").value : "";
         state.bar = own ? $("bar").value : "";
+
+        // Always sent, unlike the two above. Those have a readable default
+        // Claper may improve later, so freezing them into a block would be
+        // wrong. This one has no such default: the host paints white whatever
+        // the page says, so white is not a placeholder here, it is the truth.
+        state.bg = $("bg").value;
       }
 
       function openSetup(atStep2) {
@@ -535,6 +588,7 @@
         $("colours").hidden = !own;
         if (state.text) $("text").value = state.text;
         if (state.bar) $("bar").value = state.bar;
+        if (state.bg) $("bg").value = state.bg;
       }
 
       function goToStep2() {
@@ -585,7 +639,19 @@
             saved = null;
           }
 
-          return loadLanguage().then(function () { decide(saved, moved); });
+          // A block that has never been set up starts from the deck's standard
+          // rather than from Claper's. A block that HAS been set up keeps what
+          // it was given: a standard that reached back and changed blocks
+          // already on slides would be a standard nobody could rely on.
+          var carry = saved
+            ? Promise.resolve()
+            : readDeckLook().then(function (look) {
+                if (look) state = Object.assign(state, look);
+              });
+
+          return carry
+            .then(loadLanguage)
+            .then(function () { decide(saved, moved); });
         });
 
         function decide(saved, moved) {
@@ -610,15 +676,25 @@
         });
 
         $("resetLook").addEventListener("click", function () {
-          $("theme").value = "light";
-          $("panel").value = "off";
-          $("radius").value = "soft";
-          $("shadow").value = "off";
-          $("layout").value = "cloud";
-          $("board").value = "off";
-          $("ownColours").checked = false;
-          $("colours").hidden = true;
-          say(t("Set back to the standard look. Save it below to apply."), true);
+          // Back to the deck's own standard where there is one, and to Claper's
+          // where there is not. "Standard" written in the sidebar has to be what
+          // this button means, or the deck has two standards and this one wins
+          // by being nearer.
+          readDeckLook().then(function (look) {
+            $("theme").value = (look && look.theme) || "light";
+            $("panel").value = "off";
+            $("radius").value = (look && look.radius) || "soft";
+            $("shadow").value = (look && look.shadow) || "off";
+            $("layout").value = "cloud";
+            $("board").value = "off";
+            $("bg").value = (look && look.bg) || "#ffffff";
+            var own = !!(look && (look.text || look.bar));
+            $("ownColours").checked = own;
+            $("colours").hidden = !own;
+            if (look && look.text) $("text").value = look.text;
+            if (look && look.bar) $("bar").value = look.bar;
+            say(t("Set back to the standard look. Save it below to apply."), true);
+          });
         });
         $("connect").addEventListener("click", goToStep2);
         $("url").addEventListener("keydown", function (e) { if (e.key === "Enter") goToStep2(); });

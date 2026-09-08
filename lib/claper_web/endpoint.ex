@@ -23,6 +23,29 @@ defmodule ClaperWeb.Endpoint do
       ]
     ]
 
+  # The add-in's two pages, ahead of the general static plug so this one answers
+  # them.
+  #
+  # Everything else under priv/static carries a content hash in its name, so
+  # "cache for as long as you like" is right for it. These two do not: their
+  # addresses are fixed, because the manifest installed in Office points at
+  # them by name and cannot be re-pointed without reinstalling the add-in.
+  # Served with the default "public" and no expiry, Office was free to keep a
+  # copy for as long as it liked - and did, which is why a fixed page kept
+  # showing the old text on the machine it was fixed for. Measured on the live
+  # instance: the file served was byte-identical to the repository while the
+  # add-in in PowerPoint still showed text that file no longer contains.
+  #
+  # "no-cache" does not mean "do not store". It means "ask before using what
+  # you stored", so the ETag still answers almost every request with a 304 and
+  # nothing but the headers travels.
+  plug Plug.Static,
+    at: "/",
+    from: :claper,
+    gzip: false,
+    only: ~w(addin),
+    cache_control_for_etags: "no-cache"
+
   # Serve at "/" the static files from "priv/static" directory.
   #
   # You should set gzip to true if you are running phx.digest

@@ -99,6 +99,8 @@
 
       .switch { display: flex; align-items: center; gap: .45rem; margin: .55rem 0 0; font-size: .8rem; font-weight: 600; }
       .switch input { width: auto; }
+      .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
+      input[type="color"] { padding: .15rem; height: 2.1rem; cursor: pointer; }
 
       /* PowerPoint ignores window.confirm, so a question has to be part of the
          page or the answer never arrives. */
@@ -180,6 +182,28 @@
       <div class="msg" id="pickMsg"></div>
     </div>
 
+    <!-- SAME TALK OR A NEW ONE -->
+    <div id="copyCheck" class="pad" hidden>
+      <h2>Is this the same talk?</h2>
+      <p class="help" style="margin-bottom:.7rem">
+        This file was set up as the event below, but it was called something else then. A
+        presentation saved under a new name is usually a new talk, and a new talk with the
+        old event would show the old talk's questions to the new room.
+      </p>
+      <div class="card" style="margin-bottom:.8rem">
+        <div class="title" id="copyEventName"></div>
+      </div>
+      <div class="actions">
+        <button id="copyKeep" type="button">Same talk, keep it</button>
+        <button id="copyFresh" class="secondary" type="button">New talk, start fresh</button>
+      </div>
+      <p class="help" style="margin-top:.6rem">
+        Starting fresh gives this file its own event and its own link. Nothing is deleted:
+        the old talk keeps everything it had.
+      </p>
+      <div class="msg" id="copyMsg"></div>
+    </div>
+
     <!-- WORK -->
     <div id="work" class="pad" hidden>
       <div style="display:flex; align-items:center; gap:.5rem; margin-bottom:.6rem">
@@ -193,7 +217,10 @@
         <button id="tabPolls" type="button" role="tab" aria-selected="true">Polls</button>
         <button id="tabQuizzes" type="button" role="tab" aria-selected="false">Quizzes</button>
         <button id="tabForms" type="button" role="tab" aria-selected="false">Open</button>
-        <button id="tabSlides" type="button" role="tab" aria-selected="false">Slides</button>
+        <!-- Not "Slides". This tab is about how the room gets in and how the
+             blocks look, and every other tab already puts things on slides -
+             so the one named after slides was the one that did it least. -->
+        <button id="tabSlides" type="button" role="tab" aria-selected="false">Join &amp; look</button>
       </div>
 
       <!-- POLLS -->
@@ -346,15 +373,73 @@
         </p>
         <div class="actions">
           <button id="insertQr" type="button">Put the code on this slide</button>
+          <button id="welcomeSlide" class="secondary" type="button">Add a welcome slide</button>
         </div>
+        <p class="help" style="margin-top:.5rem">
+          The welcome slide is a whole slide made for you: the join code big enough to read
+          from the back, the code as a picture beside it, and one line telling the room what
+          to do. Yours afterwards, so move and restyle it as you like.
+        </p>
         <div class="msg" id="qrMsg"></div>
+
+        <hr />
+
+        <h2>How new blocks look</h2>
+        <p class="help" style="margin-bottom:.6rem">
+          Set once here and every block you add afterwards starts this way. A block you have
+          already placed keeps what it has, and each one can still be changed on its own slide.
+        </p>
+        <div class="grid2">
+          <div>
+            <label for="lookTheme">Text</label>
+            <select id="lookTheme">
+              <option value="light">Dark text</option>
+              <option value="dark">Light text</option>
+            </select>
+          </div>
+          <div>
+            <label for="lookRadius">Bars</label>
+            <select id="lookRadius">
+              <option value="soft">Slightly rounded</option>
+              <option value="sharp">Square</option>
+              <option value="round">Fully rounded</option>
+            </select>
+          </div>
+          <div>
+            <label for="lookText">Text colour</label>
+            <input id="lookText" type="color" value="#111827" />
+          </div>
+          <div>
+            <label for="lookBar">Bar colour</label>
+            <input id="lookBar" type="color" value="#140553" />
+          </div>
+        </div>
+
+        <label for="lookBg">Background behind a block</label>
+        <input id="lookBg" type="color" value="#ffffff" />
+        <p class="help" style="margin-bottom:.6rem">
+          PowerPoint always paints something behind a live block: a web object on a slide
+          cannot be see-through, and Microsoft has turned that request down. So the block
+          paints the colour you pick here instead. Set it to your slide's own colour and the
+          edge disappears.
+        </p>
+        <label class="switch">
+          <input id="lookShadow" type="checkbox" />
+          <span>Soft shadow under the block</span>
+        </label>
+        <div style="margin-top:.6rem" class="actions">
+          <button id="saveLook" type="button">Save as the standard</button>
+          <button id="resetLookAll" class="secondary" type="button">Back to plain</button>
+        </div>
+        <div class="msg" id="lookMsg"></div>
 
         <hr />
 
         <h2>One link for the whole deck</h2>
         <p class="help" style="margin-bottom:.6rem">
-          Made once, then every Claper object you put on a slide finds it by itself and only asks
-          what that slide should show. The link only reads, so it is safe inside the file.
+          Made for you the moment this presentation gets its event, and stored in the file.
+          A block placed by the buttons on a question is handed the link directly, so it never
+          asks. A block you insert by hand asks once, and this is the link to paste.
         </p>
 
         <div class="linkrow">
@@ -362,8 +447,11 @@
           <button id="copyLink" class="secondary" type="button">Copy</button>
         </div>
         <div style="margin-top:.6rem" class="actions">
-          <button id="makeLink" type="button">Create link</button>
+          <button id="makeLink" type="button">Make a new link</button>
         </div>
+        <p class="help" style="margin-top:.5rem">
+          A new link replaces the old one everywhere. Only needed if the old one got out.
+        </p>
         <div class="msg" id="linkMsg"></div>
 
         <hr />
@@ -375,7 +463,7 @@
         </p>
         <ol class="steps">
           <li><span class="n">1</span><span><b>Insert &gt; Add-ins &gt; My Add-ins</b><span>Pick "Claper on a slide".</span></span></li>
-          <li><span class="n">2</span><span><b>Choose what it shows</b><span>It already knows the link.</span></span></li>
+          <li><span class="n">2</span><span><b>Paste the link from above</b><span>Then pick what that slide should show.</span></span></li>
         </ol>
         <p class="help">
           The frame around a live block, and the soft shadow along its top edge, are PowerPoint's
@@ -406,6 +494,19 @@
       // event, and so the same deck behaves the same on another computer. Only
       // the code, which is public by nature: it is what the room types in.
       var EVENT_TAG = "CLAPEREVENT";
+
+      // The file this presentation was when its event was settled. A tag travels
+      // with a copy, so "Save as" and "duplicate this deck for next month" both
+      // hand the new file the old event - which is exactly how a fresh talk ended
+      // up offering the questions of the one before it. Comparing the name is not
+      // proof of a copy, and it does not have to be: on a mismatch the add-in
+      // asks instead of choosing, and the first answer is "same talk".
+      var FILE_TAG = "CLAPERFILE";
+
+      // How new blocks should look, for the whole deck. In a tag rather than in
+      // this add-in's own bag, because a block on a slide cannot read that bag -
+      // the same reason the link lives in one.
+      var LOOK_TAG = "CLAPERLOOK";
 
       function apiLevel(version) {
         try {
@@ -444,6 +545,62 @@
       function readDeckLink() { return readTag(DECK_TAG); }
       function writeDeckLink(value) { return writeTag(DECK_TAG, value); }
 
+      // ---------- how new blocks look ----------
+
+      var LOOK_FIELDS = ["theme", "radius", "shadow", "text", "bar", "bg"];
+
+      function lookFromForm() {
+        return {
+          theme: $("lookTheme").value,
+          radius: $("lookRadius").value,
+          shadow: $("lookShadow").checked ? "on" : "off",
+          text: $("lookText").value,
+          bar: $("lookBar").value,
+          bg: $("lookBg").value
+        };
+      }
+
+      function lookIntoForm(look) {
+        if (!look) return;
+        if (look.theme) $("lookTheme").value = look.theme;
+        if (look.radius) $("lookRadius").value = look.radius;
+        $("lookShadow").checked = look.shadow === "on";
+        if (look.text) $("lookText").value = look.text;
+        if (look.bar) $("lookBar").value = look.bar;
+        if (look.bg) $("lookBg").value = look.bg;
+      }
+
+      function readLook() {
+        return readTag(LOOK_TAG).then(function (raw) {
+          if (!raw) return null;
+          try {
+            var parsed = JSON.parse(raw);
+            // Only the fields this version knows, so a tag written by a later
+            // version cannot put anything unexpected into the form.
+            var clean = {};
+            LOOK_FIELDS.forEach(function (f) {
+              if (typeof parsed[f] === "string") clean[f] = parsed[f];
+            });
+            return clean;
+          } catch (e) {
+            return null;
+          }
+        });
+      }
+
+      function saveLook() {
+        say($("lookMsg"), t("Saving…"));
+        return writeTag(LOOK_TAG, JSON.stringify(lookFromForm())).then(function (saved) {
+          say(
+            $("lookMsg"),
+            saved
+              ? t("Saved. New blocks start this way.")
+              : t("This PowerPoint cannot store it in the file. Set it on each block instead."),
+            saved ? "ok" : "err"
+          );
+        });
+      }
+
       var cfg = { base: "", token: "", embed: "", event: "", kind: "" };
       var deckLength = 0;
       var eventCode = "";
@@ -473,9 +630,14 @@
           if (hit && hit !== key) node.nodeValue = node.nodeValue.replace(key, hit);
         });
 
-        root.querySelectorAll("[placeholder]").forEach(function (el) {
-          var hit = dict[el.getAttribute("placeholder")];
-          if (hit) el.setAttribute("placeholder", hit);
+        // Not only placeholders. A title is the tooltip and an aria-label is
+        // what a screen reader says, and both were left in English by a walk
+        // that only looked at text nodes and one attribute.
+        ["placeholder", "title", "aria-label"].forEach(function (attr) {
+          root.querySelectorAll("[" + attr + "]").forEach(function (el) {
+            var hit = dict[el.getAttribute(attr)];
+            if (hit) el.setAttribute(attr, hit);
+          });
         });
       }
 
@@ -516,7 +678,7 @@
       function $(id) { return document.getElementById(id); }
       function say(el, text, kind) { el.className = "msg " + (kind || ""); el.textContent = text || ""; }
       function show(which) {
-        ["welcome", "connect", "pickEvent", "work"].forEach(function (id) {
+        ["welcome", "connect", "pickEvent", "copyCheck", "work"].forEach(function (id) {
           $(id).hidden = id !== which;
         });
       }
@@ -1320,18 +1482,71 @@
             }
 
             return readTag(EVENT_TAG).then(function (code) {
-              if (code) {
-                cfg.event = code;
-                show("work");
-                return loadPolls();
-              }
-              return startOwnEvent();
+              if (!code) return startOwnEvent();
+              return checkItIsStillTheSameTalk(code);
             });
           })
           .catch(function (e) {
             say($("connectMsg"), e.message, "err");
             show("connect");
           });
+      }
+
+      // A tag travels with a copy of the file, and copying a deck is how most
+      // people start next month's talk. So the event alone is not enough to go
+      // on: the file it was settled for is remembered beside it, and a different
+      // name means the add-in asks rather than assuming.
+      //
+      // A name is not proof. Renaming a file does not make it a new talk, and
+      // "Save as" onto a different name is not always a copy either. It does not
+      // need to be proof, because the answer is a question with "same talk" as
+      // its first button - the cost of a wrong guess here is one click, and the
+      // cost of not asking was a room being shown someone else's questions.
+      function checkItIsStillTheSameTalk(code) {
+        var now = presentationName();
+
+        return readTag(FILE_TAG).then(function (was) {
+          if (!was || !now || was === now) {
+            // Nothing recorded yet means a deck bound before this existed.
+            // Recording it now is all that can honestly be done: there is
+            // nothing to compare a copy made back then against.
+            if (now && was !== now) writeTag(FILE_TAG, now);
+            cfg.event = code;
+            show("work");
+            return loadPolls();
+          }
+          return askWhetherSameTalk(code, now);
+        });
+      }
+
+      function askWhetherSameTalk(code, name) {
+        show("copyCheck");
+        say($("copyMsg"), "");
+        $("copyEventName").textContent = code;
+
+        // The code is what the room types, so it is never wrong to show. The
+        // name is friendlier, and looking it up may fail - an event this key can
+        // no longer reach, say - which is why it only ever improves the line.
+        cfg.event = code;
+        api("/api/addin/events")
+          .then(function (body) {
+            (body.events || []).forEach(function (event) {
+              if (event.code === code) $("copyEventName").textContent = event.name;
+            });
+          })
+          .catch(function () {});
+
+        $("copyKeep").onclick = function () {
+          writeTag(FILE_TAG, name);
+          cfg.event = code;
+          show("work");
+          loadPolls();
+        };
+
+        $("copyFresh").onclick = function () {
+          cfg.event = "";
+          startOwnEvent();
+        };
       }
 
       // A presentation Claper has never seen gets its own event, named after the
@@ -1357,6 +1572,12 @@
       // talk before it. The link goes with the event, always.
       function useEvent(code) {
         cfg.event = code;
+
+        // Beside the event, the file it was settled for. Written first, so a
+        // deck that manages to store one manages to store both: a stored event
+        // with no stored file is the one combination that would ask on every
+        // single open.
+        writeTag(FILE_TAG, presentationName());
 
         return writeTag(EVENT_TAG, code)
           .then(function (saved) {
@@ -1743,6 +1964,108 @@
         });
       }
 
+      /* ---------- the welcome slide ---------- */
+
+      // What Mentimeter opens with, built out of parts this file already has:
+      // the same joining picture, on a slide of its own, with the code written
+      // large enough to read from the back and one line saying what to do.
+      //
+      // Not one prepared slide shipped as a file. A prepared slide arrives in
+      // someone else's fonts and colours and has to be redesigned before it can
+      // be shown, which is worse than no slide. This one is added by PowerPoint
+      // itself, so it takes the deck's own layout, and everything on it is an
+      // ordinary shape the author can move, restyle or delete.
+      function addWelcomeSlide() {
+        var button = $("welcomeSlide");
+        button.disabled = true;
+        say($("qrMsg"), t("Building the slide…"));
+
+        if (!selectionUsable()) {
+          say($("qrMsg"), t("This PowerPoint is too old to add a slide from here. Add one yourself and use the button above."), "err");
+          button.disabled = false;
+          return;
+        }
+
+        ensureLink()
+          .then(readQrCanvas)
+          .then(joinPicture)
+          .then(function (picture) {
+            return appendAndSelectSlide().then(function () { return picture; });
+          })
+          .then(function (picture) {
+            return putPictureOnSlide(picture);
+          })
+          .then(writeWelcomeWords)
+          .then(function (wrote) {
+            say(
+              $("qrMsg"),
+              wrote
+                ? t("Added at the end. Move it to the front and it is your opening slide.")
+                : t("Added at the end. This PowerPoint cannot write the text, so type the code beside the picture."),
+              wrote ? "ok" : "err"
+            );
+          })
+          .catch(function (e) { say($("qrMsg"), e.message, "err"); })
+          .then(function () { button.disabled = false; });
+      }
+
+      function appendAndSelectSlide() {
+        return PowerPoint.run(function (context) {
+          context.presentation.slides.add();
+          return context.sync().then(function () {
+            var all = context.presentation.slides;
+            all.load("items/id");
+            return context.sync().then(function () {
+              var last = all.items[all.items.length - 1];
+              if (!last) throw new Error(t("PowerPoint did not add the slide."));
+              // Selected, because the picture goes on whichever slide is open:
+              // setSelectedDataAsync has no way to name one.
+              context.presentation.setSelectedSlides([last.id]);
+              return context.sync();
+            });
+          });
+        });
+      }
+
+      // Text boxes need PowerPointApi 1.4. Where that is missing the slide and
+      // the picture still land, and the message says what is left to do rather
+      // than failing the whole thing over the part that is easiest to redo.
+      function writeWelcomeWords() {
+        if (!apiLevel("1.4")) return Promise.resolve(false);
+
+        return PowerPoint.run(function (context) {
+          var all = context.presentation.slides;
+          all.load("items/id");
+          return context.sync().then(function () {
+            var slide = all.items[all.items.length - 1];
+            if (!slide) return false;
+
+            // To the right of the picture, which sits at 60/60 and is 220 wide.
+            var heading = slide.shapes.addTextBox(t("Join in"), {
+              left: 310, top: 70, width: 340, height: 60
+            });
+            heading.textFrame.textRange.font.size = 40;
+            heading.textFrame.textRange.font.bold = true;
+
+            var how = slide.shapes.addTextBox(
+              t("Open the camera, point it at the code, answer on your phone."),
+              { left: 310, top: 140, width: 340, height: 80 }
+            );
+            how.textFrame.textRange.font.size = 18;
+
+            if (eventCode) {
+              var code = slide.shapes.addTextBox(eventCode, {
+                left: 310, top: 225, width: 340, height: 50
+              });
+              code.textFrame.textRange.font.size = 26;
+              code.textFrame.textRange.font.bold = true;
+            }
+
+            return context.sync().then(function () { return true; });
+          });
+        }).catch(function () { return false; });
+      }
+
       function insertJoinPicture() {
         $("insertQr").disabled = true;
         say($("qrMsg"), t("Drawing the code…"));
@@ -1766,7 +2089,13 @@
       function showLink() {
         var url = embedUrl();
         $("slideLink").value = url;
-        $("makeLink").hidden = !!url;
+        // The button used to be the only way a link ever came into being, and it
+        // hid itself once there was one. That read as "make a link" and behaved
+        // as "make the link", which is why the step list next to it could claim
+        // the block already knew it while the author was still looking at an
+        // empty box. It is now what its label says: a way to replace a link that
+        // exists, and it is always there.
+        $("makeLink").hidden = false;
       }
 
       // Only ever called when this presentation has no link yet, and the button
@@ -1807,7 +2136,14 @@
         });
         if (which === "quizzes") loadQuizzes();
         if (which === "forms") loadForms();
-        if (which === "slides") showLink();
+        if (which === "slides") {
+          showLink();
+          // A deck bound by an older version, or one whose first attempt failed,
+          // has an event but no link. This tab is where the author is told the
+          // link exists, so it is where making sure it does belongs.
+          ensureLink().then(showLink).catch(function (e) { say($("linkMsg"), e.message, "err"); });
+          readLook().then(lookIntoForm);
+        }
       }
 
       Office.onReady(function () {
@@ -1866,6 +2202,23 @@
 
         $("makeLink").addEventListener("click", makeLink);
         $("insertQr").addEventListener("click", insertJoinPicture);
+        $("welcomeSlide").addEventListener("click", addWelcomeSlide);
+        $("saveLook").addEventListener("click", saveLook);
+        $("resetLookAll").addEventListener("click", function () {
+          // Cleared rather than set to the plain values: an empty tag is what
+          // "no standard was chosen" looks like everywhere else in this file,
+          // and a block reading one must not be able to tell the difference
+          // between "never set" and "set back to plain".
+          $("lookTheme").value = "light";
+          $("lookRadius").value = "soft";
+          $("lookShadow").checked = false;
+          $("lookText").value = "#111827";
+          $("lookBar").value = "#140553";
+          $("lookBg").value = "#ffffff";
+          writeTag(LOOK_TAG, "").then(function () {
+            say($("lookMsg"), t("Back to plain. New blocks look the way Claper draws them."), "ok");
+          });
+        });
         $("qrDomain").addEventListener("change", function () {
           store(LS.domain, $("qrDomain").checked ? "1" : "0");
         });

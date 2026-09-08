@@ -67,11 +67,20 @@ defmodule ClaperWeb.EventLive.Presenter do
   background, and a white card on top of it is a rectangle the author then has
   to design around. Asking for a ground is the deliberate choice, not being
   given one.
+
+  `bg` is the colour of the page itself, and it exists because of a limit that
+  is not Claper's. A web object on a PowerPoint slide cannot be see-through:
+  Office paints an opaque ground under it whatever the page says, and the
+  request to change that was closed as not planned. So a transparent page comes
+  out white on the slide, and the only way to make the edge vanish is to paint
+  the slide's own colour. Absent, the page stays transparent, which is right
+  everywhere the host is not PowerPoint.
   """
   def embed_style(params) do
     %{
       theme: one_of(params["theme"], ~w(light dark), "light"),
       panel: one_of(params["panel"], ~w(on off), "off"),
+      bg: colour(params["bg"]),
       radius: one_of(params["radius"], ~w(sharp soft round), "soft"),
       shadow: one_of(params["shadow"], ~w(on off), "off"),
       text: colour(params["text"]),
@@ -87,6 +96,18 @@ defmodule ClaperWeb.EventLive.Presenter do
       board: one_of(params["board"], ~w(on off), "off")
     }
   end
+
+  @doc """
+  What the page paints behind everything.
+
+  Black for the presenter's own full-screen deck, which is what a projected
+  slide wants. For an embedded block it is transparent unless the link names a
+  colour, and it names one when the block sits on a PowerPoint slide, where
+  transparent is not a thing the host can honour.
+  """
+  def embed_background(false, _style), do: "black"
+  def embed_background(true, %{bg: bg}) when is_binary(bg), do: bg
+  def embed_background(true, _style), do: "transparent"
 
   @doc """
   The CSS a chosen text or bar colour needs, or nothing when neither was chosen.

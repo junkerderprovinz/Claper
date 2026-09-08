@@ -1,6 +1,6 @@
 <style>
   body {
-    background: <%= if @interaction_only, do: "transparent", else: "black" %>;
+    background: <%= embed_background(@interaction_only, assigns[:embed_style]) %>;
   }
 
   iframe {
@@ -305,7 +305,9 @@ not reasoned about. --%>
     It counts down in the browser rather than through a message a second, which
     would be one message per second per block on the wall. --%>
     <div
-      :if={@current_quiz.seconds_per_question && @question_started_at && !@current_quiz.show_results}
+      :if={
+        @current_quiz.seconds_per_question && @question_started_at && !@current_quiz.show_results
+      }
       id={"quiz-clock-#{@current_quiz.id}"}
       phx-hook="Countdown"
       phx-update="ignore"
@@ -342,7 +344,10 @@ not reasoned about. --%>
 
     Behind show_results like everything else: while the question is still open
     the board would say who has the right answer, which is the answer. --%>
-    <div :if={@embed_style.board == "on" && @current_quiz.show_results && @quiz_board != []} class="mt-5">
+    <div
+      :if={@embed_style.board == "on" && @current_quiz.show_results && @quiz_board != []}
+      class="mt-5"
+    >
       <p class={"claper-ink text-sm font-bold mb-2 #{if @embed_style.theme == "dark", do: "text-gray-300", else: "text-gray-500"}"}>
         {gettext("Leaderboard")}
       </p>
