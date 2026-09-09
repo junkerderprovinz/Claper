@@ -261,8 +261,11 @@
       <div style="display:flex; align-items:center; gap:.5rem; margin-bottom:.15rem">
         <h2 style="flex:1; margin:0" id="deckName">This presentation</h2>
         <button class="link" id="changeEvent" type="button" hidden>Change</button>
-        <button class="link" id="home" type="button">Start</button>
-        <button class="link" id="settings" type="button">Connection</button>
+        <!-- "Start" read as "start over", which is not what it does: it shows
+             the four steps again. "Connection" named the screen rather than the
+             reason anyone opens it. Both say what they do now. -->
+        <button class="link" id="home" type="button">Guide</button>
+        <button class="link" id="settings" type="button">Settings</button>
       </div>
 
       <p class="deckTalk">Talk: <span id="eventName"></span></p>

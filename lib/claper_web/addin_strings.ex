@@ -123,6 +123,10 @@ defmodule ClaperWeb.AddinStrings do
       "Change" => gettext("Change"),
       "Start" => gettext("Start"),
       "Connection" => gettext("Connection"),
+      # The two links in the header. "Start" read as "start over" and
+      # "Connection" named a screen instead of a reason to open it.
+      "Guide" => gettext("Guide"),
+      "Settings" => gettext("Settings"),
       "Polls" => gettext("Polls"),
       "Quizzes" => gettext("Quizzes"),
       "Open" => gettext("Open"),
