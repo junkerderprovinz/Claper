@@ -40,7 +40,15 @@ defmodule ClaperWeb.AddinStrings do
     end)
   end
 
-  defp strings do
+  @doc """
+  Every string in the language currently set, as `%{english => translated}`.
+
+  Public because the test that keeps this honest reads the two static pages and
+  asserts every sentence on them is a key here. A missing key does not fail
+  anything at run time: the sentence simply stays English beside text that
+  turned, which is exactly the kind of fault nobody reports.
+  """
+  def strings do
     %{
       # The welcome page
       "Bring Claper into PowerPoint" => gettext("Bring Claper into PowerPoint"),
@@ -90,6 +98,8 @@ defmodule ClaperWeb.AddinStrings do
       "Give it a name." => gettext("Give it a name."),
       "Creating…" => gettext("Creating…"),
       "Setting up this presentation…" => gettext("Setting up this presentation…"),
+      # What a deck that has never been saved is called, with the date after it.
+      "New presentation" => gettext("New presentation"),
       "This presentation could not remember its event. Save the file, then reconnect." =>
         gettext("This presentation could not remember its event. Save the file, then reconnect."),
 
@@ -203,9 +213,13 @@ defmodule ClaperWeb.AddinStrings do
         gettext(
           "No answers to pick from. People write their own, and what they write appears on the slide. For ideas, questions and moods."
         ),
-      "All three work the same way afterwards: write it here, then put it on a slide with one button. The room answers on their phones after scanning the join code." =>
+      "The first six are on this tab, under How it is shown. Quiz and Open question each have a tab of their own." =>
         gettext(
-          "All three work the same way afterwards: write it here, then put it on a slide with one button. The room answers on their phones after scanning the join code."
+          "The first six are on this tab, under How it is shown. Quiz and Open question each have a tab of their own."
+        ),
+      "They all work the same way afterwards: write it here, then put it on a slide with one button. The room answers on their phones after scanning the join code." =>
+        gettext(
+          "They all work the same way afterwards: write it here, then put it on a slide with one button. The room answers on their phones after scanning the join code."
         ),
 
       # Polls

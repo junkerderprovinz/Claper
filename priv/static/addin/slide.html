@@ -320,10 +320,16 @@
         nodes.forEach(function (node) {
           // The backslash matters: /s+/ matches the letter s, so every "s" in
           // the page became a space and nothing matched the dictionary.
-          var key = node.nodeValue.replace(/\s+/g, " ").trim();
+          var raw = node.nodeValue;
+          var key = raw.replace(/\s+/g, " ").trim();
           if (!key) return;
           var hit = dict[key];
-          if (hit && hit !== key) node.nodeValue = node.nodeValue.replace(key, hit);
+          if (!hit || hit === key) return;
+
+          // Write the translation rather than searching for the key inside the
+          // node: the key is the collapsed form, so a sentence the markup wrapped
+          // across lines never contains it, and the replace quietly did nothing.
+          node.nodeValue = raw.match(/^\s*/)[0] + hit + raw.match(/\s*$/)[0];
         });
         // A title is the tooltip and an aria-label is what a screen reader
         // says. Both stayed English while every visible word was translated.

@@ -228,6 +228,11 @@
         <details class="what">
           <summary>Which one do I want?</summary>
           <div class="inner">
+            <!-- The list used to run straight through all eight, inside the
+                 tab that can only make six of them. Counting the dropdown
+                 against the list is how you notice, and then it reads like two
+                 are missing rather than like two live next door. -->
+            <p class="help">The first six are on this tab, under How it is shown. Quiz and Open question each have a tab of their own.</p>
             <dl>
               <dt>Poll</dt>
               <dd>You give the answers, the room picks one. No answer is right, and the bars grow while people vote. For opinions, warm-ups and getting a decision out of a room.</dd>
@@ -246,8 +251,9 @@
               <dt>Open question</dt>
               <dd>No answers to pick from. People write their own, and what they write appears on the slide. For ideas, questions and moods.</dd>
             </dl>
+            <!-- "All three" was true when there were three. There are eight. -->
             <p class="help">
-              All three work the same way afterwards: write it here, then put it on a slide
+              They all work the same way afterwards: write it here, then put it on a slide
               with one button. The room answers on their phones after scanning the join code.
             </p>
           </div>
@@ -659,10 +665,20 @@
         nodes.forEach(function (node) {
           // Whitespace is collapsed first, because the markup wraps sentences
           // across lines and the key does not.
-          var key = node.nodeValue.replace(/\s+/g, " ").trim();
+          var raw = node.nodeValue;
+          var key = raw.replace(/\s+/g, " ").trim();
           if (!key) return;
           var hit = dict[key];
-          if (hit && hit !== key) node.nodeValue = node.nodeValue.replace(key, hit);
+          if (!hit || hit === key) return;
+
+          // Write the translation, do not search for the key inside the node.
+          // The key is the collapsed form, so a sentence the markup wrapped
+          // across lines does not literally contain it: replacing by it matched
+          // nothing and left every multi-line paragraph in English while the
+          // one-line labels around them turned. Leading and trailing whitespace
+          // is kept, because a text node next to an inline element carries the
+          // space that separates the two.
+          node.nodeValue = raw.match(/^\s*/)[0] + hit + raw.match(/\s*$/)[0];
         });
 
         // Not only placeholders. A title is the tooltip and an aria-label is
@@ -1669,8 +1685,14 @@
       // reuse a talk, and choosing the wrong one is what put a Christmas party's
       // questions in front of the wrong room.
       function startOwnEvent() {
-        var name = presentationName();
-        if (!name) return offerEvents(false);
+        // A deck that was created a minute ago and never saved has no URL, and
+        // so no name. That used to send it to the picker, which lists the talks
+        // of every deck before it - and a picker headed by last year's Christmas
+        // party is how a brand new presentation ended up pouring its questions
+        // into an old event. A missing name is not a reason to reuse a talk. It
+        // is the strongest sign there is that this deck is new, so it gets its
+        // own event under a dated name and can be renamed in Claper later.
+        var name = presentationName() || fallbackName();
 
         say($("connectMsg"), t("Setting up this presentation…"));
 
@@ -1728,8 +1750,10 @@
         $("cancelPick").hidden = !canCancel;
 
         // A talk is usually named after its file, so that is the offer rather
-        // than an empty box.
-        if (!$("newEventName").value) $("newEventName").value = presentationName();
+        // than an empty box. An unsaved deck has no file name, and an empty box
+        // with a disabled button reads like a dead end, so it gets the same
+        // dated name the automatic path would have given it.
+        if (!$("newEventName").value) $("newEventName").value = presentationName() || fallbackName();
 
         return api("/api/addin/events")
           .then(function (body) {
@@ -1769,6 +1793,16 @@
         } catch (e) {
           return "";
         }
+      }
+
+      // What an unsaved deck is called until it has a file name. The date is
+      // there so two of them in one week can be told apart in Claper; the word
+      // in front of it is translated, the date is formatted by the browser in
+      // whatever language Office is set to.
+      function fallbackName() {
+        var day = "";
+        try { day = new Date().toLocaleDateString(); } catch (e) { day = ""; }
+        return day ? t("New presentation") + " " + day : t("New presentation");
       }
 
       function createEvent() {
