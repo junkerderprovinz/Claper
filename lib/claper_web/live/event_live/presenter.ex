@@ -93,9 +93,25 @@ defmodule ClaperWeb.EventLive.Presenter do
       # Whether a quiz block shows who is winning under the bars. Off by
       # default: a board is a thing an author decides to put on a slide, not
       # something that appears under every quiz they place.
-      board: one_of(params["board"], ~w(on off), "off")
+      board: one_of(params["board"], ~w(on off), "off"),
+      # What stands at the end of a bar. Both by default, which is what it has
+      # always shown; the choice exists because the right answer depends on the
+      # room and not on us.
+      counts: one_of(params["counts"], ~w(both percent count), "both")
     }
   end
+
+  @doc """
+  The number at the end of a bar, in the form the author asked for.
+
+  Both by default. A share on its own hides how few people it is drawn from -
+  "67%" out of three votes reads like a finding - and a count on its own hides
+  how large a share it is. Either alone is the right choice in some rooms, which
+  is why it is a choice rather than a rule.
+  """
+  def poll_tally(percentage, _count, "percent"), do: "#{percentage}%"
+  def poll_tally(_percentage, count, "count"), do: "#{count}"
+  def poll_tally(percentage, count, _both), do: "#{percentage}% (#{count})"
 
   @doc """
   What the page paints behind everything.

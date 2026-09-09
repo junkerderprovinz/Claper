@@ -1285,4 +1285,26 @@ defmodule ClaperWeb.EventLive.PresenterEmbedTest do
       assert Presenter.embed_style(%{}).bg == nil
     end
   end
+
+  describe "poll_tally/3" do
+    alias ClaperWeb.EventLive.Presenter
+
+    test "both numbers unless the author asked for one" do
+      assert Presenter.poll_tally(67, 2, "both") == "67% (2)"
+      assert Presenter.poll_tally(67, 2, "percent") == "67%"
+      assert Presenter.poll_tally(67, 2, "count") == "2"
+    end
+
+    test "an unknown or missing choice is both, not blank" do
+      # The value arrives from a query string, so it can be anything at all. A
+      # bar with no number on it is worse than a bar with the number it always
+      # had, which is why the last clause catches everything rather than
+      # matching "both".
+      assert Presenter.poll_tally(50, 1, "nonsense") == "50% (1)"
+      assert Presenter.poll_tally(50, 1, nil) == "50% (1)"
+      assert Presenter.embed_style(%{}).counts == "both"
+      assert Presenter.embed_style(%{"counts" => "sideways"}).counts == "both"
+      assert Presenter.embed_style(%{"counts" => "count"}).counts == "count"
+    end
+  end
 end

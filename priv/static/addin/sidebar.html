@@ -75,6 +75,12 @@
 
       /* The six shapes a poll can take, all on screen. A dropdown would fit in
          less room and did, which is how five of them became invisible. */
+      /* Which talk the questions below belong to. Small, because it answers a
+         question rather than announcing one, and always there, because "whose
+         questions are these" must never need a guess. */
+      .deckTalk { margin: 0 0 .7rem; font-size: .75rem; color: var(--muted); }
+      .deckTalk span { font-weight: 600; }
+
       /* A grid rather than a wrapping row: the row left the last line stretched
          across the whole panel, which pushed the dot and its word to opposite
          edges and stopped looking like one control. */
@@ -223,12 +229,20 @@
 
     <!-- WORK -->
     <div id="work" class="pad" hidden>
-      <div style="display:flex; align-items:center; gap:.5rem; margin-bottom:.6rem">
-        <h2 style="flex:1; margin:0" id="eventName">Your event</h2>
+      <!-- The heading is the presentation, not the talk. They are two different
+           things and the talk was standing in for both, which is why a deck
+           opened for the first time appeared to be titled after last year's
+           Christmas party. The talk still has to be visible, because it decides
+           whose questions the list below shows - but underneath, in the size of
+           a fact rather than of a title. -->
+      <div style="display:flex; align-items:center; gap:.5rem; margin-bottom:.15rem">
+        <h2 style="flex:1; margin:0" id="deckName">This presentation</h2>
         <button class="link" id="changeEvent" type="button" hidden>Change</button>
         <button class="link" id="home" type="button">Start</button>
         <button class="link" id="settings" type="button">Connection</button>
       </div>
+
+      <p class="deckTalk">Talk: <span id="eventName"></span></p>
 
       <!-- Two kinds of key reach this page and they behave completely
            differently, and until now the page said nothing about which one it
@@ -257,11 +271,11 @@
         <details class="what">
           <summary>Which one do I want?</summary>
           <div class="inner">
-            <!-- The list used to run straight through all eight, inside the
-                 tab that can only make six of them. Counting the dropdown
-                 against the list is how you notice, and then it reads like two
-                 are missing rather than like two live next door. -->
-            <p class="help">The first six are on this tab, under How it is shown. Quiz and Open question each have a tab of their own.</p>
+            <!-- Six entries, for the six shapes this tab can make. Quiz and
+                 Open question were listed here too and are not: each has a tab
+                 of its own with its own box, and a box that describes what the
+                 tab below it cannot make is how the list came to read as a set
+                 of promises the page does not keep. -->
             <dl>
               <dt>Bars</dt>
               <dd>You give the answers, the room picks one. No answer is right, and the bars grow while people vote. For opinions, warm-ups and getting a decision out of a room.</dd>
@@ -275,12 +289,8 @@
               <dd>No answers at all: people tap a picture and every tap appears on your slide. For floor plans, screenshots, maps and anything where the answer is a place rather than a word.</dd>
               <dt>Wheel</dt>
               <dd>Nobody answers it. You write what is on it and spin it from Claper. For picking a name, a topic or who goes next.</dd>
-              <dt>Quiz</dt>
-              <dd>Looks like a poll, but one answer is the right one and nobody sees which until you release it. For checking whether something landed.</dd>
-              <dt>Open question</dt>
-              <dd>No answers to pick from. People write their own, and what they write appears on the slide. For ideas, questions and moods.</dd>
             </dl>
-            <!-- "All three" was true when there were three. There are eight. -->
+            <!-- "All three" was true when there were three. There are six. -->
             <p class="help">
               They all work the same way afterwards: write it here, then put it on a slide
               with one button. The room answers on their phones after scanning the join code.
@@ -489,6 +499,25 @@
             <label for="lookBar">Bar colour</label>
             <input id="lookBar" type="color" value="#140553" />
           </div>
+          <!-- Both of these existed already and could only be reached by
+               clicking a block on a slide and opening its settings, which is
+               why the word cloud was asked after as if it had never been
+               built. A setting nobody can find is not a setting. -->
+          <div>
+            <label for="lookLayout">Open answers</label>
+            <select id="lookLayout">
+              <option value="cloud">Word cloud</option>
+              <option value="list">One after another</option>
+            </select>
+          </div>
+          <div>
+            <label for="lookCounts">Numbers at the bar</label>
+            <select id="lookCounts">
+              <option value="both">Percent and count</option>
+              <option value="percent">Percent only</option>
+              <option value="count">Count only</option>
+            </select>
+          </div>
         </div>
 
         <label for="lookBg">Background behind a block</label>
@@ -623,7 +652,7 @@
 
       // ---------- how new blocks look ----------
 
-      var LOOK_FIELDS = ["theme", "radius", "shadow", "text", "bar", "bg"];
+      var LOOK_FIELDS = ["theme", "radius", "shadow", "text", "bar", "bg", "layout", "counts"];
 
       function lookFromForm() {
         return {
@@ -632,7 +661,9 @@
           shadow: $("lookShadow").checked ? "on" : "off",
           text: $("lookText").value,
           bar: $("lookBar").value,
-          bg: $("lookBg").value
+          bg: $("lookBg").value,
+          layout: $("lookLayout").value,
+          counts: $("lookCounts").value
         };
       }
 
@@ -644,6 +675,8 @@
         if (look.text) $("lookText").value = look.text;
         if (look.bar) $("lookBar").value = look.bar;
         if (look.bg) $("lookBg").value = look.bg;
+        if (look.layout) $("lookLayout").value = look.layout;
+        if (look.counts) $("lookCounts").value = look.counts;
       }
 
       function readLook() {
@@ -1236,6 +1269,10 @@
           .then(function (body) {
             deckLength = (body.event && body.event.deck_length) || 0;
             eventCode = (body.event && body.event.code) || "";
+            // The file, then the talk. A deck that has never been saved has no
+            // name to show, and calling it "This presentation" is the truth
+            // rather than borrowing the talk's name for it.
+            $("deckName").textContent = presentationName() || t("This presentation");
             $("eventName").textContent = body.event.name;
             // Only a personal key can point the deck somewhere else; an event
             // key has exactly one event and the offer would be a dead end.
@@ -2413,6 +2450,8 @@
           $("lookText").value = "#111827";
           $("lookBar").value = "#140553";
           $("lookBg").value = "#ffffff";
+          $("lookLayout").value = "cloud";
+          $("lookCounts").value = "both";
           writeTag(LOOK_TAG, "").then(function () {
             say($("lookMsg"), t("Back to plain. New blocks look the way Claper draws them."), "ok");
           });

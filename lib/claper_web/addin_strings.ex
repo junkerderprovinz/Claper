@@ -100,6 +100,9 @@ defmodule ClaperWeb.AddinStrings do
       "Setting up this presentation…" => gettext("Setting up this presentation…"),
       # What a deck that has never been saved is called, with the date after it.
       "New presentation" => gettext("New presentation"),
+      # The line under the heading. The heading is the file; this is the talk
+      # whose questions the list below shows, and the two are not the same.
+      "Talk:" => gettext("Talk:"),
       "This key belongs to one talk, so every presentation you open with it lands here. A personal key from your Claper account settings gives each presentation a talk of its own." =>
         gettext(
           "This key belongs to one talk, so every presentation you open with it lands here. A personal key from your Claper account settings gives each presentation a talk of its own."
@@ -212,19 +215,7 @@ defmodule ClaperWeb.AddinStrings do
           "The answers become a row in the order you write them, and the slide also shows the average. Write the ends first if you want words: \"never\" through to \"always\"."
         ),
       "Quiz" => gettext("Quiz"),
-      "Looks like a poll, but one answer is the right one and nobody sees which until you release it. For checking whether something landed." =>
-        gettext(
-          "Looks like a poll, but one answer is the right one and nobody sees which until you release it. For checking whether something landed."
-        ),
       "Open question" => gettext("Open question"),
-      "No answers to pick from. People write their own, and what they write appears on the slide. For ideas, questions and moods." =>
-        gettext(
-          "No answers to pick from. People write their own, and what they write appears on the slide. For ideas, questions and moods."
-        ),
-      "The first six are on this tab, under How it is shown. Quiz and Open question each have a tab of their own." =>
-        gettext(
-          "The first six are on this tab, under How it is shown. Quiz and Open question each have a tab of their own."
-        ),
       "They all work the same way afterwards: write it here, then put it on a slide with one button. The room answers on their phones after scanning the join code." =>
         gettext(
           "They all work the same way afterwards: write it here, then put it on a slide with one button. The room answers on their phones after scanning the join code."
@@ -458,6 +449,12 @@ defmodule ClaperWeb.AddinStrings do
       "Quiz leaderboard" => gettext("Quiz leaderboard"),
       "Do not show" => gettext("Do not show"),
       "Under the answers" => gettext("Under the answers"),
+      # What stands at the end of a bar. Offered on the block and, since this
+      # round, as a standard for the whole deck.
+      "Numbers at the bar" => gettext("Numbers at the bar"),
+      "Percent and count" => gettext("Percent and count"),
+      "Percent only" => gettext("Percent only"),
+      "Count only" => gettext("Count only"),
       "Use my own colours" => gettext("Use my own colours"),
       "Text colour" => gettext("Text colour"),
       "Bar colour" => gettext("Bar colour"),

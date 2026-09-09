@@ -165,6 +165,18 @@
                 <option value="on">Under the answers</option>
               </select>
             </div>
+            <!-- A share on its own hides how few people it is drawn from, and a
+                 count on its own hides how large a share it is. Both is the
+                 default it has always had; which one a room wants is the
+                 author's call, not ours. -->
+            <div>
+              <label for="counts">Numbers at the bar</label>
+              <select id="counts">
+                <option value="both">Percent and count</option>
+                <option value="percent">Percent only</option>
+                <option value="count">Count only</option>
+              </select>
+            </div>
           </div>
 
           <!-- The two dropdowns above pick between readable defaults. A deck
@@ -262,7 +274,7 @@
           try {
             var parsed = JSON.parse(raw);
             var clean = {};
-            ["theme", "radius", "shadow", "text", "bar", "bg"].forEach(function (f) {
+            ["theme", "radius", "shadow", "text", "bar", "bg", "layout", "counts"].forEach(function (f) {
               if (typeof parsed[f] === "string" && parsed[f]) clean[f] = parsed[f];
             });
             return clean;
@@ -297,6 +309,7 @@
         // board is something an author decides to put on a slide rather than
         // something that appears under every quiz they place.
         board: "off",
+        counts: "both",
         // Empty means "whatever the theme says", which is the readable default.
         // Only a colour the author actually picked is sent.
         text: "",
@@ -398,7 +411,8 @@
           "radius=" + state.radius,
           "shadow=" + state.shadow,
           "layout=" + state.layout,
-          "board=" + state.board
+          "board=" + state.board,
+          "counts=" + state.counts
         ];
         // Only when chosen. Sending the default as a colour would freeze it, so
         // a later change to what Claper considers readable would not reach a
@@ -566,7 +580,7 @@
           state.show = value;
         }
 
-        ["theme", "panel", "radius", "shadow", "layout", "board"].forEach(function (key) { state[key] = $(key).value; });
+        ["theme", "panel", "radius", "shadow", "layout", "board", "counts"].forEach(function (key) { state[key] = $(key).value; });
 
         var own = $("ownColours").checked;
         state.text = own ? $("text").value : "";
@@ -587,7 +601,7 @@
         $("save").disabled = false;
         $("connect").disabled = false;
         $("url").value = state.link;
-        ["theme", "panel", "radius", "shadow", "layout", "board"].forEach(function (key) { $(key).value = state[key]; });
+        ["theme", "panel", "radius", "shadow", "layout", "board", "counts"].forEach(function (key) { $(key).value = state[key]; });
 
         var own = !!(state.text || state.bar);
         $("ownColours").checked = own;
@@ -691,8 +705,9 @@
             $("panel").value = "off";
             $("radius").value = (look && look.radius) || "soft";
             $("shadow").value = (look && look.shadow) || "off";
-            $("layout").value = "cloud";
+            $("layout").value = (look && look.layout) || "cloud";
             $("board").value = "off";
+            $("counts").value = (look && look.counts) || "both";
             $("bg").value = (look && look.bg) || "#ffffff";
             var own = !!(look && (look.text || look.bar));
             $("ownColours").checked = own;

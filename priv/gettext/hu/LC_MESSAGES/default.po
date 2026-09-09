@@ -36,7 +36,7 @@ msgstr "E-mail"
 msgid "Oops, check that all fields are filled in correctly."
 msgstr "Ellenőrizze, hogy minden mező helyesen lett-e kitöltve."
 
-#: lib/claper_web/addin_strings.ex:112
+#: lib/claper_web/addin_strings.ex:115
 #: lib/claper_web/live/user_settings_live/show.html.heex:226
 #: lib/claper_web/live/user_settings_live/show.html.heex:244
 #: lib/claper_web/live/user_settings_live/show.html.heex:264
@@ -172,7 +172,7 @@ msgstr "Vissza a kezdőlapra"
 msgid "Created successfully"
 msgstr "Sikeresen létrehozva"
 
-#: lib/claper_web/addin_strings.ex:123
+#: lib/claper_web/addin_strings.ex:126
 #: lib/claper_web/live/admin_live/event_live.html.heex:102
 #: lib/claper_web/live/admin_live/oidc_provider_live.html.heex:220
 #: lib/claper_web/live/admin_live/user_live.html.heex:102
@@ -181,7 +181,7 @@ msgstr "Sikeresen létrehozva"
 msgid "Edit"
 msgstr "Szerkesztés"
 
-#: lib/claper_web/addin_strings.ex:124
+#: lib/claper_web/addin_strings.ex:127
 #: lib/claper_web/live/embed_live/form_component.html.heex:71
 #: lib/claper_web/live/event_live/event_card_component.ex:837
 #: lib/claper_web/live/event_live/manage_audience_responses_component.ex:263
@@ -196,7 +196,7 @@ msgstr "Szerkesztés"
 msgid "Delete"
 msgstr "Törlés"
 
-#: lib/claper_web/addin_strings.ex:126
+#: lib/claper_web/addin_strings.ex:129
 #: lib/claper_web/live/embed_live/form_component.html.heex:67
 #: lib/claper_web/live/form_live/form_component.html.heex:105
 #: lib/claper_web/live/poll_live/form_component.html.heex:98
@@ -293,7 +293,7 @@ msgstr "Az importálás sikertelen"
 msgid "Add poll to know opinion of your public."
 msgstr "Adjon hozzá egy szavazást, hogy megismerje a közönség véleményét."
 
-#: lib/claper_web/addin_strings.ex:154
+#: lib/claper_web/addin_strings.ex:155
 #: lib/claper_web/live/event_live/manage.html.heex:87
 #: lib/claper_web/live/event_live/manage_floating_action_bar.ex:10
 #: lib/claper_web/live/event_live/manage_interaction_list_component.ex:96
@@ -612,7 +612,7 @@ msgstr "Jelenlegi űrlap megtekintése"
 msgid "Submit"
 msgstr "Küldés"
 
-#: lib/claper_web/addin_strings.ex:433
+#: lib/claper_web/addin_strings.ex:422
 #: lib/claper_web/live/admin_live/event_live.html.heex:186
 #: lib/claper_web/live/form_live/form_component.html.heex:39
 #, elixir-autogen, elixir-format
@@ -1303,7 +1303,7 @@ msgstr "Új kvíz"
 msgid "Previous"
 msgstr "Előző"
 
-#: lib/claper_web/addin_strings.ex:216
+#: lib/claper_web/addin_strings.ex:217
 #: lib/claper_web/live/event_live/manage.html.heex:180
 #: lib/claper_web/live/event_live/manage_floating_action_bar.ex:76
 #: lib/claper_web/live/event_live/manage_floating_action_bar.ex:77
@@ -1424,14 +1424,14 @@ msgstr "Nincsenek kvízek"
 msgid "No web content has been created"
 msgstr "Nincsenek webes tartalmak"
 
-#: lib/claper_web/addin_strings.ex:115
+#: lib/claper_web/addin_strings.ex:118
 #: lib/claper_web/live/event_live/manage_floating_action_bar.ex:11
 #: lib/claper_web/live/stat_live/index.html.heex:189
 #, elixir-autogen, elixir-format
 msgid "Polls"
 msgstr "Szavazások"
 
-#: lib/claper_web/addin_strings.ex:116
+#: lib/claper_web/addin_strings.ex:119
 #: lib/claper_web/live/stat_live/index.html.heex:213
 #, elixir-autogen, elixir-format
 msgid "Quizzes"
@@ -1561,7 +1561,7 @@ msgstr "Hozzárendelt felhasználó"
 msgid "Audience Peak"
 msgstr "Részvételi csúcs"
 
-#: lib/claper_web/addin_strings.ex:127
+#: lib/claper_web/addin_strings.ex:130
 #: lib/claper_web/live/admin_live/event_live/form_component.ex:80
 #: lib/claper_web/live/admin_live/oidc_provider_live/form_component.ex:147
 #: lib/claper_web/live/admin_live/user_live/form_component.ex:96
@@ -3163,7 +3163,7 @@ msgstr "Szavazás létrehozása"
 msgid "Create form"
 msgstr "Űrlap létrehozása"
 
-#: lib/claper_web/addin_strings.ex:266
+#: lib/claper_web/addin_strings.ex:255
 #: lib/claper_web/live/quiz_live/quiz_component.html.heex:218
 #, elixir-autogen, elixir-format
 msgid "Create quiz"
@@ -3616,7 +3616,7 @@ msgstr "name@example.com"
 msgid "An embed link is active. Anyone holding it can watch this event. Create a new one to replace it, or revoke it to switch it off."
 msgstr "Egy beágyazási hivatkozás aktív. Bárki követheti ezt az eseményt, akinél megvan. Hozzon létre újat a cseréjéhez, vagy vonja vissza a kikapcsolásához."
 
-#: lib/claper_web/addin_strings.ex:384
+#: lib/claper_web/addin_strings.ex:373
 #: lib/claper_web/live/event_live/manage_presenter_embed_component.ex:68
 #: lib/claper_web/templates/addin_manifest/show.html.heex:66
 #, elixir-autogen, elixir-format
@@ -3853,33 +3853,32 @@ msgstr "A Claper oldalsáv egyszer kéri ezt a kulcsot. Ezzel egy új bemutató 
 msgid "Write questions for your talks without leaving your slides"
 msgstr "Írja meg az előadásai kérdéseit a diák elhagyása nélkül"
 
-#: lib/claper_web/addin_strings.ex:272
+#: lib/claper_web/addin_strings.ex:261
 #, elixir-autogen, elixir-format
 msgid "A quiz needs at least one question."
 msgstr "Egy kvízhez legalább egy kérdés kell."
 
-#: lib/claper_web/addin_strings.ex:265
+#: lib/claper_web/addin_strings.ex:254
 #, elixir-autogen, elixir-format
 msgid "Add another question"
 msgstr "Még egy kérdés hozzáadása"
 
-#: lib/claper_web/addin_strings.ex:268
+#: lib/claper_web/addin_strings.ex:257
 #, elixir-autogen, elixir-format
 msgid "Add answer"
 msgstr "Válasz hozzáadása"
 
-#: lib/claper_web/addin_strings.ex:388
+#: lib/claper_web/addin_strings.ex:377
 #, elixir-autogen, elixir-format
 msgid "Asking Claper…"
 msgstr "Kérdezzük a Clapert…"
 
-#: lib/claper_web/addin_strings.ex:243
+#: lib/claper_web/addin_strings.ex:232
 #, elixir-autogen, elixir-format
 msgid "At least two answers."
 msgstr "Legalább két válasz."
 
-#: lib/claper_web/addin_strings.ex:153
-#: lib/claper_web/addin_strings.ex:448
+#: lib/claper_web/addin_strings.ex:439
 #, elixir-autogen, elixir-format
 msgid "Bars"
 msgstr "Oszlopok"
@@ -3894,12 +3893,12 @@ msgstr "Mindkettő szükséges."
 msgid "Bring Claper into PowerPoint"
 msgstr "Hozza be a Clapert a PowerPointba"
 
-#: lib/claper_web/addin_strings.ex:442
+#: lib/claper_web/addin_strings.ex:431
 #, elixir-autogen, elixir-format
 msgid "Card"
 msgstr "Kártya"
 
-#: lib/claper_web/addin_strings.ex:246
+#: lib/claper_web/addin_strings.ex:235
 #, elixir-autogen, elixir-format
 msgid "Changing the answers clears the votes already given for this question."
 msgstr "A válaszok módosítása törli az ehhez a kérdéshez már leadott szavazatokat."
@@ -3914,12 +3913,12 @@ msgstr "Ellenőrzés…"
 msgid "Claper address"
 msgstr "Claper-cím"
 
-#: lib/claper_web/addin_strings.ex:414
+#: lib/claper_web/addin_strings.ex:403
 #, elixir-autogen, elixir-format
 msgid "Claper on this slide"
 msgstr "Claper ezen a dián"
 
-#: lib/claper_web/addin_strings.ex:129
+#: lib/claper_web/addin_strings.ex:132
 #, elixir-autogen, elixir-format
 msgid "Claper slide"
 msgstr "Claper-dia"
@@ -3934,17 +3933,17 @@ msgstr "Csatlakozás"
 msgid "Connect once"
 msgstr "Csatlakozzon egyszer"
 
-#: lib/claper_web/addin_strings.ex:114
+#: lib/claper_web/addin_strings.ex:117
 #, elixir-autogen, elixir-format
 msgid "Connection"
 msgstr "Kapcsolat"
 
-#: lib/claper_web/addin_strings.ex:423
+#: lib/claper_web/addin_strings.ex:412
 #, elixir-autogen, elixir-format
 msgid "Continue"
 msgstr "Tovább"
 
-#: lib/claper_web/addin_strings.ex:383
+#: lib/claper_web/addin_strings.ex:372
 #, elixir-autogen, elixir-format
 msgid "Copy"
 msgstr "Másolás"
@@ -3954,7 +3953,7 @@ msgstr "Másolás"
 msgid "Create it"
 msgstr "Létrehozás"
 
-#: lib/claper_web/addin_strings.ex:240
+#: lib/claper_web/addin_strings.ex:229
 #, elixir-autogen, elixir-format
 msgid "Create poll"
 msgstr "Szavazás létrehozása"
@@ -3964,32 +3963,32 @@ msgstr "Szavazás létrehozása"
 msgid "Creating…"
 msgstr "Létrehozás…"
 
-#: lib/claper_web/addin_strings.ex:434
+#: lib/claper_web/addin_strings.ex:423
 #, elixir-autogen, elixir-format
 msgid "Dark text"
 msgstr "Sötét szöveg"
 
-#: lib/claper_web/addin_strings.ex:248
+#: lib/claper_web/addin_strings.ex:237
 #, elixir-autogen, elixir-format
 msgid "Delete this question? The answers already given go with it."
 msgstr "Törli ezt a kérdést? A már megadott válaszok is eltűnnek vele."
 
-#: lib/claper_web/addin_strings.ex:283
+#: lib/claper_web/addin_strings.ex:272
 #, elixir-autogen, elixir-format
 msgid "Delete this quiz? The answers already given go with it."
 msgstr "Törli ezt a kvízt? A már megadott válaszok is eltűnnek vele."
 
-#: lib/claper_web/addin_strings.ex:323
+#: lib/claper_web/addin_strings.ex:312
 #, elixir-autogen, elixir-format
 msgid "Done. It landed on the slide you have open."
 msgstr "Kész. A megnyitott diára került."
 
-#: lib/claper_web/addin_strings.ex:320
+#: lib/claper_web/addin_strings.ex:309
 #, elixir-autogen, elixir-format
 msgid "Drawing the code…"
 msgstr "A kód rajzolása…"
 
-#: lib/claper_web/addin_strings.ex:128
+#: lib/claper_web/addin_strings.ex:131
 #, elixir-autogen, elixir-format
 msgid "For PowerPoint"
 msgstr "A PowerPointhoz"
@@ -3999,7 +3998,7 @@ msgstr "A PowerPointhoz"
 msgid "From your account settings. It can create and delete, so it stays on this computer and never inside a presentation. A key from a single event's settings works too."
 msgstr "A fiókbeállításaiból. Létre tud hozni és törölni is, ezért ezen a számítógépen marad, és soha nem kerül bemutatóba. Egyetlen esemény beállításaiból származó kulcs is megfelel."
 
-#: lib/claper_web/addin_strings.ex:451
+#: lib/claper_web/addin_strings.ex:442
 #, elixir-autogen, elixir-format
 msgid "Fully rounded"
 msgstr "Teljesen lekerekített"
@@ -4014,42 +4013,42 @@ msgstr "Kezdés"
 msgid "Give it a name."
 msgstr "Adjon neki nevet."
 
-#: lib/claper_web/addin_strings.ex:309
+#: lib/claper_web/addin_strings.ex:298
 #, elixir-autogen, elixir-format
 msgid "How people join"
 msgstr "Így csatlakoznak"
 
-#: lib/claper_web/addin_strings.ex:466
+#: lib/claper_web/addin_strings.ex:463
 #, elixir-autogen, elixir-format
 msgid "How to join (QR code and code)"
 msgstr "Csatlakozás módja (QR-kód és kód)"
 
-#: lib/claper_web/addin_strings.ex:237
+#: lib/claper_web/addin_strings.ex:226
 #, elixir-autogen, elixir-format
 msgid "How was it?"
 msgstr "Milyen volt?"
 
-#: lib/claper_web/addin_strings.ex:400
+#: lib/claper_web/addin_strings.ex:389
 #, elixir-autogen, elixir-format
 msgid "Insert > Add-ins > My Add-ins"
 msgstr "Beszúrás > Bővítmények > Saját bővítmények"
 
-#: lib/claper_web/addin_strings.ex:125
+#: lib/claper_web/addin_strings.ex:128
 #, elixir-autogen, elixir-format
 msgid "Keep it"
 msgstr "Megtartom"
 
-#: lib/claper_web/addin_strings.ex:435
+#: lib/claper_web/addin_strings.ex:424
 #, elixir-autogen, elixir-format
 msgid "Light text"
 msgstr "Világos szöveg"
 
-#: lib/claper_web/addin_strings.ex:122
+#: lib/claper_web/addin_strings.ex:125
 #, elixir-autogen, elixir-format
 msgid "Loading…"
 msgstr "Betöltés…"
 
-#: lib/claper_web/addin_strings.ex:467
+#: lib/claper_web/addin_strings.ex:464
 #, elixir-autogen, elixir-format
 msgid "Messages from the audience"
 msgstr "Üzenetek a közönségtől"
@@ -4059,22 +4058,22 @@ msgstr "Üzenetek a közönségtől"
 msgid "Name of your talk"
 msgstr "Az előadása neve"
 
-#: lib/claper_web/addin_strings.ex:382
+#: lib/claper_web/addin_strings.ex:371
 #, elixir-autogen, elixir-format
 msgid "No link yet"
 msgstr "Még nincs hivatkozás"
 
-#: lib/claper_web/addin_strings.ex:241
+#: lib/claper_web/addin_strings.ex:230
 #, elixir-autogen, elixir-format
 msgid "No polls for this presentation yet."
 msgstr "Ehhez a bemutatóhoz még nincs szavazás."
 
-#: lib/claper_web/addin_strings.ex:267
+#: lib/claper_web/addin_strings.ex:256
 #, elixir-autogen, elixir-format
 msgid "No quizzes for this presentation yet."
 msgstr "Ehhez a bemutatóhoz még nincs kvíz."
 
-#: lib/claper_web/addin_strings.ex:453
+#: lib/claper_web/addin_strings.ex:444
 #, elixir-autogen, elixir-format
 msgid "None"
 msgstr "Nincs"
@@ -4084,7 +4083,7 @@ msgstr "Nincs"
 msgid "One button. Without it nobody in the room can answer."
 msgstr "Egyetlen gomb. Nélküle senki a teremben nem tud válaszolni."
 
-#: lib/claper_web/addin_strings.ex:377
+#: lib/claper_web/addin_strings.ex:366
 #, elixir-autogen, elixir-format
 msgid "One link for the whole deck"
 msgstr "Egy hivatkozás az egész diasorhoz"
@@ -4094,12 +4093,12 @@ msgstr "Egy hivatkozás az egész diasorhoz"
 msgid "Or use one you already have"
 msgstr "Vagy használjon egy meglévőt"
 
-#: lib/claper_web/addin_strings.ex:419
+#: lib/claper_web/addin_strings.ex:408
 #, elixir-autogen, elixir-format
 msgid "Paste the link from the Claper sidebar once. It is stored with this presentation, so everyone who opens the file sees the same thing."
 msgstr "Illessze be egyszer a hivatkozást a Claper oldalsávból. A bemutatóval együtt tárolódik, így mindenki ugyanazt látja, aki megnyitja a fájlt."
 
-#: lib/claper_web/addin_strings.ex:401
+#: lib/claper_web/addin_strings.ex:390
 #, elixir-autogen, elixir-format
 msgid "Pick \"Claper on a slide\"."
 msgstr "Válassza a „Claper egy dián” lehetőséget."
@@ -4109,7 +4108,7 @@ msgstr "Válassza a „Claper egy dián” lehetőséget."
 msgid "Put the answers on slides"
 msgstr "A válaszok diákra helyezése"
 
-#: lib/claper_web/addin_strings.ex:319
+#: lib/claper_web/addin_strings.ex:308
 #, elixir-autogen, elixir-format
 msgid "Put the code on this slide"
 msgstr "A kód elhelyezése ezen a dián"
@@ -4119,92 +4118,92 @@ msgstr "A kód elhelyezése ezen a dián"
 msgid "Put the join code on a slide"
 msgstr "A csatlakozási kód elhelyezése egy dián"
 
-#: lib/claper_web/addin_strings.ex:311
+#: lib/claper_web/addin_strings.ex:300
 #, elixir-autogen, elixir-format
 msgid "Put this on an early slide, otherwise nobody in the room knows how to answer. It is a picture, so it goes straight onto the slide you have open."
 msgstr "Tegye ezt egy korai diára, különben senki a teremben nem tudja, hogyan válaszoljon. Ez egy kép, ezért egyenesen a megnyitott diára kerül."
 
-#: lib/claper_web/addin_strings.ex:321
+#: lib/claper_web/addin_strings.ex:310
 #, elixir-autogen, elixir-format
 msgid "Putting it on the slide…"
 msgstr "Elhelyezés a dián…"
 
-#: lib/claper_web/addin_strings.ex:236
+#: lib/claper_web/addin_strings.ex:225
 #, elixir-autogen, elixir-format
 msgid "Question"
 msgstr "Kérdés"
 
-#: lib/claper_web/addin_strings.ex:256
+#: lib/claper_web/addin_strings.ex:245
 #, elixir-autogen, elixir-format
 msgid "Quiz name"
 msgstr "A kvíz neve"
 
-#: lib/claper_web/addin_strings.ex:390
+#: lib/claper_web/addin_strings.ex:379
 #, elixir-autogen, elixir-format
 msgid "Ready. Blocks you put on slides pick it up on their own."
 msgstr "Kész. A diákra helyezett blokkok maguktól megtalálják."
 
-#: lib/claper_web/addin_strings.ex:121
+#: lib/claper_web/addin_strings.ex:124
 #, elixir-autogen, elixir-format
 msgid "Reload"
 msgstr "Újratöltés"
 
-#: lib/claper_web/addin_strings.ex:269
+#: lib/claper_web/addin_strings.ex:258
 #, elixir-autogen, elixir-format
 msgid "Remove"
 msgstr "Eltávolítás"
 
-#: lib/claper_web/addin_strings.ex:270
+#: lib/claper_web/addin_strings.ex:259
 #, elixir-autogen, elixir-format
 msgid "Right"
 msgstr "Helyes"
 
-#: lib/claper_web/addin_strings.ex:257
+#: lib/claper_web/addin_strings.ex:246
 #, elixir-autogen, elixir-format
 msgid "Round one"
 msgstr "Első kör"
 
-#: lib/claper_web/addin_strings.ex:279
+#: lib/claper_web/addin_strings.ex:268
 #, elixir-autogen, elixir-format
 msgid "Saving rebuilds the questions, which clears the answers already given for this quiz."
 msgstr "A mentés újraépíti a kérdéseket, ami törli az ehhez a kvízhez már megadott válaszokat."
 
-#: lib/claper_web/addin_strings.ex:452
+#: lib/claper_web/addin_strings.ex:443
 #, elixir-autogen, elixir-format
 msgid "Shadow"
 msgstr "Árnyék"
 
-#: lib/claper_web/addin_strings.ex:464
+#: lib/claper_web/addin_strings.ex:461
 #, elixir-autogen, elixir-format
 msgid "Show it"
 msgstr "Mutasd"
 
-#: lib/claper_web/addin_strings.ex:424
+#: lib/claper_web/addin_strings.ex:413
 #, elixir-autogen, elixir-format
 msgid "Show on this slide"
 msgstr "Megjelenítés ezen a dián"
 
-#: lib/claper_web/addin_strings.ex:422
+#: lib/claper_web/addin_strings.ex:411
 #, elixir-autogen, elixir-format
 msgid "Slide link"
 msgstr "Dia hivatkozása"
 
-#: lib/claper_web/addin_strings.ex:449
+#: lib/claper_web/addin_strings.ex:440
 #, elixir-autogen, elixir-format
 msgid "Slightly rounded"
 msgstr "Enyhén lekerekített"
 
-#: lib/claper_web/addin_strings.ex:454
+#: lib/claper_web/addin_strings.ex:445
 #, elixir-autogen, elixir-format
 msgid "Soft shadow"
 msgstr "Lágy árnyék"
 
-#: lib/claper_web/addin_strings.ex:450
+#: lib/claper_web/addin_strings.ex:441
 #, elixir-autogen, elixir-format
 msgid "Square"
 msgstr "Szögletes"
 
-#: lib/claper_web/addin_strings.ex:113
+#: lib/claper_web/addin_strings.ex:116
 #, elixir-autogen, elixir-format
 msgid "Start"
 msgstr "Kezdőlap"
@@ -4214,17 +4213,17 @@ msgstr "Kezdőlap"
 msgid "Start a new event"
 msgstr "Új esemény indítása"
 
-#: lib/claper_web/addin_strings.ex:470
+#: lib/claper_web/addin_strings.ex:467
 #, elixir-autogen, elixir-format
 msgid "That does not look like a Claper slide link."
 msgstr "Ez nem úgy néz ki, mint egy Claper dia-hivatkozás."
 
-#: lib/claper_web/addin_strings.ex:242
+#: lib/claper_web/addin_strings.ex:231
 #, elixir-autogen, elixir-format
 msgid "The question is missing."
 msgstr "Hiányzik a kérdés."
 
-#: lib/claper_web/addin_strings.ex:271
+#: lib/claper_web/addin_strings.ex:260
 #, elixir-autogen, elixir-format
 msgid "The quiz needs a name."
 msgstr "A kvíznek név kell."
@@ -4234,17 +4233,17 @@ msgstr "A kvíznek név kell."
 msgid "This presentation"
 msgstr "Ez a bemutató"
 
-#: lib/claper_web/addin_strings.ex:108
+#: lib/claper_web/addin_strings.ex:111
 #, elixir-autogen, elixir-format
 msgid "This presentation could not remember its event. Save the file, then reconnect."
 msgstr "Ez a bemutató nem tudta megjegyezni az eseményét. Mentse a fájlt, majd csatlakozzon újra."
 
-#: lib/claper_web/addin_strings.ex:472
+#: lib/claper_web/addin_strings.ex:469
 #, elixir-autogen, elixir-format
 msgid "This slide link no longer works. Ask the Claper sidebar for the current one."
 msgstr "Ez a dia-hivatkozás már nem működik. Kérje a jelenlegit a Claper oldalsávtól."
 
-#: lib/claper_web/addin_strings.ex:465
+#: lib/claper_web/addin_strings.ex:462
 #, elixir-autogen, elixir-format
 msgid "Use a different link"
 msgstr "Másik hivatkozás használata"
@@ -4254,7 +4253,7 @@ msgstr "Másik hivatkozás használata"
 msgid "Use this one"
 msgstr "Ezt használom"
 
-#: lib/claper_web/addin_strings.ex:468
+#: lib/claper_web/addin_strings.ex:465
 #, elixir-autogen, elixir-format
 msgid "Whatever Claper is showing right now"
 msgstr "Amit a Claper éppen most mutat"
@@ -4274,7 +4273,7 @@ msgstr "Írja ide a kérdéseket, tartsa a diasort a saját PowerPoint-fájljáb
 msgid "You have no events yet."
 msgstr "Még nincs egyetlen eseménye sem."
 
-#: lib/claper_web/addin_strings.ex:111
+#: lib/claper_web/addin_strings.ex:114
 #, elixir-autogen, elixir-format
 msgid "Your event"
 msgstr "Az eseménye"
@@ -4284,32 +4283,32 @@ msgstr "Az eseménye"
 msgid "Your key"
 msgstr "A kulcsa"
 
-#: lib/claper_web/addin_strings.ex:130
+#: lib/claper_web/addin_strings.ex:133
 #, elixir-autogen, elixir-format
 msgid "already on the deck inside Claper"
 msgstr "már a diasorban a Claperen belül"
 
-#: lib/claper_web/addin_strings.ex:131
+#: lib/claper_web/addin_strings.ex:134
 #, elixir-autogen, elixir-format
 msgid "answers so far"
 msgstr "válasz eddig"
 
-#: lib/claper_web/addin_strings.ex:141
+#: lib/claper_web/addin_strings.ex:144
 #, elixir-autogen, elixir-format
 msgid "Added as a new slide at the end."
 msgstr "Új diaként hozzáadva a végére."
 
-#: lib/claper_web/addin_strings.ex:140
+#: lib/claper_web/addin_strings.ex:143
 #, elixir-autogen, elixir-format
 msgid "Building the slide…"
 msgstr "A dia felépítése…"
 
-#: lib/claper_web/addin_strings.ex:273
+#: lib/claper_web/addin_strings.ex:262
 #, elixir-autogen, elixir-format
 msgid "A question is missing its text."
 msgstr "Egy kérdésből hiányzik a szöveg."
 
-#: lib/claper_web/addin_strings.ex:253
+#: lib/claper_web/addin_strings.ex:242
 #, elixir-autogen, elixir-format
 msgid "A quiz has right answers and can hold several questions in a row. Tick the right one while you write it. On the slide every answer looks the same until you release the results in Claper, so nobody in the room can read the answer off the wall."
 msgstr "A kvíznek vannak helyes válaszai, és több kérdést is tartalmazhat egymás után. Írás közben jelölje be a helyeset. A dián minden válasz egyformán néz ki, amíg ki nem adja az eredményeket a Claperben, így senki a teremben nem tudja leolvasni a választ a falról."
@@ -4319,57 +4318,57 @@ msgstr "A kvíznek vannak helyes válaszai, és több kérdést is tartalmazhat 
 msgid "Account settings, PowerPoint"
 msgstr "Fiókbeállítások, PowerPoint"
 
-#: lib/claper_web/addin_strings.ex:299
+#: lib/claper_web/addin_strings.ex:288
 #, elixir-autogen, elixir-format
 msgid "Add box"
 msgstr "Mező hozzáadása"
 
-#: lib/claper_web/addin_strings.ex:139
+#: lib/claper_web/addin_strings.ex:142
 #, elixir-autogen, elixir-format
 msgid "Adds a slide at the end showing this question."
 msgstr "A végére illeszt egy diát, amely ezt a kérdést mutatja."
 
-#: lib/claper_web/addin_strings.ex:239
+#: lib/claper_web/addin_strings.ex:228
 #, elixir-autogen, elixir-format
 msgid "Answer"
 msgstr "Válasz"
 
-#: lib/claper_web/addin_strings.ex:238
+#: lib/claper_web/addin_strings.ex:227
 #, elixir-autogen, elixir-format
 msgid "Answers"
 msgstr "Válaszok"
 
-#: lib/claper_web/addin_strings.ex:300
+#: lib/claper_web/addin_strings.ex:289
 #, elixir-autogen, elixir-format
 msgid "At least one box."
 msgstr "Legalább egy mező."
 
-#: lib/claper_web/addin_strings.ex:463
+#: lib/claper_web/addin_strings.ex:460
 #, elixir-autogen, elixir-format
 msgid "Bar colour"
 msgstr "Sávok színe"
 
-#: lib/claper_web/addin_strings.ex:296
+#: lib/claper_web/addin_strings.ex:285
 #, elixir-autogen, elixir-format
 msgid "Boxes people fill in"
 msgstr "Kitöltendő mezők"
 
-#: lib/claper_web/addin_strings.ex:301
+#: lib/claper_web/addin_strings.ex:290
 #, elixir-autogen, elixir-format
 msgid "Create open question"
 msgstr "Nyílt kérdés létrehozása"
 
-#: lib/claper_web/addin_strings.ex:244
+#: lib/claper_web/addin_strings.ex:233
 #, elixir-autogen, elixir-format
 msgid "Created. Put it on a slide below."
 msgstr "Létrejött. Tegye egy diára lentebb."
 
-#: lib/claper_web/addin_strings.ex:306
+#: lib/claper_web/addin_strings.ex:295
 #, elixir-autogen, elixir-format
 msgid "Delete this open question? What people wrote goes with it."
 msgstr "Törli ezt a nyílt kérdést? Amit az emberek írtak, eltűnik vele."
 
-#: lib/claper_web/addin_strings.ex:143
+#: lib/claper_web/addin_strings.ex:146
 #, elixir-autogen, elixir-format
 msgid "Done. It is on the slide you had open."
 msgstr "Kész. Azon a dián van, amelyet megnyitva tartott."
@@ -4379,57 +4378,47 @@ msgstr "Kész. Azon a dián van, amelyet megnyitva tartott."
 msgid "Every presentation gets an event of its own, so it never shows the questions of another talk. The choice is saved in the file, so it is the same on any computer that opens it."
 msgstr "Minden bemutató saját eseményt kap, így sosem mutatja egy másik előadás kérdéseit. A választás a fájlban tárolódik, ezért minden számítógépen ugyanaz, amely megnyitja."
 
-#: lib/claper_web/addin_strings.ex:275
+#: lib/claper_web/addin_strings.ex:264
 #, elixir-autogen, elixir-format
 msgid "Every question needs at least two answers."
 msgstr "Minden kérdéshez legalább két válasz kell."
 
-#: lib/claper_web/addin_strings.ex:277
+#: lib/claper_web/addin_strings.ex:266
 #, elixir-autogen, elixir-format
 msgid "Every question needs one answer ticked as right."
 msgstr "Minden kérdésnél egy választ helyesként kell megjelölni."
 
-#: lib/claper_web/addin_strings.ex:251
+#: lib/claper_web/addin_strings.ex:240
 #, elixir-autogen, elixir-format
 msgid "How a quiz differs from a poll"
 msgstr "Miben más a kvíz, mint a szavazás"
 
-#: lib/claper_web/addin_strings.ex:218
-#, elixir-autogen, elixir-format
-msgid "Looks like a poll, but one answer is the right one and nobody sees which until you release it. For checking whether something landed."
-msgstr "Úgy néz ki, mint egy szavazás, de az egyik válasz a helyes, és senki sem látja, melyik, amíg ki nem adja. Annak ellenőrzésére, hogy átment-e valami."
-
-#: lib/claper_web/addin_strings.ex:297
+#: lib/claper_web/addin_strings.ex:286
 #, elixir-autogen, elixir-format
 msgid "Name of the box"
 msgstr "A mező neve"
 
-#: lib/claper_web/addin_strings.ex:137
+#: lib/claper_web/addin_strings.ex:140
 #, elixir-autogen, elixir-format
 msgid "New slide"
 msgstr "Új dia"
 
-#: lib/claper_web/addin_strings.ex:223
-#, elixir-autogen, elixir-format
-msgid "No answers to pick from. People write their own, and what they write appears on the slide. For ideas, questions and moods."
-msgstr "Nincs miből választani. Az emberek a saját válaszukat írják, és amit írnak, megjelenik a dián. Ötletekhez, kérdésekhez és hangulathoz."
-
-#: lib/claper_web/addin_strings.ex:304
+#: lib/claper_web/addin_strings.ex:293
 #, elixir-autogen, elixir-format
 msgid "No open questions for this presentation yet."
 msgstr "Ehhez a bemutatóhoz még nincs nyílt kérdés."
 
-#: lib/claper_web/addin_strings.ex:288
+#: lib/claper_web/addin_strings.ex:277
 #, elixir-autogen, elixir-format
 msgid "Nothing to pick from: people write their own answer and it appears on your slide as it arrives. Use it when you do not know the answers yet, for gathering questions, or for one word each on how the room is feeling."
 msgstr "Nincs miből választani: az emberek a saját válaszukat írják, és az érkezés sorrendjében megjelenik a diáján. Akkor használja, ha még nem ismeri a válaszokat, kérdések gyűjtésére, vagy hogy mindenki egy szóval elmondja, hogy áll a terem."
 
-#: lib/claper_web/addin_strings.ex:316
+#: lib/claper_web/addin_strings.ex:305
 #, elixir-autogen, elixir-format
 msgid "Off by default: the code is scanned, and the address underneath is one more thing on your slide. Turn it on for a room where phones are not a given."
 msgstr "Alapból ki: a kódot beolvassák, az alatta lévő cím pedig még egy dolog a diáján. Kapcsolja be olyan teremhez, ahol a telefon nem magától értetődő."
 
-#: lib/claper_web/addin_strings.ex:134
+#: lib/claper_web/addin_strings.ex:137
 #, elixir-autogen, elixir-format
 msgid "On this slide"
 msgstr "Ezen a dián"
@@ -4439,23 +4428,23 @@ msgstr "Ezen a dián"
 msgid "One button per question, on this slide or on a new one."
 msgstr "Kérdésenként egy gomb, ezen a dián vagy egy újon."
 
-#: lib/claper_web/addin_strings.ex:117
+#: lib/claper_web/addin_strings.ex:120
 #, elixir-autogen, elixir-format
 msgid "Open"
 msgstr "Nyílt"
 
-#: lib/claper_web/addin_strings.ex:221
+#: lib/claper_web/addin_strings.ex:218
 #: lib/claper_web/live/event_live/show.ex:1199
 #, elixir-autogen, elixir-format
 msgid "Open question"
 msgstr "Nyílt kérdés"
 
-#: lib/claper_web/addin_strings.ex:302
+#: lib/claper_web/addin_strings.ex:291
 #, elixir-autogen, elixir-format
 msgid "Open questions"
 msgstr "Nyílt kérdések"
 
-#: lib/claper_web/addin_strings.ex:144
+#: lib/claper_web/addin_strings.ex:147
 #, elixir-autogen, elixir-format
 msgid "Open the slide you want it on first."
 msgstr "Először nyissa meg azt a diát, amelyikre szeretné."
@@ -4465,12 +4454,12 @@ msgstr "Először nyissa meg azt a diát, amelyikre szeretné."
 msgid "Polls, quizzes and open questions, created straight away."
 msgstr "Szavazások, kvízek és nyílt kérdések, azonnal létrehozva."
 
-#: lib/claper_web/addin_strings.ex:136
+#: lib/claper_web/addin_strings.ex:139
 #, elixir-autogen, elixir-format
 msgid "Puts a live block on the slide you have open, keeping what is on it."
 msgstr "Élő blokkot tesz a megnyitott diára, megtartva azt, ami rajta van."
 
-#: lib/claper_web/addin_strings.ex:392
+#: lib/claper_web/addin_strings.ex:381
 #, elixir-autogen, elixir-format
 msgid "Ready. This PowerPoint cannot hand it over on its own, so paste it into each Claper object."
 msgstr "Kész. Ez a PowerPoint nem tudja magától átadni, ezért illessze be minden Claper-objektumba."
@@ -4480,37 +4469,37 @@ msgstr "Kész. Ez a PowerPoint nem tudja magától átadni, ezért illessze be m
 msgid "Setting up this presentation…"
 msgstr "A bemutató beállítása…"
 
-#: lib/claper_web/addin_strings.ex:314
+#: lib/claper_web/addin_strings.ex:303
 #, elixir-autogen, elixir-format
 msgid "Show the web address as well"
 msgstr "A webcím megjelenítése is"
 
-#: lib/claper_web/addin_strings.ex:462
+#: lib/claper_web/addin_strings.ex:459
 #, elixir-autogen, elixir-format
 msgid "Text colour"
 msgstr "Szöveg színe"
 
-#: lib/claper_web/addin_strings.ex:397
+#: lib/claper_web/addin_strings.ex:386
 #, elixir-autogen, elixir-format
 msgid "The buttons on each question copy a block that already exists in this file, so the very first one has to be inserted by hand. Once one is in, you never have to do this again."
 msgstr "Az egyes kérdéseknél lévő gombok egy olyan blokkot másolnak, amely már létezik ebben a fájlban, ezért a legelsőt kézzel kell beszúrni. Ha egyszer van egy, soha többé nem kell ezt megtennie."
 
-#: lib/claper_web/addin_strings.ex:395
+#: lib/claper_web/addin_strings.ex:384
 #, elixir-autogen, elixir-format
 msgid "The first live block"
 msgstr "Az első élő blokk"
 
-#: lib/claper_web/addin_strings.ex:409
+#: lib/claper_web/addin_strings.ex:398
 #, elixir-autogen, elixir-format
 msgid "The frame around a live block, and the soft shadow along its top edge, are PowerPoint's own and cannot be turned off from here. A picture has neither, which is why the joining code is one."
 msgstr "Az élő blokk körüli keret és a felső élén futó lágy árnyék a PowerPointé, és innen nem kapcsolható ki. A képnek egyik sincs, ezért a csatlakozási kód kép."
 
-#: lib/claper_web/addin_strings.ex:461
+#: lib/claper_web/addin_strings.ex:458
 #, elixir-autogen, elixir-format
 msgid "Use my own colours"
 msgstr "Saját színek használata"
 
-#: lib/claper_web/addin_strings.ex:292
+#: lib/claper_web/addin_strings.ex:281
 #, elixir-autogen, elixir-format
 msgid "Usually one box is enough. Add a second when you want two things at once, say a name and a question."
 msgstr "Általában egy mező elég. Adjon hozzá egy másodikat, ha egyszerre két dolgot szeretne, például egy nevet és egy kérdést."
@@ -4520,27 +4509,27 @@ msgstr "Általában egy mező elég. Adjon hozzá egy másodikat, ha egyszerre k
 msgid "Waiting for the first answer."
 msgstr "Várakozás az első válaszra."
 
-#: lib/claper_web/addin_strings.ex:286
+#: lib/claper_web/addin_strings.ex:275
 #, elixir-autogen, elixir-format
 msgid "What an open question is for"
 msgstr "Mire való a nyílt kérdés"
 
-#: lib/claper_web/addin_strings.ex:264
+#: lib/claper_web/addin_strings.ex:253
 #, elixir-autogen, elixir-format
 msgid "What is the capital of France?"
 msgstr "Mi Franciaország fővárosa?"
 
-#: lib/claper_web/addin_strings.ex:295
+#: lib/claper_web/addin_strings.ex:284
 #, elixir-autogen, elixir-format
 msgid "What should we talk about?"
 msgstr "Miről beszéljünk?"
 
-#: lib/claper_web/addin_strings.ex:147
+#: lib/claper_web/addin_strings.ex:150
 #, elixir-autogen, elixir-format
 msgid "Which one do I want?"
 msgstr "Melyikre van szükségem?"
 
-#: lib/claper_web/addin_strings.ex:156
+#: lib/claper_web/addin_strings.ex:157
 #, elixir-autogen, elixir-format
 msgid "You give the answers, the room picks one. No answer is right, and the bars grow while people vote. For opinions, warm-ups and getting a decision out of a room."
 msgstr "Ön adja a válaszokat, a terem egyet választ. Egyik válasz sem helyes, és a sávok nőnek, miközben szavaznak. Véleményekhez, bemelegítéshez és ahhoz, hogy döntés szülessen egy teremben."
@@ -4550,27 +4539,27 @@ msgstr "Ön adja a válaszokat, a terem egyet választ. Egyik válasz sem helyes
 msgid "Your Claper address and the sidebar key from your account."
 msgstr "A Claper-címe és az oldalsáv kulcsa a fiókjából."
 
-#: lib/claper_web/addin_strings.ex:298
+#: lib/claper_web/addin_strings.ex:287
 #, elixir-autogen, elixir-format
 msgid "Your answer"
 msgstr "Az Ön válasza"
 
-#: lib/claper_web/addin_strings.ex:457
+#: lib/claper_web/addin_strings.ex:448
 #, elixir-autogen, elixir-format
 msgid "One after another"
 msgstr "Egymás után"
 
-#: lib/claper_web/addin_strings.ex:455
+#: lib/claper_web/addin_strings.ex:446
 #, elixir-autogen, elixir-format
 msgid "Open answers"
 msgstr "Nyílt válaszok"
 
-#: lib/claper_web/addin_strings.ex:456
+#: lib/claper_web/addin_strings.ex:447
 #, elixir-autogen, elixir-format
 msgid "Word cloud"
 msgstr "Szófelhő"
 
-#: lib/claper_web/addin_strings.ex:459
+#: lib/claper_web/addin_strings.ex:450
 #, elixir-autogen, elixir-format
 msgid "Do not show"
 msgstr "Ne jelenjen meg"
@@ -4580,32 +4569,32 @@ msgstr "Ne jelenjen meg"
 msgid "Leaderboard"
 msgstr "Ranglista"
 
-#: lib/claper_web/addin_strings.ex:261
+#: lib/claper_web/addin_strings.ex:250
 #, elixir-autogen, elixir-format
 msgid "Leave it empty for no clock. The count starts when you move to the question in Claper, and it shows on the slide. It does not lock anyone out: you end the question by releasing the results."
 msgstr "Hagyja üresen, ha nem akar órát. A számlálás akkor indul, amikor a Claperben a kérdéshez ér, és a dián látszik. Senkit nem zár ki: a kérdést az eredmények kiadásával zárja le."
 
-#: lib/claper_web/addin_strings.ex:259
+#: lib/claper_web/addin_strings.ex:248
 #, elixir-autogen, elixir-format
 msgid "No limit"
 msgstr "Nincs korlát"
 
-#: lib/claper_web/addin_strings.ex:458
+#: lib/claper_web/addin_strings.ex:449
 #, elixir-autogen, elixir-format
 msgid "Quiz leaderboard"
 msgstr "Kvíz ranglistája"
 
-#: lib/claper_web/addin_strings.ex:258
+#: lib/claper_web/addin_strings.ex:247
 #, elixir-autogen, elixir-format
 msgid "Seconds per question"
 msgstr "Másodperc kérdésenként"
 
-#: lib/claper_web/addin_strings.ex:460
+#: lib/claper_web/addin_strings.ex:451
 #, elixir-autogen, elixir-format
 msgid "Under the answers"
 msgstr "A válaszok alatt"
 
-#: lib/claper_web/addin_strings.ex:211
+#: lib/claper_web/addin_strings.ex:212
 #, elixir-autogen, elixir-format
 msgid "A scale from left to right"
 msgstr "Skála balról jobbra"
@@ -4615,17 +4604,17 @@ msgstr "Skála balról jobbra"
 msgid "Average"
 msgstr "Átlag"
 
-#: lib/claper_web/addin_strings.ex:210
+#: lib/claper_web/addin_strings.ex:211
 #, elixir-autogen, elixir-format
 msgid "Bars, one per answer"
 msgstr "Sávok, válaszonként egy"
 
-#: lib/claper_web/addin_strings.ex:209
+#: lib/claper_web/addin_strings.ex:210
 #, elixir-autogen, elixir-format
 msgid "How it is shown"
 msgstr "Hogyan jelenik meg"
 
-#: lib/claper_web/addin_strings.ex:159
+#: lib/claper_web/addin_strings.ex:160
 #: lib/claper_web/live/event_live/show.ex:1195
 #, elixir-autogen, elixir-format
 msgid "Scale"
@@ -4636,37 +4625,37 @@ msgstr "Skála"
 msgid "Tap where you stand"
 msgstr "Érintse meg, hol áll"
 
-#: lib/claper_web/addin_strings.ex:213
+#: lib/claper_web/addin_strings.ex:214
 #, elixir-autogen, elixir-format
 msgid "The answers become a row in the order you write them, and the slide also shows the average. Write the ends first if you want words: \"never\" through to \"always\"."
 msgstr "A válaszok abban a sorrendben alkotnak sort, ahogy leírja őket, és a dia az átlagot is mutatja. Ha szavakat szeretne, előbb a végpontokat írja: „soha” egészen az „mindig”-ig."
 
-#: lib/claper_web/addin_strings.ex:161
+#: lib/claper_web/addin_strings.ex:162
 #, elixir-autogen, elixir-format
 msgid "The same thing, drawn as a row from left to right with an average underneath. For \"how much do you agree\" and anything else where the order of the answers means something."
 msgstr "Ugyanaz, balról jobbra tartó sorként rajzolva, alatta átlaggal. A „mennyire ért egyet” típusú kérdésekhez és mindenhez, ahol a válaszok sorrendje jelent valamit."
 
-#: lib/claper_web/addin_strings.ex:169
+#: lib/claper_web/addin_strings.ex:170
 #, elixir-autogen, elixir-format
 msgid "A ranking people put in order"
 msgstr "Rangsor, amelyet az emberek sorba tesznek"
 
-#: lib/claper_web/addin_strings.ex:426
+#: lib/claper_web/addin_strings.ex:415
 #, elixir-autogen, elixir-format
 msgid "Back to the standard look"
 msgstr "Vissza az alapértelmezett megjelenéshez"
 
-#: lib/claper_web/addin_strings.ex:425
+#: lib/claper_web/addin_strings.ex:414
 #, elixir-autogen, elixir-format
 msgid "Colours, background and more"
 msgstr "Színek, háttér és több"
 
-#: lib/claper_web/addin_strings.ex:166
+#: lib/claper_web/addin_strings.ex:167
 #, elixir-autogen, elixir-format
 msgid "Everyone puts all the answers in their own order, and the slide shows the order the room agreed on. For priorities and for \"what should we do first\"."
 msgstr "Mindenki a saját sorrendjébe teszi az összes választ, és a dia azt a sorrendet mutatja, amelyben a terem megegyezett. Prioritásokhoz és a „mit csináljunk először” kérdéshez."
 
-#: lib/claper_web/addin_strings.ex:206
+#: lib/claper_web/addin_strings.ex:207
 #, elixir-autogen, elixir-format
 msgid "Everyone puts all the answers in their own order. The slide shows the order the room agreed on, with the average place next to each one."
 msgstr "Mindenki a saját sorrendjébe teszi az összes választ. A dia azt a sorrendet mutatja, amelyben a terem megegyezett, mindegyik mellett az átlagos helyezéssel."
@@ -4686,7 +4675,7 @@ msgstr "Feljebb"
 msgid "Put them in your order, best at the top"
 msgstr "Tegye a saját sorrendjébe, a legjobb felülre"
 
-#: lib/claper_web/addin_strings.ex:164
+#: lib/claper_web/addin_strings.ex:165
 #: lib/claper_web/live/event_live/show.ex:1194
 #, elixir-autogen, elixir-format
 msgid "Ranking"
@@ -4697,12 +4686,12 @@ msgstr "Rangsor"
 msgid "Send my order"
 msgstr "Sorrendem elküldése"
 
-#: lib/claper_web/addin_strings.ex:428
+#: lib/claper_web/addin_strings.ex:417
 #, elixir-autogen, elixir-format
 msgid "Set back to the standard look. Save it below to apply."
 msgstr "Visszaállítva az alapértelmezett megjelenésre. Az alkalmazáshoz mentsen lentebb."
 
-#: lib/claper_web/addin_strings.ex:430
+#: lib/claper_web/addin_strings.ex:419
 #, elixir-autogen, elixir-format
 msgid "This presentation now belongs to a different event. Choose what this slide shows."
 msgstr "Ez a bemutató most már egy másik eseményhez tartozik. Válassza ki, mit mutasson ez a dia."
@@ -4712,177 +4701,177 @@ msgstr "Ez a bemutató most már egy másik eseményhez tartozik. Válassza ki, 
 msgid "place"
 msgstr "helyezés"
 
-#: lib/claper_web/addin_strings.ex:387
+#: lib/claper_web/addin_strings.ex:376
 #, elixir-autogen, elixir-format
 msgid "A new link replaces the old one everywhere. Only needed if the old one got out."
 msgstr "Az új hivatkozás mindenhol lecseréli a régit. Csak akkor kell, ha a régi kikerült."
 
-#: lib/claper_web/addin_strings.ex:324
+#: lib/claper_web/addin_strings.ex:313
 #, elixir-autogen, elixir-format
 msgid "Add a welcome slide"
 msgstr "Üdvözlődia hozzáadása"
 
-#: lib/claper_web/addin_strings.ex:335
+#: lib/claper_web/addin_strings.ex:324
 #, elixir-autogen, elixir-format
 msgid "Added at the end. Move it to the front and it is your opening slide."
 msgstr "A végére került. Tolja előre, és ez lesz a nyitódiája."
 
-#: lib/claper_web/addin_strings.ex:337
+#: lib/claper_web/addin_strings.ex:326
 #, elixir-autogen, elixir-format
 msgid "Added at the end. This PowerPoint cannot write the text, so type the code beside the picture."
 msgstr "A végére került. Ez a PowerPoint nem tudja megírni a szöveget, ezért gépelje a kódot a kép mellé."
 
-#: lib/claper_web/addin_strings.ex:357
+#: lib/claper_web/addin_strings.ex:346
 #, elixir-autogen, elixir-format
 msgid "Back to plain"
 msgstr "Vissza az egyszerűhöz"
 
-#: lib/claper_web/addin_strings.ex:363
+#: lib/claper_web/addin_strings.ex:352
 #, elixir-autogen, elixir-format
 msgid "Back to plain. New blocks look the way Claper draws them."
 msgstr "Vissza az egyszerűre. Az új blokkok úgy néznek ki, ahogy a Claper rajzolja őket."
 
-#: lib/claper_web/addin_strings.ex:350
+#: lib/claper_web/addin_strings.ex:339
 #, elixir-autogen, elixir-format
 msgid "Background behind a block"
 msgstr "Háttér a blokk mögött"
 
-#: lib/claper_web/addin_strings.ex:443
+#: lib/claper_web/addin_strings.ex:432
 #, elixir-autogen, elixir-format
 msgid "Background behind this block"
 msgstr "Háttér e blokk mögött"
 
-#: lib/claper_web/addin_strings.ex:417
+#: lib/claper_web/addin_strings.ex:406
 #, elixir-autogen, elixir-format
 msgid "Claper interaction"
 msgstr "Claper-interakció"
 
-#: lib/claper_web/addin_strings.ex:345
+#: lib/claper_web/addin_strings.ex:334
 #, elixir-autogen, elixir-format
 msgid "How new blocks look"
 msgstr "Hogyan néznek ki az új blokkok"
 
-#: lib/claper_web/addin_strings.ex:366
+#: lib/claper_web/addin_strings.ex:355
 #, elixir-autogen, elixir-format
 msgid "Is this the same talk?"
 msgstr "Ugyanaz az előadás?"
 
-#: lib/claper_web/addin_strings.ex:120
+#: lib/claper_web/addin_strings.ex:123
 #, elixir-autogen, elixir-format
 msgid "Join & look"
 msgstr "Csatlakozás és megjelenés"
 
-#: lib/claper_web/addin_strings.ex:340
+#: lib/claper_web/addin_strings.ex:329
 #, elixir-autogen, elixir-format
 msgid "Join in"
 msgstr "Belépés"
 
-#: lib/claper_web/addin_strings.ex:379
+#: lib/claper_web/addin_strings.ex:368
 #, elixir-autogen, elixir-format
 msgid "Made for you the moment this presentation gets its event, and stored in the file. A block placed by the buttons on a question is handed the link directly, so it never asks. A block you insert by hand asks once, and this is the link to paste."
 msgstr "Abban a pillanatban létrejön, amikor ez a bemutató megkapja az eseményét, és a fájlban tárolódik. Az a blokk, amelyet a kérdésnél lévő gombok helyeztek el, közvetlenül megkapja a hivatkozást, ezért sosem kérdez. Az a blokk, amelyet kézzel szúr be, egyszer kérdez, és ezt a hivatkozást kell beilleszteni."
 
-#: lib/claper_web/addin_strings.ex:385
+#: lib/claper_web/addin_strings.ex:374
 #, elixir-autogen, elixir-format
 msgid "Make a new link"
 msgstr "Új hivatkozás létrehozása"
 
-#: lib/claper_web/addin_strings.ex:372
+#: lib/claper_web/addin_strings.ex:361
 #, elixir-autogen, elixir-format
 msgid "New talk, start fresh"
 msgstr "Új előadás, kezdjük elölről"
 
-#: lib/claper_web/addin_strings.ex:342
+#: lib/claper_web/addin_strings.ex:331
 #, elixir-autogen, elixir-format
 msgid "Open the camera, point it at the code, answer on your phone."
 msgstr "Nyissa meg a kamerát, irányítsa a kódra, válaszoljon a telefonján."
 
-#: lib/claper_web/addin_strings.ex:405
+#: lib/claper_web/addin_strings.ex:394
 #, elixir-autogen, elixir-format
 msgid "Paste the link from above"
 msgstr "Illessze be a fenti hivatkozást"
 
-#: lib/claper_web/addin_strings.ex:441
+#: lib/claper_web/addin_strings.ex:430
 #, elixir-autogen, elixir-format
 msgid "Plain"
 msgstr "Egyszerű"
 
-#: lib/claper_web/addin_strings.ex:445
+#: lib/claper_web/addin_strings.ex:434
 #, elixir-autogen, elixir-format
 msgid "PowerPoint always paints something behind a live block. Set this to your slide's colour and the edge disappears."
 msgstr "A PowerPoint mindig fest valamit az élő blokk mögé. Állítsa ezt a dia színére, és a szél eltűnik."
 
-#: lib/claper_web/addin_strings.ex:352
+#: lib/claper_web/addin_strings.ex:341
 #, elixir-autogen, elixir-format
 msgid "PowerPoint always paints something behind a live block: a web object on a slide cannot be see-through, and Microsoft has turned that request down. So the block paints the colour you pick here instead. Set it to your slide's own colour and the edge disappears."
 msgstr "A PowerPoint mindig fest valamit az élő blokk mögé: egy dián lévő webobjektum nem lehet átlátszó, és a Microsoft elutasította ezt a kérést. Ezért a blokk az itt kiválasztott színt festi. Állítsa a saját diája színére, és a szél eltűnik."
 
-#: lib/claper_web/addin_strings.ex:333
+#: lib/claper_web/addin_strings.ex:322
 #, elixir-autogen, elixir-format
 msgid "PowerPoint did not add the slide."
 msgstr "A PowerPoint nem adta hozzá a diát."
 
-#: lib/claper_web/addin_strings.ex:371
+#: lib/claper_web/addin_strings.ex:360
 #, elixir-autogen, elixir-format
 msgid "Same talk, keep it"
 msgstr "Ugyanaz az előadás, megtartom"
 
-#: lib/claper_web/addin_strings.ex:356
+#: lib/claper_web/addin_strings.ex:345
 #, elixir-autogen, elixir-format
 msgid "Save as the standard"
 msgstr "Mentés alapértelmezettként"
 
-#: lib/claper_web/addin_strings.ex:359
+#: lib/claper_web/addin_strings.ex:348
 #, elixir-autogen, elixir-format
 msgid "Saved. New blocks start this way."
 msgstr "Mentve. Az új blokkok így indulnak."
 
-#: lib/claper_web/addin_strings.ex:358
+#: lib/claper_web/addin_strings.ex:347
 #, elixir-autogen, elixir-format
 msgid "Saving…"
 msgstr "Mentés…"
 
-#: lib/claper_web/addin_strings.ex:347
+#: lib/claper_web/addin_strings.ex:336
 #, elixir-autogen, elixir-format
 msgid "Set once here and every block you add afterwards starts this way. A block you have already placed keeps what it has, and each one can still be changed on its own slide."
 msgstr "Itt egyszer beállítja, és minden ezután hozzáadott blokk így indul. A már elhelyezett blokk megtartja, amije van, és mindegyik továbbra is módosítható a saját diáján."
 
-#: lib/claper_web/addin_strings.ex:440
+#: lib/claper_web/addin_strings.ex:429
 #, elixir-autogen, elixir-format
 msgid "Shape"
 msgstr "Alak"
 
-#: lib/claper_web/addin_strings.ex:355
+#: lib/claper_web/addin_strings.ex:344
 #, elixir-autogen, elixir-format
 msgid "Soft shadow under the block"
 msgstr "Lágy árnyék a blokk alatt"
 
-#: lib/claper_web/addin_strings.ex:374
+#: lib/claper_web/addin_strings.ex:363
 #, elixir-autogen, elixir-format
 msgid "Starting fresh gives this file its own event and its own link. Nothing is deleted: the old talk keeps everything it had."
 msgstr "Az újrakezdés saját eseményt és saját hivatkozást ad ennek a fájlnak. Semmi sem törlődik: a régi előadás mindent megtart, amije volt."
 
-#: lib/claper_web/addin_strings.ex:326
+#: lib/claper_web/addin_strings.ex:315
 #, elixir-autogen, elixir-format
 msgid "The welcome slide is a whole slide made for you: the join code big enough to read from the back, the code as a picture beside it, and one line telling the room what to do. Yours afterwards, so move and restyle it as you like."
 msgstr "Az üdvözlődia egy egész dia, amelyet Önnek készítünk: a csatlakozási kód elég nagy ahhoz, hogy hátulról is olvasható legyen, mellette a kód képként, és egy sor, amely megmondja a teremnek, mit tegyen. Utána az Öné, mozgassa és alakítsa át, ahogy tetszik."
 
-#: lib/claper_web/addin_strings.ex:407
+#: lib/claper_web/addin_strings.ex:396
 #, elixir-autogen, elixir-format
 msgid "Then pick what that slide should show."
 msgstr "Ezután válassza ki, mit mutasson az a dia."
 
-#: lib/claper_web/addin_strings.ex:361
+#: lib/claper_web/addin_strings.ex:350
 #, elixir-autogen, elixir-format
 msgid "This PowerPoint cannot store it in the file. Set it on each block instead."
 msgstr "Ez a PowerPoint nem tudja a fájlban tárolni. Állítsa be inkább minden blokknál."
 
-#: lib/claper_web/addin_strings.ex:330
+#: lib/claper_web/addin_strings.ex:319
 #, elixir-autogen, elixir-format
 msgid "This PowerPoint is too old to add a slide from here. Add one yourself and use the button above."
 msgstr "Ez a PowerPoint túl régi ahhoz, hogy innen diát adjon hozzá. Adjon hozzá egyet maga, és használja a fenti gombot."
 
-#: lib/claper_web/addin_strings.ex:368
+#: lib/claper_web/addin_strings.ex:357
 #, elixir-autogen, elixir-format
 msgid "This file was set up as the event below, but it was called something else then. A presentation saved under a new name is usually a new talk, and a new talk with the old event would show the old talk's questions to the new room."
 msgstr "Ezt a fájlt az alábbi eseményhez állították be, de akkor másképp hívták. Az új néven mentett bemutató általában új előadás, és egy új előadás a régi eseménnyel a régi előadás kérdéseit mutatná az új teremnek."
@@ -4897,12 +4886,12 @@ msgstr "%{count} jelölés"
 msgid "%{left} of %{budget} points left"
 msgstr "%{left} pont maradt a(z) %{budget} pontból"
 
-#: lib/claper_web/addin_strings.ex:171
+#: lib/claper_web/addin_strings.ex:172
 #, elixir-autogen, elixir-format
 msgid "A picture people tap"
 msgstr "Kép, amelyet meg lehet érinteni"
 
-#: lib/claper_web/addin_strings.ex:172
+#: lib/claper_web/addin_strings.ex:173
 #, elixir-autogen, elixir-format
 msgid "A wheel you spin"
 msgstr "Kerék, amelyet megpörget"
@@ -4917,17 +4906,17 @@ msgstr "Minden kérdés"
 msgid "Answer at your own pace"
 msgstr "Válaszoljon a saját tempójában"
 
-#: lib/claper_web/addin_strings.ex:204
+#: lib/claper_web/addin_strings.ex:205
 #, elixir-autogen, elixir-format
 msgid "Choose a picture first."
 msgstr "Először válasszon egy képet."
 
-#: lib/claper_web/addin_strings.ex:177
+#: lib/claper_web/addin_strings.ex:178
 #, elixir-autogen, elixir-format
 msgid "Everyone gets the same budget and decides how much of it each answer is worth. It forces a trade-off that ticking boxes does not, which is why the result reads differently from a poll."
 msgstr "Mindenki ugyanazt a keretet kapja, és eldönti, mennyit ér az egyes válasz. Olyan mérlegelésre kényszerít, amilyet a négyzetek bejelölése nem, és ezért olvasható másképp az eredmény, mint egy szavazásé."
 
-#: lib/claper_web/addin_strings.ex:181
+#: lib/claper_web/addin_strings.ex:182
 #, elixir-autogen, elixir-format
 msgid "Everyone gets the same budget and decides how much of it each answer is worth. It forces a trade-off that ticking boxes does not, which is why the result reads differently from a poll. For budgets, priorities and \"what would you give up\"."
 msgstr "Mindenki ugyanazt a keretet kapja, és eldönti, mennyit ér az egyes válasz. Olyan mérlegelésre kényszerít, amilyet a négyzetek bejelölése nem, és ezért olvasható másképp az eredmény, mint egy szavazásé. Költségvetésekhez, prioritásokhoz és a „miről mondana le” kérdéshez."
@@ -4937,7 +4926,7 @@ msgstr "Mindenki ugyanazt a keretet kapja, és eldönti, mennyit ér az egyes v�
 msgid "Follow the presenter again"
 msgstr "Kövesse újra az előadót"
 
-#: lib/claper_web/addin_strings.ex:203
+#: lib/claper_web/addin_strings.ex:204
 #, elixir-autogen, elixir-format
 msgid "Give each answer a picture"
 msgstr "Adjon minden válasznak képet"
@@ -4947,22 +4936,22 @@ msgstr "Adjon minden válasznak képet"
 msgid "Let people answer at their own pace"
 msgstr "Hagyja, hogy saját tempójukban válaszoljanak"
 
-#: lib/claper_web/addin_strings.ex:190
+#: lib/claper_web/addin_strings.ex:191
 #, elixir-autogen, elixir-format
 msgid "No answers at all: people tap a picture and every tap appears on your slide. For floor plans, screenshots, maps and anything where the answer is a place rather than a word."
 msgstr "Egyáltalán nincsenek válaszok: az emberek megérintenek egy képet, és minden érintés megjelenik a diáján. Alaprajzokhoz, képernyőképekhez, térképekhez és mindenhez, ahol a válasz egy hely, nem pedig egy szó."
 
-#: lib/claper_web/addin_strings.ex:186
+#: lib/claper_web/addin_strings.ex:187
 #, elixir-autogen, elixir-format
 msgid "No answers to write: people tap the picture and every tap appears on your slide. For \"where does this go wrong\", floor plans, screenshots and maps."
 msgstr "Nincs mit írni: az emberek megérintik a képet, és minden érintés megjelenik a diáján. A „hol romlik el ez” kérdéshez, alaprajzokhoz, képernyőképekhez és térképekhez."
 
-#: lib/claper_web/addin_strings.ex:196
+#: lib/claper_web/addin_strings.ex:197
 #, elixir-autogen, elixir-format
 msgid "Nobody answers a wheel. You write what is on it, and a button in Claper spins it and shows what it landed on. For picking a name, a topic or who goes next."
 msgstr "A kerékre senki sem válaszol. Ön írja meg, mi van rajta, és a Claper egyik gombja megpörgeti, majd megmutatja, hol állt meg. Név, téma vagy a következő ember kiválasztásához."
 
-#: lib/claper_web/addin_strings.ex:200
+#: lib/claper_web/addin_strings.ex:201
 #, elixir-autogen, elixir-format
 msgid "Nobody answers it. You write what is on it and spin it from Claper. For picking a name, a topic or who goes next."
 msgstr "Senki sem válaszol rá. Ön írja meg, mi van rajta, és a Claperből pörgeti meg. Név, téma vagy a következő ember kiválasztásához."
@@ -4982,7 +4971,7 @@ msgstr "Itt nincs mire válaszolni. A kereket elöl pörgetik meg."
 msgid "Nothing to answer yet."
 msgstr "Még nincs mire válaszolni."
 
-#: lib/claper_web/addin_strings.ex:194
+#: lib/claper_web/addin_strings.ex:195
 #, elixir-autogen, elixir-format
 msgid "PNG, JPEG, GIF or WebP, up to 2 MB."
 msgstr "Válasszon egy kérdést. Bármikor visszatérhet, és megcsinálhatja a többit."
@@ -4992,24 +4981,24 @@ msgstr "Válasszon egy kérdést. Bármikor visszatérhet, és megcsinálhatja a
 msgid "Pick a question. You can come back and do the rest whenever you like."
 msgstr "PNG, JPEG, GIF vagy WebP, legfeljebb 2 MB."
 
-#: lib/claper_web/addin_strings.ex:174
+#: lib/claper_web/addin_strings.ex:175
 #: lib/claper_web/live/event_live/show.ex:1197
 #, elixir-autogen, elixir-format
 msgid "Picture"
 msgstr "Kép"
 
-#: lib/claper_web/addin_strings.ex:173
+#: lib/claper_web/addin_strings.ex:174
 #: lib/claper_web/live/event_live/show.ex:1196
 #, elixir-autogen, elixir-format
 msgid "Points"
 msgstr "Pontok"
 
-#: lib/claper_web/addin_strings.ex:184
+#: lib/claper_web/addin_strings.ex:185
 #, elixir-autogen, elixir-format
 msgid "Points each person gets"
 msgstr "Pont fejenként"
 
-#: lib/claper_web/addin_strings.ex:170
+#: lib/claper_web/addin_strings.ex:171
 #, elixir-autogen, elixir-format
 msgid "Points to spend across the answers"
 msgstr "Pontok, amelyeket el kell osztani a válaszok között"
@@ -5039,12 +5028,12 @@ msgstr "Pörgesse meg a kereket"
 msgid "Tap the spot on the picture"
 msgstr "Érintse meg a helyet a képen"
 
-#: lib/claper_web/addin_strings.ex:193
+#: lib/claper_web/addin_strings.ex:194
 #, elixir-autogen, elixir-format
 msgid "The picture"
 msgstr "A kép"
 
-#: lib/claper_web/addin_strings.ex:175
+#: lib/claper_web/addin_strings.ex:176
 #: lib/claper_web/live/event_live/show.ex:1193
 #, elixir-autogen, elixir-format
 msgid "Wheel"
@@ -5060,17 +5049,37 @@ msgstr "A jelölése bekerült."
 msgid "New presentation"
 msgstr "Új bemutató"
 
-#: lib/claper_web/addin_strings.ex:227
-#, elixir-autogen, elixir-format
-msgid "The first six are on this tab, under How it is shown. Quiz and Open question each have a tab of their own."
-msgstr "Az első hat ezen a lapon van, a Hogyan jelenik meg alatt. A kvíznek és a nyitott kérdésnek saját lapja van."
-
-#: lib/claper_web/addin_strings.ex:231
+#: lib/claper_web/addin_strings.ex:220
 #, elixir-autogen, elixir-format
 msgid "They all work the same way afterwards: write it here, then put it on a slide with one button. The room answers on their phones after scanning the join code."
 msgstr "Utána mindegyik ugyanúgy működik: írja meg itt, majd egy gombbal tegye ki egy diára. A terem a telefonján válaszol, miután beolvasta a csatlakozási kódot."
 
-#: lib/claper_web/addin_strings.ex:104
+#: lib/claper_web/addin_strings.ex:107
 #, elixir-autogen, elixir-format
 msgid "This key belongs to one talk, so every presentation you open with it lands here. A personal key from your Claper account settings gives each presentation a talk of its own."
 msgstr "Ez a kulcs egyetlen előadáshoz tartozik, ezért minden bemutató, amelyet vele nyit meg, ide kerül. A Claper fiókbeállításaiban létrehozott személyes kulcs minden bemutatónak saját előadást ad."
+
+#: lib/claper_web/addin_strings.ex:457
+#, elixir-autogen, elixir-format
+msgid "Count only"
+msgstr "Csak darabszám"
+
+#: lib/claper_web/addin_strings.ex:454
+#, elixir-autogen, elixir-format
+msgid "Numbers at the bar"
+msgstr "Számok a sávon"
+
+#: lib/claper_web/addin_strings.ex:455
+#, elixir-autogen, elixir-format
+msgid "Percent and count"
+msgstr "Százalék és darabszám"
+
+#: lib/claper_web/addin_strings.ex:456
+#, elixir-autogen, elixir-format
+msgid "Percent only"
+msgstr "Csak százalék"
+
+#: lib/claper_web/addin_strings.ex:105
+#, elixir-autogen, elixir-format
+msgid "Talk:"
+msgstr "Előadás:"

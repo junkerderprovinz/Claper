@@ -36,7 +36,7 @@ msgstr "E-mail"
 msgid "Oops, check that all fields are filled in correctly."
 msgstr "Oeps, controleer of alle velden correct zijn ingevuld."
 
-#: lib/claper_web/addin_strings.ex:112
+#: lib/claper_web/addin_strings.ex:115
 #: lib/claper_web/live/user_settings_live/show.html.heex:226
 #: lib/claper_web/live/user_settings_live/show.html.heex:244
 #: lib/claper_web/live/user_settings_live/show.html.heex:264
@@ -172,7 +172,7 @@ msgstr "Terug"
 msgid "Created successfully"
 msgstr "Succesvol aangemaakt"
 
-#: lib/claper_web/addin_strings.ex:123
+#: lib/claper_web/addin_strings.ex:126
 #: lib/claper_web/live/admin_live/event_live.html.heex:102
 #: lib/claper_web/live/admin_live/oidc_provider_live.html.heex:220
 #: lib/claper_web/live/admin_live/user_live.html.heex:102
@@ -181,7 +181,7 @@ msgstr "Succesvol aangemaakt"
 msgid "Edit"
 msgstr "Bewerken"
 
-#: lib/claper_web/addin_strings.ex:124
+#: lib/claper_web/addin_strings.ex:127
 #: lib/claper_web/live/embed_live/form_component.html.heex:71
 #: lib/claper_web/live/event_live/event_card_component.ex:837
 #: lib/claper_web/live/event_live/manage_audience_responses_component.ex:263
@@ -196,7 +196,7 @@ msgstr "Bewerken"
 msgid "Delete"
 msgstr "Verwijderen"
 
-#: lib/claper_web/addin_strings.ex:126
+#: lib/claper_web/addin_strings.ex:129
 #: lib/claper_web/live/embed_live/form_component.html.heex:67
 #: lib/claper_web/live/form_live/form_component.html.heex:105
 #: lib/claper_web/live/poll_live/form_component.html.heex:98
@@ -293,7 +293,7 @@ msgstr "Importeren mislukt"
 msgid "Add poll to know opinion of your public."
 msgstr "Voeg een peiling toe om achter de mening van het publiek te komen."
 
-#: lib/claper_web/addin_strings.ex:154
+#: lib/claper_web/addin_strings.ex:155
 #: lib/claper_web/live/event_live/manage.html.heex:87
 #: lib/claper_web/live/event_live/manage_floating_action_bar.ex:10
 #: lib/claper_web/live/event_live/manage_interaction_list_component.ex:96
@@ -612,7 +612,7 @@ msgstr "Bekijk huidig formulier"
 msgid "Submit"
 msgstr "Indienen"
 
-#: lib/claper_web/addin_strings.ex:433
+#: lib/claper_web/addin_strings.ex:422
 #: lib/claper_web/live/admin_live/event_live.html.heex:186
 #: lib/claper_web/live/form_live/form_component.html.heex:39
 #, elixir-autogen, elixir-format
@@ -1303,7 +1303,7 @@ msgstr "Nieuwe quiz"
 msgid "Previous"
 msgstr "Vorige"
 
-#: lib/claper_web/addin_strings.ex:216
+#: lib/claper_web/addin_strings.ex:217
 #: lib/claper_web/live/event_live/manage.html.heex:180
 #: lib/claper_web/live/event_live/manage_floating_action_bar.ex:76
 #: lib/claper_web/live/event_live/manage_floating_action_bar.ex:77
@@ -1424,14 +1424,14 @@ msgstr "Er is geen quiz gemaakt"
 msgid "No web content has been created"
 msgstr "Er is geen webinhoud gemaakt"
 
-#: lib/claper_web/addin_strings.ex:115
+#: lib/claper_web/addin_strings.ex:118
 #: lib/claper_web/live/event_live/manage_floating_action_bar.ex:11
 #: lib/claper_web/live/stat_live/index.html.heex:189
 #, elixir-autogen, elixir-format
 msgid "Polls"
 msgstr "Peilingen"
 
-#: lib/claper_web/addin_strings.ex:116
+#: lib/claper_web/addin_strings.ex:119
 #: lib/claper_web/live/stat_live/index.html.heex:213
 #, elixir-autogen, elixir-format
 msgid "Quizzes"
@@ -1561,7 +1561,7 @@ msgstr "Toegewezen gebruiker"
 msgid "Audience Peak"
 msgstr "Publiekspiek"
 
-#: lib/claper_web/addin_strings.ex:127
+#: lib/claper_web/addin_strings.ex:130
 #: lib/claper_web/live/admin_live/event_live/form_component.ex:80
 #: lib/claper_web/live/admin_live/oidc_provider_live/form_component.ex:147
 #: lib/claper_web/live/admin_live/user_live/form_component.ex:96
@@ -3165,7 +3165,7 @@ msgstr "Peiling aanmaken"
 msgid "Create form"
 msgstr "Formulier aanmaken"
 
-#: lib/claper_web/addin_strings.ex:266
+#: lib/claper_web/addin_strings.ex:255
 #: lib/claper_web/live/quiz_live/quiz_component.html.heex:218
 #, elixir-autogen, elixir-format
 msgid "Create quiz"
@@ -3618,7 +3618,7 @@ msgstr "name@example.com"
 msgid "An embed link is active. Anyone holding it can watch this event. Create a new one to replace it, or revoke it to switch it off."
 msgstr "Er is een insluitlink actief. Iedereen die hem heeft, kan dit evenement volgen. Maak een nieuwe om hem te vervangen, of trek hem in om hem uit te zetten."
 
-#: lib/claper_web/addin_strings.ex:384
+#: lib/claper_web/addin_strings.ex:373
 #: lib/claper_web/live/event_live/manage_presenter_embed_component.ex:68
 #: lib/claper_web/templates/addin_manifest/show.html.heex:66
 #, elixir-autogen, elixir-format
@@ -3855,33 +3855,32 @@ msgstr "Het Claper-deelvenster vraagt één keer om deze sleutel. Daarmee kan ee
 msgid "Write questions for your talks without leaving your slides"
 msgstr "Schrijf vragen voor uw lezingen zonder uw dia's te verlaten"
 
-#: lib/claper_web/addin_strings.ex:272
+#: lib/claper_web/addin_strings.ex:261
 #, elixir-autogen, elixir-format
 msgid "A quiz needs at least one question."
 msgstr "Een quiz heeft minstens één vraag nodig."
 
-#: lib/claper_web/addin_strings.ex:265
+#: lib/claper_web/addin_strings.ex:254
 #, elixir-autogen, elixir-format
 msgid "Add another question"
 msgstr "Nog een vraag toevoegen"
 
-#: lib/claper_web/addin_strings.ex:268
+#: lib/claper_web/addin_strings.ex:257
 #, elixir-autogen, elixir-format
 msgid "Add answer"
 msgstr "Antwoord toevoegen"
 
-#: lib/claper_web/addin_strings.ex:388
+#: lib/claper_web/addin_strings.ex:377
 #, elixir-autogen, elixir-format
 msgid "Asking Claper…"
 msgstr "Claper wordt geraadpleegd…"
 
-#: lib/claper_web/addin_strings.ex:243
+#: lib/claper_web/addin_strings.ex:232
 #, elixir-autogen, elixir-format
 msgid "At least two answers."
 msgstr "Minstens twee antwoorden."
 
-#: lib/claper_web/addin_strings.ex:153
-#: lib/claper_web/addin_strings.ex:448
+#: lib/claper_web/addin_strings.ex:439
 #, elixir-autogen, elixir-format
 msgid "Bars"
 msgstr "Balken"
@@ -3896,12 +3895,12 @@ msgstr "Beide zijn nodig."
 msgid "Bring Claper into PowerPoint"
 msgstr "Haal Claper naar PowerPoint"
 
-#: lib/claper_web/addin_strings.ex:442
+#: lib/claper_web/addin_strings.ex:431
 #, elixir-autogen, elixir-format
 msgid "Card"
 msgstr "Kaart"
 
-#: lib/claper_web/addin_strings.ex:246
+#: lib/claper_web/addin_strings.ex:235
 #, elixir-autogen, elixir-format
 msgid "Changing the answers clears the votes already given for this question."
 msgstr "Als u de antwoorden wijzigt, worden de al uitgebrachte stemmen voor deze vraag gewist."
@@ -3916,12 +3915,12 @@ msgstr "Controleren…"
 msgid "Claper address"
 msgstr "Claper-adres"
 
-#: lib/claper_web/addin_strings.ex:414
+#: lib/claper_web/addin_strings.ex:403
 #, elixir-autogen, elixir-format
 msgid "Claper on this slide"
 msgstr "Claper op deze dia"
 
-#: lib/claper_web/addin_strings.ex:129
+#: lib/claper_web/addin_strings.ex:132
 #, elixir-autogen, elixir-format
 msgid "Claper slide"
 msgstr "Claper-dia"
@@ -3936,17 +3935,17 @@ msgstr "Verbinden"
 msgid "Connect once"
 msgstr "Eenmalig verbinden"
 
-#: lib/claper_web/addin_strings.ex:114
+#: lib/claper_web/addin_strings.ex:117
 #, elixir-autogen, elixir-format
 msgid "Connection"
 msgstr "Verbinding"
 
-#: lib/claper_web/addin_strings.ex:423
+#: lib/claper_web/addin_strings.ex:412
 #, elixir-autogen, elixir-format
 msgid "Continue"
 msgstr "Doorgaan"
 
-#: lib/claper_web/addin_strings.ex:383
+#: lib/claper_web/addin_strings.ex:372
 #, elixir-autogen, elixir-format
 msgid "Copy"
 msgstr "Kopiëren"
@@ -3956,7 +3955,7 @@ msgstr "Kopiëren"
 msgid "Create it"
 msgstr "Aanmaken"
 
-#: lib/claper_web/addin_strings.ex:240
+#: lib/claper_web/addin_strings.ex:229
 #, elixir-autogen, elixir-format
 msgid "Create poll"
 msgstr "Peiling aanmaken"
@@ -3966,32 +3965,32 @@ msgstr "Peiling aanmaken"
 msgid "Creating…"
 msgstr "Aanmaken…"
 
-#: lib/claper_web/addin_strings.ex:434
+#: lib/claper_web/addin_strings.ex:423
 #, elixir-autogen, elixir-format
 msgid "Dark text"
 msgstr "Donkere tekst"
 
-#: lib/claper_web/addin_strings.ex:248
+#: lib/claper_web/addin_strings.ex:237
 #, elixir-autogen, elixir-format
 msgid "Delete this question? The answers already given go with it."
 msgstr "Deze vraag verwijderen? De al gegeven antwoorden gaan mee."
 
-#: lib/claper_web/addin_strings.ex:283
+#: lib/claper_web/addin_strings.ex:272
 #, elixir-autogen, elixir-format
 msgid "Delete this quiz? The answers already given go with it."
 msgstr "Deze quiz verwijderen? De al gegeven antwoorden gaan mee."
 
-#: lib/claper_web/addin_strings.ex:323
+#: lib/claper_web/addin_strings.ex:312
 #, elixir-autogen, elixir-format
 msgid "Done. It landed on the slide you have open."
 msgstr "Klaar. Hij staat op de dia die u open had."
 
-#: lib/claper_web/addin_strings.ex:320
+#: lib/claper_web/addin_strings.ex:309
 #, elixir-autogen, elixir-format
 msgid "Drawing the code…"
 msgstr "De code wordt getekend…"
 
-#: lib/claper_web/addin_strings.ex:128
+#: lib/claper_web/addin_strings.ex:131
 #, elixir-autogen, elixir-format
 msgid "For PowerPoint"
 msgstr "Voor PowerPoint"
@@ -4001,7 +4000,7 @@ msgstr "Voor PowerPoint"
 msgid "From your account settings. It can create and delete, so it stays on this computer and never inside a presentation. A key from a single event's settings works too."
 msgstr "Uit uw accountinstellingen. Hij kan maken en verwijderen, dus hij blijft op deze computer en nooit in een presentatie. Een sleutel uit de instellingen van één evenement werkt ook."
 
-#: lib/claper_web/addin_strings.ex:451
+#: lib/claper_web/addin_strings.ex:442
 #, elixir-autogen, elixir-format
 msgid "Fully rounded"
 msgstr "Volledig afgerond"
@@ -4016,42 +4015,42 @@ msgstr "Beginnen"
 msgid "Give it a name."
 msgstr "Geef het een naam."
 
-#: lib/claper_web/addin_strings.ex:309
+#: lib/claper_web/addin_strings.ex:298
 #, elixir-autogen, elixir-format
 msgid "How people join"
 msgstr "Hoe mensen deelnemen"
 
-#: lib/claper_web/addin_strings.ex:466
+#: lib/claper_web/addin_strings.ex:463
 #, elixir-autogen, elixir-format
 msgid "How to join (QR code and code)"
 msgstr "Hoe u deelneemt (QR-code en code)"
 
-#: lib/claper_web/addin_strings.ex:237
+#: lib/claper_web/addin_strings.ex:226
 #, elixir-autogen, elixir-format
 msgid "How was it?"
 msgstr "Hoe was het?"
 
-#: lib/claper_web/addin_strings.ex:400
+#: lib/claper_web/addin_strings.ex:389
 #, elixir-autogen, elixir-format
 msgid "Insert > Add-ins > My Add-ins"
 msgstr "Invoegen > Invoegtoepassingen > Mijn invoegtoepassingen"
 
-#: lib/claper_web/addin_strings.ex:125
+#: lib/claper_web/addin_strings.ex:128
 #, elixir-autogen, elixir-format
 msgid "Keep it"
 msgstr "Behouden"
 
-#: lib/claper_web/addin_strings.ex:435
+#: lib/claper_web/addin_strings.ex:424
 #, elixir-autogen, elixir-format
 msgid "Light text"
 msgstr "Lichte tekst"
 
-#: lib/claper_web/addin_strings.ex:122
+#: lib/claper_web/addin_strings.ex:125
 #, elixir-autogen, elixir-format
 msgid "Loading…"
 msgstr "Laden…"
 
-#: lib/claper_web/addin_strings.ex:467
+#: lib/claper_web/addin_strings.ex:464
 #, elixir-autogen, elixir-format
 msgid "Messages from the audience"
 msgstr "Berichten van het publiek"
@@ -4061,22 +4060,22 @@ msgstr "Berichten van het publiek"
 msgid "Name of your talk"
 msgstr "Naam van uw lezing"
 
-#: lib/claper_web/addin_strings.ex:382
+#: lib/claper_web/addin_strings.ex:371
 #, elixir-autogen, elixir-format
 msgid "No link yet"
 msgstr "Nog geen link"
 
-#: lib/claper_web/addin_strings.ex:241
+#: lib/claper_web/addin_strings.ex:230
 #, elixir-autogen, elixir-format
 msgid "No polls for this presentation yet."
 msgstr "Nog geen polls voor deze presentatie."
 
-#: lib/claper_web/addin_strings.ex:267
+#: lib/claper_web/addin_strings.ex:256
 #, elixir-autogen, elixir-format
 msgid "No quizzes for this presentation yet."
 msgstr "Nog geen quizzen voor deze presentatie."
 
-#: lib/claper_web/addin_strings.ex:453
+#: lib/claper_web/addin_strings.ex:444
 #, elixir-autogen, elixir-format
 msgid "None"
 msgstr "Geen"
@@ -4086,7 +4085,7 @@ msgstr "Geen"
 msgid "One button. Without it nobody in the room can answer."
 msgstr "Eén knop. Zonder die knop kan niemand in de zaal antwoorden."
 
-#: lib/claper_web/addin_strings.ex:377
+#: lib/claper_web/addin_strings.ex:366
 #, elixir-autogen, elixir-format
 msgid "One link for the whole deck"
 msgstr "Eén link voor de hele presentatie"
@@ -4096,12 +4095,12 @@ msgstr "Eén link voor de hele presentatie"
 msgid "Or use one you already have"
 msgstr "Of gebruik er een die u al hebt"
 
-#: lib/claper_web/addin_strings.ex:419
+#: lib/claper_web/addin_strings.ex:408
 #, elixir-autogen, elixir-format
 msgid "Paste the link from the Claper sidebar once. It is stored with this presentation, so everyone who opens the file sees the same thing."
 msgstr "Plak de link uit het Claper-deelvenster één keer. Hij wordt bij deze presentatie bewaard, dus iedereen die het bestand opent ziet hetzelfde."
 
-#: lib/claper_web/addin_strings.ex:401
+#: lib/claper_web/addin_strings.ex:390
 #, elixir-autogen, elixir-format
 msgid "Pick \"Claper on a slide\"."
 msgstr "Kies «Claper op een dia»."
@@ -4111,7 +4110,7 @@ msgstr "Kies «Claper op een dia»."
 msgid "Put the answers on slides"
 msgstr "De antwoorden op dia's zetten"
 
-#: lib/claper_web/addin_strings.ex:319
+#: lib/claper_web/addin_strings.ex:308
 #, elixir-autogen, elixir-format
 msgid "Put the code on this slide"
 msgstr "De code op deze dia zetten"
@@ -4121,92 +4120,92 @@ msgstr "De code op deze dia zetten"
 msgid "Put the join code on a slide"
 msgstr "De deelnamecode op een dia zetten"
 
-#: lib/claper_web/addin_strings.ex:311
+#: lib/claper_web/addin_strings.ex:300
 #, elixir-autogen, elixir-format
 msgid "Put this on an early slide, otherwise nobody in the room knows how to answer. It is a picture, so it goes straight onto the slide you have open."
 msgstr "Zet dit op een vroege dia, anders weet niemand in de zaal hoe hij moet antwoorden. Het is een afbeelding, dus hij gaat rechtstreeks naar de dia die u open hebt."
 
-#: lib/claper_web/addin_strings.ex:321
+#: lib/claper_web/addin_strings.ex:310
 #, elixir-autogen, elixir-format
 msgid "Putting it on the slide…"
 msgstr "Wordt op de dia gezet…"
 
-#: lib/claper_web/addin_strings.ex:236
+#: lib/claper_web/addin_strings.ex:225
 #, elixir-autogen, elixir-format
 msgid "Question"
 msgstr "Vraag"
 
-#: lib/claper_web/addin_strings.ex:256
+#: lib/claper_web/addin_strings.ex:245
 #, elixir-autogen, elixir-format
 msgid "Quiz name"
 msgstr "Naam van de quiz"
 
-#: lib/claper_web/addin_strings.ex:390
+#: lib/claper_web/addin_strings.ex:379
 #, elixir-autogen, elixir-format
 msgid "Ready. Blocks you put on slides pick it up on their own."
 msgstr "Klaar. Blokken die u op dia's zet vinden hem zelf."
 
-#: lib/claper_web/addin_strings.ex:121
+#: lib/claper_web/addin_strings.ex:124
 #, elixir-autogen, elixir-format
 msgid "Reload"
 msgstr "Opnieuw laden"
 
-#: lib/claper_web/addin_strings.ex:269
+#: lib/claper_web/addin_strings.ex:258
 #, elixir-autogen, elixir-format
 msgid "Remove"
 msgstr "Verwijderen"
 
-#: lib/claper_web/addin_strings.ex:270
+#: lib/claper_web/addin_strings.ex:259
 #, elixir-autogen, elixir-format
 msgid "Right"
 msgstr "Juist"
 
-#: lib/claper_web/addin_strings.ex:257
+#: lib/claper_web/addin_strings.ex:246
 #, elixir-autogen, elixir-format
 msgid "Round one"
 msgstr "Eerste ronde"
 
-#: lib/claper_web/addin_strings.ex:279
+#: lib/claper_web/addin_strings.ex:268
 #, elixir-autogen, elixir-format
 msgid "Saving rebuilds the questions, which clears the answers already given for this quiz."
 msgstr "Opslaan bouwt de vragen opnieuw op, waardoor de al gegeven antwoorden voor deze quiz worden gewist."
 
-#: lib/claper_web/addin_strings.ex:452
+#: lib/claper_web/addin_strings.ex:443
 #, elixir-autogen, elixir-format
 msgid "Shadow"
 msgstr "Schaduw"
 
-#: lib/claper_web/addin_strings.ex:464
+#: lib/claper_web/addin_strings.ex:461
 #, elixir-autogen, elixir-format
 msgid "Show it"
 msgstr "Toon het"
 
-#: lib/claper_web/addin_strings.ex:424
+#: lib/claper_web/addin_strings.ex:413
 #, elixir-autogen, elixir-format
 msgid "Show on this slide"
 msgstr "Op deze dia tonen"
 
-#: lib/claper_web/addin_strings.ex:422
+#: lib/claper_web/addin_strings.ex:411
 #, elixir-autogen, elixir-format
 msgid "Slide link"
 msgstr "Dialink"
 
-#: lib/claper_web/addin_strings.ex:449
+#: lib/claper_web/addin_strings.ex:440
 #, elixir-autogen, elixir-format
 msgid "Slightly rounded"
 msgstr "Licht afgerond"
 
-#: lib/claper_web/addin_strings.ex:454
+#: lib/claper_web/addin_strings.ex:445
 #, elixir-autogen, elixir-format
 msgid "Soft shadow"
 msgstr "Zachte schaduw"
 
-#: lib/claper_web/addin_strings.ex:450
+#: lib/claper_web/addin_strings.ex:441
 #, elixir-autogen, elixir-format
 msgid "Square"
 msgstr "Vierkant"
 
-#: lib/claper_web/addin_strings.ex:113
+#: lib/claper_web/addin_strings.ex:116
 #, elixir-autogen, elixir-format
 msgid "Start"
 msgstr "Start"
@@ -4216,17 +4215,17 @@ msgstr "Start"
 msgid "Start a new event"
 msgstr "Een nieuw evenement beginnen"
 
-#: lib/claper_web/addin_strings.ex:470
+#: lib/claper_web/addin_strings.ex:467
 #, elixir-autogen, elixir-format
 msgid "That does not look like a Claper slide link."
 msgstr "Dit lijkt niet op een Claper-dialink."
 
-#: lib/claper_web/addin_strings.ex:242
+#: lib/claper_web/addin_strings.ex:231
 #, elixir-autogen, elixir-format
 msgid "The question is missing."
 msgstr "De vraag ontbreekt."
 
-#: lib/claper_web/addin_strings.ex:271
+#: lib/claper_web/addin_strings.ex:260
 #, elixir-autogen, elixir-format
 msgid "The quiz needs a name."
 msgstr "De quiz heeft een naam nodig."
@@ -4236,17 +4235,17 @@ msgstr "De quiz heeft een naam nodig."
 msgid "This presentation"
 msgstr "Deze presentatie"
 
-#: lib/claper_web/addin_strings.ex:108
+#: lib/claper_web/addin_strings.ex:111
 #, elixir-autogen, elixir-format
 msgid "This presentation could not remember its event. Save the file, then reconnect."
 msgstr "Deze presentatie kon zijn evenement niet onthouden. Sla het bestand op en maak opnieuw verbinding."
 
-#: lib/claper_web/addin_strings.ex:472
+#: lib/claper_web/addin_strings.ex:469
 #, elixir-autogen, elixir-format
 msgid "This slide link no longer works. Ask the Claper sidebar for the current one."
 msgstr "Deze dialink werkt niet meer. Vraag het Claper-deelvenster om de huidige."
 
-#: lib/claper_web/addin_strings.ex:465
+#: lib/claper_web/addin_strings.ex:462
 #, elixir-autogen, elixir-format
 msgid "Use a different link"
 msgstr "Een andere link gebruiken"
@@ -4256,7 +4255,7 @@ msgstr "Een andere link gebruiken"
 msgid "Use this one"
 msgstr "Deze gebruiken"
 
-#: lib/claper_web/addin_strings.ex:468
+#: lib/claper_web/addin_strings.ex:465
 #, elixir-autogen, elixir-format
 msgid "Whatever Claper is showing right now"
 msgstr "Wat Claper op dit moment toont"
@@ -4276,7 +4275,7 @@ msgstr "Schrijf de vragen hier, houd de presentatie in uw eigen PowerPoint-besta
 msgid "You have no events yet."
 msgstr "U hebt nog geen evenementen."
 
-#: lib/claper_web/addin_strings.ex:111
+#: lib/claper_web/addin_strings.ex:114
 #, elixir-autogen, elixir-format
 msgid "Your event"
 msgstr "Uw evenement"
@@ -4286,32 +4285,32 @@ msgstr "Uw evenement"
 msgid "Your key"
 msgstr "Uw sleutel"
 
-#: lib/claper_web/addin_strings.ex:130
+#: lib/claper_web/addin_strings.ex:133
 #, elixir-autogen, elixir-format
 msgid "already on the deck inside Claper"
 msgstr "al in de presentatie binnen Claper"
 
-#: lib/claper_web/addin_strings.ex:131
+#: lib/claper_web/addin_strings.ex:134
 #, elixir-autogen, elixir-format
 msgid "answers so far"
 msgstr "antwoorden tot nu toe"
 
-#: lib/claper_web/addin_strings.ex:141
+#: lib/claper_web/addin_strings.ex:144
 #, elixir-autogen, elixir-format
 msgid "Added as a new slide at the end."
 msgstr "Toegevoegd als nieuwe dia aan het eind."
 
-#: lib/claper_web/addin_strings.ex:140
+#: lib/claper_web/addin_strings.ex:143
 #, elixir-autogen, elixir-format
 msgid "Building the slide…"
 msgstr "De dia wordt gebouwd…"
 
-#: lib/claper_web/addin_strings.ex:273
+#: lib/claper_web/addin_strings.ex:262
 #, elixir-autogen, elixir-format
 msgid "A question is missing its text."
 msgstr "Bij een vraag ontbreekt de tekst."
 
-#: lib/claper_web/addin_strings.ex:253
+#: lib/claper_web/addin_strings.ex:242
 #, elixir-autogen, elixir-format
 msgid "A quiz has right answers and can hold several questions in a row. Tick the right one while you write it. On the slide every answer looks the same until you release the results in Claper, so nobody in the room can read the answer off the wall."
 msgstr "Een quiz heeft juiste antwoorden en kan meerdere vragen achter elkaar bevatten. Vink het juiste antwoord aan terwijl u het schrijft. Op de dia zien alle antwoorden er hetzelfde uit tot u de resultaten in Claper vrijgeeft, zodat niemand in de zaal het antwoord van de muur kan aflezen."
@@ -4321,57 +4320,57 @@ msgstr "Een quiz heeft juiste antwoorden en kan meerdere vragen achter elkaar be
 msgid "Account settings, PowerPoint"
 msgstr "Accountinstellingen, PowerPoint"
 
-#: lib/claper_web/addin_strings.ex:299
+#: lib/claper_web/addin_strings.ex:288
 #, elixir-autogen, elixir-format
 msgid "Add box"
 msgstr "Veld toevoegen"
 
-#: lib/claper_web/addin_strings.ex:139
+#: lib/claper_web/addin_strings.ex:142
 #, elixir-autogen, elixir-format
 msgid "Adds a slide at the end showing this question."
 msgstr "Voegt aan het eind een dia toe die deze vraag toont."
 
-#: lib/claper_web/addin_strings.ex:239
+#: lib/claper_web/addin_strings.ex:228
 #, elixir-autogen, elixir-format
 msgid "Answer"
 msgstr "Antwoord"
 
-#: lib/claper_web/addin_strings.ex:238
+#: lib/claper_web/addin_strings.ex:227
 #, elixir-autogen, elixir-format
 msgid "Answers"
 msgstr "Antwoorden"
 
-#: lib/claper_web/addin_strings.ex:300
+#: lib/claper_web/addin_strings.ex:289
 #, elixir-autogen, elixir-format
 msgid "At least one box."
 msgstr "Minstens één veld."
 
-#: lib/claper_web/addin_strings.ex:463
+#: lib/claper_web/addin_strings.ex:460
 #, elixir-autogen, elixir-format
 msgid "Bar colour"
 msgstr "Balkkleur"
 
-#: lib/claper_web/addin_strings.ex:296
+#: lib/claper_web/addin_strings.ex:285
 #, elixir-autogen, elixir-format
 msgid "Boxes people fill in"
 msgstr "Velden die mensen invullen"
 
-#: lib/claper_web/addin_strings.ex:301
+#: lib/claper_web/addin_strings.ex:290
 #, elixir-autogen, elixir-format
 msgid "Create open question"
 msgstr "Open vraag maken"
 
-#: lib/claper_web/addin_strings.ex:244
+#: lib/claper_web/addin_strings.ex:233
 #, elixir-autogen, elixir-format
 msgid "Created. Put it on a slide below."
 msgstr "Gemaakt. Zet hem hieronder op een dia."
 
-#: lib/claper_web/addin_strings.ex:306
+#: lib/claper_web/addin_strings.ex:295
 #, elixir-autogen, elixir-format
 msgid "Delete this open question? What people wrote goes with it."
 msgstr "Deze open vraag verwijderen? Wat mensen hebben geschreven gaat mee."
 
-#: lib/claper_web/addin_strings.ex:143
+#: lib/claper_web/addin_strings.ex:146
 #, elixir-autogen, elixir-format
 msgid "Done. It is on the slide you had open."
 msgstr "Klaar. Hij staat op de dia die u open had."
@@ -4381,57 +4380,47 @@ msgstr "Klaar. Hij staat op de dia die u open had."
 msgid "Every presentation gets an event of its own, so it never shows the questions of another talk. The choice is saved in the file, so it is the same on any computer that opens it."
 msgstr "Elke presentatie krijgt een eigen evenement, zodat hij nooit de vragen van een andere lezing toont. De keuze wordt in het bestand bewaard, dus hij is hetzelfde op elke computer die het opent."
 
-#: lib/claper_web/addin_strings.ex:275
+#: lib/claper_web/addin_strings.ex:264
 #, elixir-autogen, elixir-format
 msgid "Every question needs at least two answers."
 msgstr "Elke vraag heeft minstens twee antwoorden nodig."
 
-#: lib/claper_web/addin_strings.ex:277
+#: lib/claper_web/addin_strings.ex:266
 #, elixir-autogen, elixir-format
 msgid "Every question needs one answer ticked as right."
 msgstr "Bij elke vraag moet één antwoord als juist zijn aangevinkt."
 
-#: lib/claper_web/addin_strings.ex:251
+#: lib/claper_web/addin_strings.ex:240
 #, elixir-autogen, elixir-format
 msgid "How a quiz differs from a poll"
 msgstr "Hoe een quiz verschilt van een poll"
 
-#: lib/claper_web/addin_strings.ex:218
-#, elixir-autogen, elixir-format
-msgid "Looks like a poll, but one answer is the right one and nobody sees which until you release it. For checking whether something landed."
-msgstr "Lijkt op een poll, maar één antwoord is het juiste en niemand ziet welke tot u het vrijgeeft. Om te controleren of iets is overgekomen."
-
-#: lib/claper_web/addin_strings.ex:297
+#: lib/claper_web/addin_strings.ex:286
 #, elixir-autogen, elixir-format
 msgid "Name of the box"
 msgstr "Naam van het veld"
 
-#: lib/claper_web/addin_strings.ex:137
+#: lib/claper_web/addin_strings.ex:140
 #, elixir-autogen, elixir-format
 msgid "New slide"
 msgstr "Nieuwe dia"
 
-#: lib/claper_web/addin_strings.ex:223
-#, elixir-autogen, elixir-format
-msgid "No answers to pick from. People write their own, and what they write appears on the slide. For ideas, questions and moods."
-msgstr "Niets om uit te kiezen. Mensen schrijven hun eigen antwoord, en wat ze schrijven verschijnt op de dia. Voor ideeën, vragen en stemmingen."
-
-#: lib/claper_web/addin_strings.ex:304
+#: lib/claper_web/addin_strings.ex:293
 #, elixir-autogen, elixir-format
 msgid "No open questions for this presentation yet."
 msgstr "Nog geen open vragen voor deze presentatie."
 
-#: lib/claper_web/addin_strings.ex:288
+#: lib/claper_web/addin_strings.ex:277
 #, elixir-autogen, elixir-format
 msgid "Nothing to pick from: people write their own answer and it appears on your slide as it arrives. Use it when you do not know the answers yet, for gathering questions, or for one word each on how the room is feeling."
 msgstr "Niets om uit te kiezen: mensen schrijven hun eigen antwoord en het verschijnt op uw dia zodra het binnenkomt. Gebruik dit als u de antwoorden nog niet kent, om vragen te verzamelen, of voor één woord per persoon over hoe de zaal erbij zit."
 
-#: lib/claper_web/addin_strings.ex:316
+#: lib/claper_web/addin_strings.ex:305
 #, elixir-autogen, elixir-format
 msgid "Off by default: the code is scanned, and the address underneath is one more thing on your slide. Turn it on for a room where phones are not a given."
 msgstr "Standaard uit: de code wordt gescand, en het adres eronder is nog iets extra's op uw dia. Zet het aan voor een zaal waar een telefoon niet vanzelfsprekend is."
 
-#: lib/claper_web/addin_strings.ex:134
+#: lib/claper_web/addin_strings.ex:137
 #, elixir-autogen, elixir-format
 msgid "On this slide"
 msgstr "Op deze dia"
@@ -4441,23 +4430,23 @@ msgstr "Op deze dia"
 msgid "One button per question, on this slide or on a new one."
 msgstr "Eén knop per vraag, op deze dia of op een nieuwe."
 
-#: lib/claper_web/addin_strings.ex:117
+#: lib/claper_web/addin_strings.ex:120
 #, elixir-autogen, elixir-format
 msgid "Open"
 msgstr "Open"
 
-#: lib/claper_web/addin_strings.ex:221
+#: lib/claper_web/addin_strings.ex:218
 #: lib/claper_web/live/event_live/show.ex:1199
 #, elixir-autogen, elixir-format
 msgid "Open question"
 msgstr "Open vraag"
 
-#: lib/claper_web/addin_strings.ex:302
+#: lib/claper_web/addin_strings.ex:291
 #, elixir-autogen, elixir-format
 msgid "Open questions"
 msgstr "Open vragen"
 
-#: lib/claper_web/addin_strings.ex:144
+#: lib/claper_web/addin_strings.ex:147
 #, elixir-autogen, elixir-format
 msgid "Open the slide you want it on first."
 msgstr "Open eerst de dia waarop u hem wilt."
@@ -4467,12 +4456,12 @@ msgstr "Open eerst de dia waarop u hem wilt."
 msgid "Polls, quizzes and open questions, created straight away."
 msgstr "Polls, quizzen en open vragen, meteen gemaakt."
 
-#: lib/claper_web/addin_strings.ex:136
+#: lib/claper_web/addin_strings.ex:139
 #, elixir-autogen, elixir-format
 msgid "Puts a live block on the slide you have open, keeping what is on it."
 msgstr "Zet een live blok op de dia die u open hebt, met behoud van wat erop staat."
 
-#: lib/claper_web/addin_strings.ex:392
+#: lib/claper_web/addin_strings.ex:381
 #, elixir-autogen, elixir-format
 msgid "Ready. This PowerPoint cannot hand it over on its own, so paste it into each Claper object."
 msgstr "Klaar. Deze PowerPoint kan hem niet zelf doorgeven, plak hem dus in elk Claper-object."
@@ -4482,37 +4471,37 @@ msgstr "Klaar. Deze PowerPoint kan hem niet zelf doorgeven, plak hem dus in elk 
 msgid "Setting up this presentation…"
 msgstr "Deze presentatie wordt ingericht…"
 
-#: lib/claper_web/addin_strings.ex:314
+#: lib/claper_web/addin_strings.ex:303
 #, elixir-autogen, elixir-format
 msgid "Show the web address as well"
 msgstr "Ook het webadres tonen"
 
-#: lib/claper_web/addin_strings.ex:462
+#: lib/claper_web/addin_strings.ex:459
 #, elixir-autogen, elixir-format
 msgid "Text colour"
 msgstr "Tekstkleur"
 
-#: lib/claper_web/addin_strings.ex:397
+#: lib/claper_web/addin_strings.ex:386
 #, elixir-autogen, elixir-format
 msgid "The buttons on each question copy a block that already exists in this file, so the very first one has to be inserted by hand. Once one is in, you never have to do this again."
 msgstr "De knoppen bij elke vraag kopiëren een blok dat al in dit bestand bestaat, dus het allereerste moet met de hand worden ingevoegd. Zodra er één staat, hoeft u dit nooit meer te doen."
 
-#: lib/claper_web/addin_strings.ex:395
+#: lib/claper_web/addin_strings.ex:384
 #, elixir-autogen, elixir-format
 msgid "The first live block"
 msgstr "Het eerste live blok"
 
-#: lib/claper_web/addin_strings.ex:409
+#: lib/claper_web/addin_strings.ex:398
 #, elixir-autogen, elixir-format
 msgid "The frame around a live block, and the soft shadow along its top edge, are PowerPoint's own and cannot be turned off from here. A picture has neither, which is why the joining code is one."
 msgstr "Het kader rond een live blok, en de zachte schaduw langs de bovenrand, zijn van PowerPoint en kunnen hier niet worden uitgezet. Een afbeelding heeft geen van beide, en daarom is de deelnamecode een afbeelding."
 
-#: lib/claper_web/addin_strings.ex:461
+#: lib/claper_web/addin_strings.ex:458
 #, elixir-autogen, elixir-format
 msgid "Use my own colours"
 msgstr "Mijn eigen kleuren gebruiken"
 
-#: lib/claper_web/addin_strings.ex:292
+#: lib/claper_web/addin_strings.ex:281
 #, elixir-autogen, elixir-format
 msgid "Usually one box is enough. Add a second when you want two things at once, say a name and a question."
 msgstr "Meestal is één veld genoeg. Voeg een tweede toe als u twee dingen tegelijk wilt, bijvoorbeeld een naam en een vraag."
@@ -4522,27 +4511,27 @@ msgstr "Meestal is één veld genoeg. Voeg een tweede toe als u twee dingen tege
 msgid "Waiting for the first answer."
 msgstr "Wachten op het eerste antwoord."
 
-#: lib/claper_web/addin_strings.ex:286
+#: lib/claper_web/addin_strings.ex:275
 #, elixir-autogen, elixir-format
 msgid "What an open question is for"
 msgstr "Waar een open vraag voor is"
 
-#: lib/claper_web/addin_strings.ex:264
+#: lib/claper_web/addin_strings.ex:253
 #, elixir-autogen, elixir-format
 msgid "What is the capital of France?"
 msgstr "Wat is de hoofdstad van Frankrijk?"
 
-#: lib/claper_web/addin_strings.ex:295
+#: lib/claper_web/addin_strings.ex:284
 #, elixir-autogen, elixir-format
 msgid "What should we talk about?"
 msgstr "Waar zouden we het over moeten hebben?"
 
-#: lib/claper_web/addin_strings.ex:147
+#: lib/claper_web/addin_strings.ex:150
 #, elixir-autogen, elixir-format
 msgid "Which one do I want?"
 msgstr "Welke heb ik nodig?"
 
-#: lib/claper_web/addin_strings.ex:156
+#: lib/claper_web/addin_strings.ex:157
 #, elixir-autogen, elixir-format
 msgid "You give the answers, the room picks one. No answer is right, and the bars grow while people vote. For opinions, warm-ups and getting a decision out of a room."
 msgstr "U geeft de antwoorden, de zaal kiest er één. Geen enkel antwoord is juist, en de balken groeien terwijl mensen stemmen. Voor meningen, om op gang te komen en om een besluit uit een zaal te krijgen."
@@ -4552,27 +4541,27 @@ msgstr "U geeft de antwoorden, de zaal kiest er één. Geen enkel antwoord is ju
 msgid "Your Claper address and the sidebar key from your account."
 msgstr "Uw Claper-adres en de sleutel voor het deelvenster, uit uw account."
 
-#: lib/claper_web/addin_strings.ex:298
+#: lib/claper_web/addin_strings.ex:287
 #, elixir-autogen, elixir-format
 msgid "Your answer"
 msgstr "Uw antwoord"
 
-#: lib/claper_web/addin_strings.ex:457
+#: lib/claper_web/addin_strings.ex:448
 #, elixir-autogen, elixir-format
 msgid "One after another"
 msgstr "De een na de ander"
 
-#: lib/claper_web/addin_strings.ex:455
+#: lib/claper_web/addin_strings.ex:446
 #, elixir-autogen, elixir-format
 msgid "Open answers"
 msgstr "Open antwoorden"
 
-#: lib/claper_web/addin_strings.ex:456
+#: lib/claper_web/addin_strings.ex:447
 #, elixir-autogen, elixir-format
 msgid "Word cloud"
 msgstr "Woordwolk"
 
-#: lib/claper_web/addin_strings.ex:459
+#: lib/claper_web/addin_strings.ex:450
 #, elixir-autogen, elixir-format
 msgid "Do not show"
 msgstr "Niet tonen"
@@ -4582,32 +4571,32 @@ msgstr "Niet tonen"
 msgid "Leaderboard"
 msgstr "Ranglijst"
 
-#: lib/claper_web/addin_strings.ex:261
+#: lib/claper_web/addin_strings.ex:250
 #, elixir-autogen, elixir-format
 msgid "Leave it empty for no clock. The count starts when you move to the question in Claper, and it shows on the slide. It does not lock anyone out: you end the question by releasing the results."
 msgstr "Laat leeg voor geen klok. Het tellen begint zodra u in Claper bij de vraag komt, en het is op de dia te zien. Het sluit niemand buiten: u beëindigt de vraag door de resultaten vrij te geven."
 
-#: lib/claper_web/addin_strings.ex:259
+#: lib/claper_web/addin_strings.ex:248
 #, elixir-autogen, elixir-format
 msgid "No limit"
 msgstr "Geen limiet"
 
-#: lib/claper_web/addin_strings.ex:458
+#: lib/claper_web/addin_strings.ex:449
 #, elixir-autogen, elixir-format
 msgid "Quiz leaderboard"
 msgstr "Quizranglijst"
 
-#: lib/claper_web/addin_strings.ex:258
+#: lib/claper_web/addin_strings.ex:247
 #, elixir-autogen, elixir-format
 msgid "Seconds per question"
 msgstr "Seconden per vraag"
 
-#: lib/claper_web/addin_strings.ex:460
+#: lib/claper_web/addin_strings.ex:451
 #, elixir-autogen, elixir-format
 msgid "Under the answers"
 msgstr "Onder de antwoorden"
 
-#: lib/claper_web/addin_strings.ex:211
+#: lib/claper_web/addin_strings.ex:212
 #, elixir-autogen, elixir-format
 msgid "A scale from left to right"
 msgstr "Een schaal van links naar rechts"
@@ -4617,17 +4606,17 @@ msgstr "Een schaal van links naar rechts"
 msgid "Average"
 msgstr "Gemiddelde"
 
-#: lib/claper_web/addin_strings.ex:210
+#: lib/claper_web/addin_strings.ex:211
 #, elixir-autogen, elixir-format
 msgid "Bars, one per answer"
 msgstr "Balken, één per antwoord"
 
-#: lib/claper_web/addin_strings.ex:209
+#: lib/claper_web/addin_strings.ex:210
 #, elixir-autogen, elixir-format
 msgid "How it is shown"
 msgstr "Hoe het wordt getoond"
 
-#: lib/claper_web/addin_strings.ex:159
+#: lib/claper_web/addin_strings.ex:160
 #: lib/claper_web/live/event_live/show.ex:1195
 #, elixir-autogen, elixir-format
 msgid "Scale"
@@ -4638,37 +4627,37 @@ msgstr "Schaal"
 msgid "Tap where you stand"
 msgstr "Tik aan waar u staat"
 
-#: lib/claper_web/addin_strings.ex:213
+#: lib/claper_web/addin_strings.ex:214
 #, elixir-autogen, elixir-format
 msgid "The answers become a row in the order you write them, and the slide also shows the average. Write the ends first if you want words: \"never\" through to \"always\"."
 msgstr "De antwoorden worden een rij in de volgorde waarin u ze schrijft, en de dia toont ook het gemiddelde. Schrijf eerst de uiteinden als u woorden wilt: «nooit» tot «altijd»."
 
-#: lib/claper_web/addin_strings.ex:161
+#: lib/claper_web/addin_strings.ex:162
 #, elixir-autogen, elixir-format
 msgid "The same thing, drawn as a row from left to right with an average underneath. For \"how much do you agree\" and anything else where the order of the answers means something."
 msgstr "Hetzelfde, getekend als een rij van links naar rechts met een gemiddelde eronder. Voor «hoezeer bent u het eens» en alles waarbij de volgorde van de antwoorden iets betekent."
 
-#: lib/claper_web/addin_strings.ex:169
+#: lib/claper_web/addin_strings.ex:170
 #, elixir-autogen, elixir-format
 msgid "A ranking people put in order"
 msgstr "Een rangschikking die mensen op volgorde zetten"
 
-#: lib/claper_web/addin_strings.ex:426
+#: lib/claper_web/addin_strings.ex:415
 #, elixir-autogen, elixir-format
 msgid "Back to the standard look"
 msgstr "Terug naar het standaarduiterlijk"
 
-#: lib/claper_web/addin_strings.ex:425
+#: lib/claper_web/addin_strings.ex:414
 #, elixir-autogen, elixir-format
 msgid "Colours, background and more"
 msgstr "Kleuren, achtergrond en meer"
 
-#: lib/claper_web/addin_strings.ex:166
+#: lib/claper_web/addin_strings.ex:167
 #, elixir-autogen, elixir-format
 msgid "Everyone puts all the answers in their own order, and the slide shows the order the room agreed on. For priorities and for \"what should we do first\"."
 msgstr "Iedereen zet alle antwoorden in zijn eigen volgorde, en de dia toont de volgorde waar de zaal het over eens was. Voor prioriteiten en voor «wat moeten we eerst doen»."
 
-#: lib/claper_web/addin_strings.ex:206
+#: lib/claper_web/addin_strings.ex:207
 #, elixir-autogen, elixir-format
 msgid "Everyone puts all the answers in their own order. The slide shows the order the room agreed on, with the average place next to each one."
 msgstr "Iedereen zet alle antwoorden in zijn eigen volgorde. De dia toont de volgorde waar de zaal het over eens was, met de gemiddelde plaats ernaast."
@@ -4688,7 +4677,7 @@ msgstr "Omhoog"
 msgid "Put them in your order, best at the top"
 msgstr "Zet ze in uw volgorde, de beste bovenaan"
 
-#: lib/claper_web/addin_strings.ex:164
+#: lib/claper_web/addin_strings.ex:165
 #: lib/claper_web/live/event_live/show.ex:1194
 #, elixir-autogen, elixir-format
 msgid "Ranking"
@@ -4699,12 +4688,12 @@ msgstr "Rangschikking"
 msgid "Send my order"
 msgstr "Mijn volgorde versturen"
 
-#: lib/claper_web/addin_strings.ex:428
+#: lib/claper_web/addin_strings.ex:417
 #, elixir-autogen, elixir-format
 msgid "Set back to the standard look. Save it below to apply."
 msgstr "Teruggezet naar het standaarduiterlijk. Sla hieronder op om het toe te passen."
 
-#: lib/claper_web/addin_strings.ex:430
+#: lib/claper_web/addin_strings.ex:419
 #, elixir-autogen, elixir-format
 msgid "This presentation now belongs to a different event. Choose what this slide shows."
 msgstr "Deze presentatie hoort nu bij een ander evenement. Kies wat deze dia toont."
@@ -4714,177 +4703,177 @@ msgstr "Deze presentatie hoort nu bij een ander evenement. Kies wat deze dia too
 msgid "place"
 msgstr "plaats"
 
-#: lib/claper_web/addin_strings.ex:387
+#: lib/claper_web/addin_strings.ex:376
 #, elixir-autogen, elixir-format
 msgid "A new link replaces the old one everywhere. Only needed if the old one got out."
 msgstr "Een nieuwe link vervangt de oude overal. Alleen nodig als de oude is uitgelekt."
 
-#: lib/claper_web/addin_strings.ex:324
+#: lib/claper_web/addin_strings.ex:313
 #, elixir-autogen, elixir-format
 msgid "Add a welcome slide"
 msgstr "Een welkomstdia toevoegen"
 
-#: lib/claper_web/addin_strings.ex:335
+#: lib/claper_web/addin_strings.ex:324
 #, elixir-autogen, elixir-format
 msgid "Added at the end. Move it to the front and it is your opening slide."
 msgstr "Aan het eind toegevoegd. Schuif hem naar voren en het is uw openingsdia."
 
-#: lib/claper_web/addin_strings.ex:337
+#: lib/claper_web/addin_strings.ex:326
 #, elixir-autogen, elixir-format
 msgid "Added at the end. This PowerPoint cannot write the text, so type the code beside the picture."
 msgstr "Aan het eind toegevoegd. Deze PowerPoint kan de tekst niet schrijven, typ de code dus naast de afbeelding."
 
-#: lib/claper_web/addin_strings.ex:357
+#: lib/claper_web/addin_strings.ex:346
 #, elixir-autogen, elixir-format
 msgid "Back to plain"
 msgstr "Terug naar eenvoudig"
 
-#: lib/claper_web/addin_strings.ex:363
+#: lib/claper_web/addin_strings.ex:352
 #, elixir-autogen, elixir-format
 msgid "Back to plain. New blocks look the way Claper draws them."
 msgstr "Terug naar eenvoudig. Nieuwe blokken zien eruit zoals Claper ze tekent."
 
-#: lib/claper_web/addin_strings.ex:350
+#: lib/claper_web/addin_strings.ex:339
 #, elixir-autogen, elixir-format
 msgid "Background behind a block"
 msgstr "Achtergrond achter een blok"
 
-#: lib/claper_web/addin_strings.ex:443
+#: lib/claper_web/addin_strings.ex:432
 #, elixir-autogen, elixir-format
 msgid "Background behind this block"
 msgstr "Achtergrond achter dit blok"
 
-#: lib/claper_web/addin_strings.ex:417
+#: lib/claper_web/addin_strings.ex:406
 #, elixir-autogen, elixir-format
 msgid "Claper interaction"
 msgstr "Claper-interactie"
 
-#: lib/claper_web/addin_strings.ex:345
+#: lib/claper_web/addin_strings.ex:334
 #, elixir-autogen, elixir-format
 msgid "How new blocks look"
 msgstr "Hoe nieuwe blokken eruitzien"
 
-#: lib/claper_web/addin_strings.ex:366
+#: lib/claper_web/addin_strings.ex:355
 #, elixir-autogen, elixir-format
 msgid "Is this the same talk?"
 msgstr "Is dit dezelfde lezing?"
 
-#: lib/claper_web/addin_strings.ex:120
+#: lib/claper_web/addin_strings.ex:123
 #, elixir-autogen, elixir-format
 msgid "Join & look"
 msgstr "Deelnemen en uiterlijk"
 
-#: lib/claper_web/addin_strings.ex:340
+#: lib/claper_web/addin_strings.ex:329
 #, elixir-autogen, elixir-format
 msgid "Join in"
 msgstr "Meedoen"
 
-#: lib/claper_web/addin_strings.ex:379
+#: lib/claper_web/addin_strings.ex:368
 #, elixir-autogen, elixir-format
 msgid "Made for you the moment this presentation gets its event, and stored in the file. A block placed by the buttons on a question is handed the link directly, so it never asks. A block you insert by hand asks once, and this is the link to paste."
 msgstr "Wordt gemaakt zodra deze presentatie haar evenement krijgt, en in het bestand bewaard. Een blok dat met de knoppen bij een vraag is geplaatst, krijgt de link rechtstreeks en vraagt dus nooit. Een blok dat u met de hand invoegt vraagt één keer, en dit is de link om te plakken."
 
-#: lib/claper_web/addin_strings.ex:385
+#: lib/claper_web/addin_strings.ex:374
 #, elixir-autogen, elixir-format
 msgid "Make a new link"
 msgstr "Een nieuwe link maken"
 
-#: lib/claper_web/addin_strings.ex:372
+#: lib/claper_web/addin_strings.ex:361
 #, elixir-autogen, elixir-format
 msgid "New talk, start fresh"
 msgstr "Nieuwe lezing, opnieuw beginnen"
 
-#: lib/claper_web/addin_strings.ex:342
+#: lib/claper_web/addin_strings.ex:331
 #, elixir-autogen, elixir-format
 msgid "Open the camera, point it at the code, answer on your phone."
 msgstr "Open de camera, richt op de code, antwoord op uw telefoon."
 
-#: lib/claper_web/addin_strings.ex:405
+#: lib/claper_web/addin_strings.ex:394
 #, elixir-autogen, elixir-format
 msgid "Paste the link from above"
 msgstr "Plak de link van hierboven"
 
-#: lib/claper_web/addin_strings.ex:441
+#: lib/claper_web/addin_strings.ex:430
 #, elixir-autogen, elixir-format
 msgid "Plain"
 msgstr "Eenvoudig"
 
-#: lib/claper_web/addin_strings.ex:445
+#: lib/claper_web/addin_strings.ex:434
 #, elixir-autogen, elixir-format
 msgid "PowerPoint always paints something behind a live block. Set this to your slide's colour and the edge disappears."
 msgstr "PowerPoint tekent altijd iets achter een live blok. Zet dit op de kleur van uw dia en de rand verdwijnt."
 
-#: lib/claper_web/addin_strings.ex:352
+#: lib/claper_web/addin_strings.ex:341
 #, elixir-autogen, elixir-format
 msgid "PowerPoint always paints something behind a live block: a web object on a slide cannot be see-through, and Microsoft has turned that request down. So the block paints the colour you pick here instead. Set it to your slide's own colour and the edge disappears."
 msgstr "PowerPoint tekent altijd iets achter een live blok: een webobject op een dia kan niet doorzichtig zijn, en Microsoft heeft dat verzoek afgewezen. Daarom tekent het blok de kleur die u hier kiest. Zet hem op de kleur van uw eigen dia en de rand verdwijnt."
 
-#: lib/claper_web/addin_strings.ex:333
+#: lib/claper_web/addin_strings.ex:322
 #, elixir-autogen, elixir-format
 msgid "PowerPoint did not add the slide."
 msgstr "PowerPoint heeft de dia niet toegevoegd."
 
-#: lib/claper_web/addin_strings.ex:371
+#: lib/claper_web/addin_strings.ex:360
 #, elixir-autogen, elixir-format
 msgid "Same talk, keep it"
 msgstr "Dezelfde lezing, behouden"
 
-#: lib/claper_web/addin_strings.ex:356
+#: lib/claper_web/addin_strings.ex:345
 #, elixir-autogen, elixir-format
 msgid "Save as the standard"
 msgstr "Als standaard opslaan"
 
-#: lib/claper_web/addin_strings.ex:359
+#: lib/claper_web/addin_strings.ex:348
 #, elixir-autogen, elixir-format
 msgid "Saved. New blocks start this way."
 msgstr "Opgeslagen. Nieuwe blokken beginnen zo."
 
-#: lib/claper_web/addin_strings.ex:358
+#: lib/claper_web/addin_strings.ex:347
 #, elixir-autogen, elixir-format
 msgid "Saving…"
 msgstr "Opslaan…"
 
-#: lib/claper_web/addin_strings.ex:347
+#: lib/claper_web/addin_strings.ex:336
 #, elixir-autogen, elixir-format
 msgid "Set once here and every block you add afterwards starts this way. A block you have already placed keeps what it has, and each one can still be changed on its own slide."
 msgstr "Hier één keer ingesteld, en elk blok dat u daarna toevoegt begint zo. Een blok dat al geplaatst is behoudt wat het heeft, en elk blok kan nog steeds op zijn eigen dia worden gewijzigd."
 
-#: lib/claper_web/addin_strings.ex:440
+#: lib/claper_web/addin_strings.ex:429
 #, elixir-autogen, elixir-format
 msgid "Shape"
 msgstr "Vorm"
 
-#: lib/claper_web/addin_strings.ex:355
+#: lib/claper_web/addin_strings.ex:344
 #, elixir-autogen, elixir-format
 msgid "Soft shadow under the block"
 msgstr "Zachte schaduw onder het blok"
 
-#: lib/claper_web/addin_strings.ex:374
+#: lib/claper_web/addin_strings.ex:363
 #, elixir-autogen, elixir-format
 msgid "Starting fresh gives this file its own event and its own link. Nothing is deleted: the old talk keeps everything it had."
 msgstr "Opnieuw beginnen geeft dit bestand een eigen evenement en een eigen link. Er wordt niets verwijderd: de oude lezing behoudt alles wat ze had."
 
-#: lib/claper_web/addin_strings.ex:326
+#: lib/claper_web/addin_strings.ex:315
 #, elixir-autogen, elixir-format
 msgid "The welcome slide is a whole slide made for you: the join code big enough to read from the back, the code as a picture beside it, and one line telling the room what to do. Yours afterwards, so move and restyle it as you like."
 msgstr "De welkomstdia is een hele dia die voor u wordt gemaakt: de deelnamecode groot genoeg om vanaf achteren te lezen, de code als afbeelding ernaast, en één regel die de zaal vertelt wat te doen. Daarna is hij van u, verplaats hem en geef hem de opmaak die u wilt."
 
-#: lib/claper_web/addin_strings.ex:407
+#: lib/claper_web/addin_strings.ex:396
 #, elixir-autogen, elixir-format
 msgid "Then pick what that slide should show."
 msgstr "Kies daarna wat die dia moet tonen."
 
-#: lib/claper_web/addin_strings.ex:361
+#: lib/claper_web/addin_strings.ex:350
 #, elixir-autogen, elixir-format
 msgid "This PowerPoint cannot store it in the file. Set it on each block instead."
 msgstr "Deze PowerPoint kan het niet in het bestand bewaren. Stel het in plaats daarvan per blok in."
 
-#: lib/claper_web/addin_strings.ex:330
+#: lib/claper_web/addin_strings.ex:319
 #, elixir-autogen, elixir-format
 msgid "This PowerPoint is too old to add a slide from here. Add one yourself and use the button above."
 msgstr "Deze PowerPoint is te oud om vanaf hier een dia toe te voegen. Voeg er zelf een toe en gebruik de knop hierboven."
 
-#: lib/claper_web/addin_strings.ex:368
+#: lib/claper_web/addin_strings.ex:357
 #, elixir-autogen, elixir-format
 msgid "This file was set up as the event below, but it was called something else then. A presentation saved under a new name is usually a new talk, and a new talk with the old event would show the old talk's questions to the new room."
 msgstr "Dit bestand is ingericht voor het evenement hieronder, maar het heette toen anders. Een presentatie die onder een nieuwe naam is opgeslagen is meestal een nieuwe lezing, en een nieuwe lezing met het oude evenement zou de nieuwe zaal de vragen van de oude tonen."
@@ -4899,12 +4888,12 @@ msgstr "%{count} markeringen"
 msgid "%{left} of %{budget} points left"
 msgstr "%{left} van %{budget} punten over"
 
-#: lib/claper_web/addin_strings.ex:171
+#: lib/claper_web/addin_strings.ex:172
 #, elixir-autogen, elixir-format
 msgid "A picture people tap"
 msgstr "Een afbeelding waarop mensen tikken"
 
-#: lib/claper_web/addin_strings.ex:172
+#: lib/claper_web/addin_strings.ex:173
 #, elixir-autogen, elixir-format
 msgid "A wheel you spin"
 msgstr "Een rad dat u draait"
@@ -4919,17 +4908,17 @@ msgstr "Alle vragen"
 msgid "Answer at your own pace"
 msgstr "In uw eigen tempo antwoorden"
 
-#: lib/claper_web/addin_strings.ex:204
+#: lib/claper_web/addin_strings.ex:205
 #, elixir-autogen, elixir-format
 msgid "Choose a picture first."
 msgstr "Kies eerst een afbeelding."
 
-#: lib/claper_web/addin_strings.ex:177
+#: lib/claper_web/addin_strings.ex:178
 #, elixir-autogen, elixir-format
 msgid "Everyone gets the same budget and decides how much of it each answer is worth. It forces a trade-off that ticking boxes does not, which is why the result reads differently from a poll."
 msgstr "Iedereen krijgt hetzelfde budget en bepaalt hoeveel elk antwoord waard is. Het dwingt tot een afweging die vakjes aanvinken niet vraagt, en daarom leest het resultaat anders dan dat van een poll."
 
-#: lib/claper_web/addin_strings.ex:181
+#: lib/claper_web/addin_strings.ex:182
 #, elixir-autogen, elixir-format
 msgid "Everyone gets the same budget and decides how much of it each answer is worth. It forces a trade-off that ticking boxes does not, which is why the result reads differently from a poll. For budgets, priorities and \"what would you give up\"."
 msgstr "Iedereen krijgt hetzelfde budget en bepaalt hoeveel elk antwoord waard is. Het dwingt tot een afweging die vakjes aanvinken niet vraagt, en daarom leest het resultaat anders dan dat van een poll. Voor budgetten, prioriteiten en «waar zou u van afzien»."
@@ -4939,7 +4928,7 @@ msgstr "Iedereen krijgt hetzelfde budget en bepaalt hoeveel elk antwoord waard i
 msgid "Follow the presenter again"
 msgstr "Weer de presentator volgen"
 
-#: lib/claper_web/addin_strings.ex:203
+#: lib/claper_web/addin_strings.ex:204
 #, elixir-autogen, elixir-format
 msgid "Give each answer a picture"
 msgstr "Elk antwoord een afbeelding geven"
@@ -4949,22 +4938,22 @@ msgstr "Elk antwoord een afbeelding geven"
 msgid "Let people answer at their own pace"
 msgstr "Mensen in hun eigen tempo laten antwoorden"
 
-#: lib/claper_web/addin_strings.ex:190
+#: lib/claper_web/addin_strings.ex:191
 #, elixir-autogen, elixir-format
 msgid "No answers at all: people tap a picture and every tap appears on your slide. For floor plans, screenshots, maps and anything where the answer is a place rather than a word."
 msgstr "Helemaal geen antwoorden: mensen tikken op een afbeelding en elke tik verschijnt op uw dia. Voor plattegronden, schermafbeeldingen, kaarten en alles waarbij het antwoord een plek is en geen woord."
 
-#: lib/claper_web/addin_strings.ex:186
+#: lib/claper_web/addin_strings.ex:187
 #, elixir-autogen, elixir-format
 msgid "No answers to write: people tap the picture and every tap appears on your slide. For \"where does this go wrong\", floor plans, screenshots and maps."
 msgstr "Geen antwoorden om te schrijven: mensen tikken op de afbeelding en elke tik verschijnt op uw dia. Voor «waar gaat dit mis», plattegronden, schermafbeeldingen en kaarten."
 
-#: lib/claper_web/addin_strings.ex:196
+#: lib/claper_web/addin_strings.ex:197
 #, elixir-autogen, elixir-format
 msgid "Nobody answers a wheel. You write what is on it, and a button in Claper spins it and shows what it landed on. For picking a name, a topic or who goes next."
 msgstr "Een rad beantwoordt niemand. U schrijft wat erop staat, en een knop in Claper draait het en toont waar het is blijven staan. Om een naam, een onderwerp of wie er volgt te kiezen."
 
-#: lib/claper_web/addin_strings.ex:200
+#: lib/claper_web/addin_strings.ex:201
 #, elixir-autogen, elixir-format
 msgid "Nobody answers it. You write what is on it and spin it from Claper. For picking a name, a topic or who goes next."
 msgstr "Niemand beantwoordt het. U schrijft wat erop staat en draait het vanuit Claper. Om een naam, een onderwerp of wie er volgt te kiezen."
@@ -4984,7 +4973,7 @@ msgstr "Hier valt niets te beantwoorden. Het rad wordt vooraan gedraaid."
 msgid "Nothing to answer yet."
 msgstr "Nog niets te beantwoorden."
 
-#: lib/claper_web/addin_strings.ex:194
+#: lib/claper_web/addin_strings.ex:195
 #, elixir-autogen, elixir-format
 msgid "PNG, JPEG, GIF or WebP, up to 2 MB."
 msgstr "Kies een vraag. U kunt terugkomen en de rest doen wanneer u wilt."
@@ -4994,24 +4983,24 @@ msgstr "Kies een vraag. U kunt terugkomen en de rest doen wanneer u wilt."
 msgid "Pick a question. You can come back and do the rest whenever you like."
 msgstr "PNG, JPEG, GIF of WebP, tot 2 MB."
 
-#: lib/claper_web/addin_strings.ex:174
+#: lib/claper_web/addin_strings.ex:175
 #: lib/claper_web/live/event_live/show.ex:1197
 #, elixir-autogen, elixir-format
 msgid "Picture"
 msgstr "Afbeelding"
 
-#: lib/claper_web/addin_strings.ex:173
+#: lib/claper_web/addin_strings.ex:174
 #: lib/claper_web/live/event_live/show.ex:1196
 #, elixir-autogen, elixir-format
 msgid "Points"
 msgstr "Punten"
 
-#: lib/claper_web/addin_strings.ex:184
+#: lib/claper_web/addin_strings.ex:185
 #, elixir-autogen, elixir-format
 msgid "Points each person gets"
 msgstr "Punten per persoon"
 
-#: lib/claper_web/addin_strings.ex:170
+#: lib/claper_web/addin_strings.ex:171
 #, elixir-autogen, elixir-format
 msgid "Points to spend across the answers"
 msgstr "Punten om over de antwoorden te verdelen"
@@ -5041,12 +5030,12 @@ msgstr "Draai aan het rad"
 msgid "Tap the spot on the picture"
 msgstr "Tik de plek op de afbeelding aan"
 
-#: lib/claper_web/addin_strings.ex:193
+#: lib/claper_web/addin_strings.ex:194
 #, elixir-autogen, elixir-format
 msgid "The picture"
 msgstr "De afbeelding"
 
-#: lib/claper_web/addin_strings.ex:175
+#: lib/claper_web/addin_strings.ex:176
 #: lib/claper_web/live/event_live/show.ex:1193
 #, elixir-autogen, elixir-format
 msgid "Wheel"
@@ -5062,17 +5051,37 @@ msgstr "Uw markering staat erin."
 msgid "New presentation"
 msgstr "Nieuwe presentatie"
 
-#: lib/claper_web/addin_strings.ex:227
-#, elixir-autogen, elixir-format
-msgid "The first six are on this tab, under How it is shown. Quiz and Open question each have a tab of their own."
-msgstr "De eerste zes staan op dit tabblad, onder Hoe het wordt getoond. Quiz en Open vraag hebben elk een eigen tabblad."
-
-#: lib/claper_web/addin_strings.ex:231
+#: lib/claper_web/addin_strings.ex:220
 #, elixir-autogen, elixir-format
 msgid "They all work the same way afterwards: write it here, then put it on a slide with one button. The room answers on their phones after scanning the join code."
 msgstr "Daarna werken ze allemaal hetzelfde: schrijf het hier en zet het met één knop op een dia. De zaal antwoordt op de telefoon na het scannen van de deelnamecode."
 
-#: lib/claper_web/addin_strings.ex:104
+#: lib/claper_web/addin_strings.ex:107
 #, elixir-autogen, elixir-format
 msgid "This key belongs to one talk, so every presentation you open with it lands here. A personal key from your Claper account settings gives each presentation a talk of its own."
 msgstr "Deze sleutel hoort bij één sessie, dus elke presentatie die je ermee opent komt hier terecht. Een persoonlijke sleutel uit je Claper-accountinstellingen geeft elke presentatie een eigen sessie."
+
+#: lib/claper_web/addin_strings.ex:457
+#, elixir-autogen, elixir-format
+msgid "Count only"
+msgstr "Alleen aantal"
+
+#: lib/claper_web/addin_strings.ex:454
+#, elixir-autogen, elixir-format
+msgid "Numbers at the bar"
+msgstr "Cijfers op de balk"
+
+#: lib/claper_web/addin_strings.ex:455
+#, elixir-autogen, elixir-format
+msgid "Percent and count"
+msgstr "Percentage en aantal"
+
+#: lib/claper_web/addin_strings.ex:456
+#, elixir-autogen, elixir-format
+msgid "Percent only"
+msgstr "Alleen percentage"
+
+#: lib/claper_web/addin_strings.ex:105
+#, elixir-autogen, elixir-format
+msgid "Talk:"
+msgstr "Sessie:"
