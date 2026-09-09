@@ -3997,11 +3997,6 @@ msgstr "Génération du code…"
 msgid "For PowerPoint"
 msgstr "Pour PowerPoint"
 
-#: lib/claper_web/addin_strings.ex:79
-#, elixir-autogen, elixir-format
-msgid "From your account settings. It can create and delete, so it stays on this computer and never inside a presentation. A key from a single event's settings works too."
-msgstr "Depuis les réglages de votre compte. Elle peut créer et supprimer, elle reste donc sur cet ordinateur et jamais dans une présentation. Une clé issue des réglages d'un seul événement fonctionne aussi."
-
 #: lib/claper_web/addin_strings.ex:442
 #, elixir-autogen, elixir-format
 msgid "Fully rounded"
@@ -5087,3 +5082,8 @@ msgstr "Pourcentage seulement"
 #, elixir-autogen, elixir-format
 msgid "Talk:"
 msgstr "Conférence :"
+
+#: lib/claper_web/addin_strings.ex:79
+#, elixir-autogen, elixir-format
+msgid "From your account settings. It can create and delete, so it stays on this computer and never inside a presentation. That is the key that lets each presentation have a talk of its own. A key from a single event also connects, but then every presentation you open shows that one talk and can never start its own."
+msgstr "Depuis les réglages de votre compte. Elle peut créer et supprimer, elle reste donc sur cet ordinateur et jamais dans une présentation. C'est elle qui permet à chaque présentation d'avoir sa propre conférence. Une clé issue d'une seule conférence se connecte aussi, mais alors chaque présentation que vous ouvrez affiche cette conférence et ne peut jamais en commencer une."

@@ -3997,11 +3997,6 @@ msgstr "Zīmē kodu…"
 msgid "For PowerPoint"
 msgstr "Programmai PowerPoint"
 
-#: lib/claper_web/addin_strings.ex:79
-#, elixir-autogen, elixir-format
-msgid "From your account settings. It can create and delete, so it stays on this computer and never inside a presentation. A key from a single event's settings works too."
-msgstr "No jūsu konta iestatījumiem. Tā var veidot un dzēst, tāpēc paliek šajā datorā un nekad prezentācijā. Derēs arī atslēga no viena pasākuma iestatījumiem."
-
 #: lib/claper_web/addin_strings.ex:442
 #, elixir-autogen, elixir-format
 msgid "Fully rounded"
@@ -5087,3 +5082,8 @@ msgstr "Tikai procenti"
 #, elixir-autogen, elixir-format
 msgid "Talk:"
 msgstr "Runa:"
+
+#: lib/claper_web/addin_strings.ex:79
+#, elixir-autogen, elixir-format
+msgid "From your account settings. It can create and delete, so it stays on this computer and never inside a presentation. That is the key that lets each presentation have a talk of its own. A key from a single event also connects, but then every presentation you open shows that one talk and can never start its own."
+msgstr "No jūsu konta iestatījumiem. Tā var izveidot un dzēst, tāpēc paliek šajā datorā un nekad prezentācijā. Tieši ar to katra prezentācija iegūst savu runu. Arī atslēga no vienas runas savienojas, bet tad katra atvērtā prezentācija rāda tieši to runu un nekad nevar sākt savu."

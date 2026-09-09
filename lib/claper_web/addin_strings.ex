@@ -75,9 +75,9 @@ defmodule ClaperWeb.AddinStrings do
       "Claper address" => gettext("Claper address"),
       "Your key" => gettext("Your key"),
       "Account settings, PowerPoint" => gettext("Account settings, PowerPoint"),
-      "From your account settings. It can create and delete, so it stays on this computer and never inside a presentation. A key from a single event's settings works too." =>
+      "From your account settings. It can create and delete, so it stays on this computer and never inside a presentation. That is the key that lets each presentation have a talk of its own. A key from a single event also connects, but then every presentation you open shows that one talk and can never start its own." =>
         gettext(
-          "From your account settings. It can create and delete, so it stays on this computer and never inside a presentation. A key from a single event's settings works too."
+          "From your account settings. It can create and delete, so it stays on this computer and never inside a presentation. That is the key that lets each presentation have a talk of its own. A key from a single event also connects, but then every presentation you open shows that one talk and can never start its own."
         ),
       "Back" => gettext("Back"),
       "Checking…" => gettext("Checking…"),

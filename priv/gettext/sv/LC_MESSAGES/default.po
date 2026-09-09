@@ -4029,11 +4029,6 @@ msgstr "Ritar koden…"
 msgid "For PowerPoint"
 msgstr "För PowerPoint"
 
-#: lib/claper_web/addin_strings.ex:79
-#, elixir-autogen, elixir-format
-msgid "From your account settings. It can create and delete, so it stays on this computer and never inside a presentation. A key from a single event's settings works too."
-msgstr "Från dina kontoinställningar. Den kan skapa och ta bort, så den stannar på den här datorn och aldrig inuti en presentation. En nyckel från ett enskilt evenemangs inställningar fungerar också."
-
 #: lib/claper_web/addin_strings.ex:442
 #, elixir-autogen, elixir-format
 msgid "Fully rounded"
@@ -5119,3 +5114,8 @@ msgstr "Endast procent"
 #, elixir-autogen, elixir-format
 msgid "Talk:"
 msgstr "Föredrag:"
+
+#: lib/claper_web/addin_strings.ex:79
+#, elixir-autogen, elixir-format
+msgid "From your account settings. It can create and delete, so it stays on this computer and never inside a presentation. That is the key that lets each presentation have a talk of its own. A key from a single event also connects, but then every presentation you open shows that one talk and can never start its own."
+msgstr "Från dina kontoinställningar. Den kan skapa och ta bort, därför stannar den på den här datorn och aldrig i en presentation. Det är nyckeln som ger varje presentation ett eget föredrag. En nyckel från ett enda föredrag ansluter också, men då visar varje presentation du öppnar just det föredraget och kan aldrig starta ett eget."

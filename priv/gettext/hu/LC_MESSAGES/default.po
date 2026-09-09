@@ -3993,11 +3993,6 @@ msgstr "A kód rajzolása…"
 msgid "For PowerPoint"
 msgstr "A PowerPointhoz"
 
-#: lib/claper_web/addin_strings.ex:79
-#, elixir-autogen, elixir-format
-msgid "From your account settings. It can create and delete, so it stays on this computer and never inside a presentation. A key from a single event's settings works too."
-msgstr "A fiókbeállításaiból. Létre tud hozni és törölni is, ezért ezen a számítógépen marad, és soha nem kerül bemutatóba. Egyetlen esemény beállításaiból származó kulcs is megfelel."
-
 #: lib/claper_web/addin_strings.ex:442
 #, elixir-autogen, elixir-format
 msgid "Fully rounded"
@@ -5083,3 +5078,8 @@ msgstr "Csak százalék"
 #, elixir-autogen, elixir-format
 msgid "Talk:"
 msgstr "Előadás:"
+
+#: lib/claper_web/addin_strings.ex:79
+#, elixir-autogen, elixir-format
+msgid "From your account settings. It can create and delete, so it stays on this computer and never inside a presentation. That is the key that lets each presentation have a talk of its own. A key from a single event also connects, but then every presentation you open shows that one talk and can never start its own."
+msgstr "A fiókbeállításokból. Létre tud hozni és törölni tud, ezért ezen a számítógépen marad, és soha nem kerül bemutatóba. Ez az a kulcs, amellyel minden bemutató saját előadást kap. Egyetlen előadáshoz tartozó kulcs is csatlakozik, de akkor minden megnyitott bemutató azt az egy előadást mutatja, és soha nem kezdhet sajátot."

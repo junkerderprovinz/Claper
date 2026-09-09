@@ -3995,11 +3995,6 @@ msgstr "De code wordt getekend…"
 msgid "For PowerPoint"
 msgstr "Voor PowerPoint"
 
-#: lib/claper_web/addin_strings.ex:79
-#, elixir-autogen, elixir-format
-msgid "From your account settings. It can create and delete, so it stays on this computer and never inside a presentation. A key from a single event's settings works too."
-msgstr "Uit uw accountinstellingen. Hij kan maken en verwijderen, dus hij blijft op deze computer en nooit in een presentatie. Een sleutel uit de instellingen van één evenement werkt ook."
-
 #: lib/claper_web/addin_strings.ex:442
 #, elixir-autogen, elixir-format
 msgid "Fully rounded"
@@ -5085,3 +5080,8 @@ msgstr "Alleen percentage"
 #, elixir-autogen, elixir-format
 msgid "Talk:"
 msgstr "Sessie:"
+
+#: lib/claper_web/addin_strings.ex:79
+#, elixir-autogen, elixir-format
+msgid "From your account settings. It can create and delete, so it stays on this computer and never inside a presentation. That is the key that lets each presentation have a talk of its own. A key from a single event also connects, but then every presentation you open shows that one talk and can never start its own."
+msgstr "Uit je accountinstellingen. Hij kan aanmaken en verwijderen, dus hij blijft op deze computer en nooit in een presentatie. Alleen met deze sleutel krijgt elke presentatie een eigen sessie. Een sleutel van één sessie verbindt ook, maar dan toont elke presentatie die je opent die ene sessie en kan er nooit een eigen beginnen."
