@@ -38,6 +38,10 @@
       .steps span { color: var(--muted); font-size: .8rem; }
 
       h2 { font-size: .82rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 0 0 .55rem; }
+      /* Inside a folded section, where an h2 would compete with the summary it
+         sits under. */
+      h3 { font-size: .78rem; font-weight: 700; color: var(--ink); margin: .8rem 0 .4rem; }
+      .inner > h3:first-child { margin-top: .2rem; }
       label { display: block; font-weight: 600; font-size: .8rem; margin: .7rem 0 .25rem; }
       input, textarea, select {
         width: 100%; padding: .5rem .6rem; font: inherit;
@@ -75,6 +79,17 @@
 
       /* The six shapes a poll can take, all on screen. A dropdown would fit in
          less room and did, which is how five of them became invisible. */
+      /* Something is wrong and can be put right here. Grey help text was the
+         wrong weight for it: it said the true thing and got read as a caption. */
+      .warn {
+        border: 1px solid #f0c36d; border-left: 4px solid #d98c00; border-radius: .5rem;
+        background: #fffaf0; padding: .6rem .7rem; margin: 0 0 .8rem;
+        font-size: .78rem; color: #6b4b00;
+      }
+      .warn p { margin: 0 0 .45rem; }
+      .warn .warnHead { font-weight: 700; color: #7a3d00; }
+      .warn label { margin-top: .2rem; color: #6b4b00; }
+
       /* Which talk the questions below belong to. Small, because it answers a
          question rather than announcing one, and always there, because "whose
          questions are these" must never need a guess. */
@@ -259,19 +274,34 @@
            created a minute ago shows last year's talk and the Change button is
            not there to explain itself. That looked like a fault in the add-in
            rather than like the key doing exactly what it is for. -->
-      <p class="help" id="eventKeyNote" hidden>
-        This key belongs to one talk, so every presentation you open with it lands here. A personal
-        key from your Claper account settings gives each presentation a talk of its own.
-      </p>
+      <div class="warn" id="eventKeyNote" hidden>
+        <p class="warnHead">This presentation cannot have a talk of its own</p>
+        <p>
+          The key you are connected with belongs to one talk, so every presentation you open
+          shows that one. A personal key from your Claper account settings gives each
+          presentation a talk of its own.
+        </p>
+        <!-- The field is here rather than three screens away on the connection
+             page. The fault is visible at this spot, so the fix belongs at this
+             spot: telling someone where to click is not the same as putting the
+             thing in front of them. -->
+        <label for="swapKey">Paste a personal key</label>
+        <input id="swapKey" type="password" />
+        <div class="actions" style="margin-top:.5rem">
+          <button id="swapKeyGo" type="button">Use this key</button>
+        </div>
+        <div class="msg" id="swapMsg"></div>
+      </div>
 
       <div class="tabs" role="tablist">
         <button id="tabPolls" type="button" role="tab" aria-selected="true">Polls</button>
         <button id="tabQuizzes" type="button" role="tab" aria-selected="false">Quizzes</button>
         <button id="tabForms" type="button" role="tab" aria-selected="false">Open</button>
-        <!-- Not "Slides". This tab is about how the room gets in and how the
-             blocks look, and every other tab already puts things on slides -
-             so the one named after slides was the one that did it least. -->
-        <button id="tabSlides" type="button" role="tab" aria-selected="false">Join &amp; look</button>
+        <!-- Not "Slides", and no longer "Join & look" either. A tab named after
+             two things is a tab you open not knowing which half you will get.
+             It is named after the one job someone opening it has: getting the
+             room in. What used to be the other half is folded inside. -->
+        <button id="tabSlides" type="button" role="tab" aria-selected="false">Joining</button>
       </div>
 
       <!-- POLLS -->
@@ -476,9 +506,15 @@
         </p>
         <div class="msg" id="qrMsg"></div>
 
-        <hr />
+        <!-- Four unrelated things stood here one after another, separated by
+             rules: how the room gets in, how blocks look, the deck's link and
+             the very first block. Only the first is what someone opening a tab
+             called Joining came for. The rest are set once or never, so they
+             are folded and the tab opens on its own job. -->
+        <details class="what">
+          <summary>How new blocks look</summary>
+          <div class="inner">
 
-        <h2>How new blocks look</h2>
         <p class="help" style="margin-bottom:.6rem">
           Set once here and every block you add afterwards starts this way. A block you have
           already placed keeps what it has, and each one can still be changed on its own slide.
@@ -546,9 +582,14 @@
         </div>
         <div class="msg" id="lookMsg"></div>
 
-        <hr />
+          </div>
+        </details>
 
-        <h2>One link for the whole deck</h2>
+        <details class="what">
+          <summary>The deck link, and placing the first block by hand</summary>
+          <div class="inner">
+
+            <h3>One link for the whole deck</h3>
         <p class="help" style="margin-bottom:.6rem">
           Made for you the moment this presentation gets its event, and stored in the file.
           A block placed by the buttons on a question is handed the link directly, so it never
@@ -567,9 +608,8 @@
         </p>
         <div class="msg" id="linkMsg"></div>
 
-        <hr />
 
-        <h2>The first live block</h2>
+            <h3>The first live block</h3>
         <p class="help" style="margin-bottom:.6rem">
           The buttons on each question copy a block that already exists in this file, so the very
           first one has to be inserted by hand. Once one is in, you never have to do this again.
@@ -583,6 +623,9 @@
           own and cannot be turned off from here. A picture has neither, which is why the joining
           code is one.
         </p>
+          </div>
+        </details>
+
       </div>
     </div>
 
@@ -2434,6 +2477,20 @@
         });
         $("home").addEventListener("click", function () { show("welcome"); });
         $("settings").addEventListener("click", function () { show("connect"); });
+
+        // Swapping the key from the spot where the wrong one is doing damage.
+        // Same two lines the connection page runs, then start over from the
+        // top: a different key can mean a different kind of key, so nothing
+        // that was decided under the old one may be carried over.
+        $("swapKeyGo").addEventListener("click", function () {
+          var key = $("swapKey").value.trim();
+          if (!key) { say($("swapMsg"), t("Both are needed."), "err"); return; }
+          cfg.token = key;
+          store(LS.token, key);
+          $("swapKey").value = "";
+          say($("swapMsg"), t("Checking…"));
+          begin();
+        });
         $("reload").addEventListener("click", loadPolls);
         $("reloadQuizzes").addEventListener("click", loadQuizzes);
         $("reloadForms").addEventListener("click", loadForms);

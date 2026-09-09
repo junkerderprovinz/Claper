@@ -103,9 +103,17 @@ defmodule ClaperWeb.AddinStrings do
       # The line under the heading. The heading is the file; this is the talk
       # whose questions the list below shows, and the two are not the same.
       "Talk:" => gettext("Talk:"),
-      "This key belongs to one talk, so every presentation you open with it lands here. A personal key from your Claper account settings gives each presentation a talk of its own." =>
+      # The box that appears when the key cannot do what the page promises,
+      # with the field to put it right in the same box.
+      "This presentation cannot have a talk of its own" =>
+        gettext("This presentation cannot have a talk of its own"),
+      "Paste a personal key" => gettext("Paste a personal key"),
+      "Use this key" => gettext("Use this key"),
+      "The deck link, and placing the first block by hand" =>
+        gettext("The deck link, and placing the first block by hand"),
+      "The key you are connected with belongs to one talk, so every presentation you open shows that one. A personal key from your Claper account settings gives each presentation a talk of its own." =>
         gettext(
-          "This key belongs to one talk, so every presentation you open with it lands here. A personal key from your Claper account settings gives each presentation a talk of its own."
+          "The key you are connected with belongs to one talk, so every presentation you open shows that one. A personal key from your Claper account settings gives each presentation a talk of its own."
         ),
       "This presentation could not remember its event. Save the file, then reconnect." =>
         gettext("This presentation could not remember its event. Save the file, then reconnect."),
@@ -118,9 +126,9 @@ defmodule ClaperWeb.AddinStrings do
       "Polls" => gettext("Polls"),
       "Quizzes" => gettext("Quizzes"),
       "Open" => gettext("Open"),
-      # Not "Slides". Every tab here puts things on slides, so the one named
-      # after them was the one that said least about itself.
-      "Join & look" => gettext("Join & look"),
+      # Not "Slides", and no longer "Join & look": a tab named after two things
+      # is one you open without knowing which half you get.
+      "Joining" => gettext("Joining"),
       "Reload" => gettext("Reload"),
       "Loading…" => gettext("Loading…"),
       "Edit" => gettext("Edit"),
