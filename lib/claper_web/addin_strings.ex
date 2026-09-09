@@ -105,15 +105,26 @@ defmodule ClaperWeb.AddinStrings do
       "Talk:" => gettext("Talk:"),
       # The box that appears when the key cannot do what the page promises,
       # with the field to put it right in the same box.
-      "This presentation cannot have a talk of its own" =>
-        gettext("This presentation cannot have a talk of its own"),
+      "Set this up once" => gettext("Set this up once"),
+      "Create key" => gettext("Create key"),
+      "A personal key fixes it for good. Four steps, once:" =>
+        gettext("A personal key fixes it for good. Four steps, once:"),
+      "Open Claper in your browser" => gettext("Open Claper in your browser"),
+      "The same address this add-in uses." => gettext("The same address this add-in uses."),
+      "Your initials, bottom left, then Settings" =>
+        gettext("Your initials, bottom left, then Settings"),
+      "Scroll to the PowerPoint section." => gettext("Scroll to the PowerPoint section."),
+      "It is shown once. Copy it." => gettext("It is shown once. Copy it."),
+      "Paste it below" => gettext("Paste it below"),
+      "From then on every presentation gets a talk of its own, named after the file." =>
+        gettext("From then on every presentation gets a talk of its own, named after the file."),
       "Paste a personal key" => gettext("Paste a personal key"),
       "Use this key" => gettext("Use this key"),
       "The deck link, and placing the first block by hand" =>
         gettext("The deck link, and placing the first block by hand"),
-      "The key you are connected with belongs to one talk, so every presentation you open shows that one. A personal key from your Claper account settings gives each presentation a talk of its own." =>
+      "The key this add-in is connected with belongs to one single talk. It cannot give this presentation a talk of its own, and until it has one, nothing is shown here: another talk's questions under this presentation's name is the one thing this must never do." =>
         gettext(
-          "The key you are connected with belongs to one talk, so every presentation you open shows that one. A personal key from your Claper account settings gives each presentation a talk of its own."
+          "The key this add-in is connected with belongs to one single talk. It cannot give this presentation a talk of its own, and until it has one, nothing is shown here: another talk's questions under this presentation's name is the one thing this must never do."
         ),
       "This presentation could not remember its event. Save the file, then reconnect." =>
         gettext("This presentation could not remember its event. Save the file, then reconnect."),

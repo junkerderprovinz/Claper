@@ -89,6 +89,14 @@
       .warn p { margin: 0 0 .45rem; }
       .warn .warnHead { font-weight: 700; color: #7a3d00; }
       .warn label { margin-top: .2rem; color: #6b4b00; }
+      /* The steps list is styled for a white page. Inside the box it has to
+         take the box's colours, or the numbers keep the brand purple and the
+         explanations turn grey against amber. */
+      .warn .steps { margin: .2rem 0 .6rem; }
+      .warn .steps li { padding: .3rem 0; font-size: .78rem; }
+      .warn .steps .n { background: #d98c00; color: #fff; }
+      .warn .steps b { font-size: .78rem; color: #6b4b00; }
+      .warn .steps span { color: #7a5c14; font-size: .74rem; }
 
       /* Which talk the questions below belong to. Small, because it answers a
          question rather than announcing one, and always there, because "whose
@@ -268,7 +276,7 @@
         <button class="link" id="settings" type="button">Settings</button>
       </div>
 
-      <p class="deckTalk">Talk: <span id="eventName"></span></p>
+      <p class="deckTalk" id="talkLine">Talk: <span id="eventName"></span></p>
 
       <!-- Two kinds of key reach this page and they behave completely
            differently, and until now the page said nothing about which one it
@@ -278,12 +286,19 @@
            not there to explain itself. That looked like a fault in the add-in
            rather than like the key doing exactly what it is for. -->
       <div class="warn" id="eventKeyNote" hidden>
-        <p class="warnHead">This presentation cannot have a talk of its own</p>
+        <p class="warnHead">Set this up once</p>
         <p>
-          The key you are connected with belongs to one talk, so every presentation you open
-          shows that one. A personal key from your Claper account settings gives each
-          presentation a talk of its own.
+          The key this add-in is connected with belongs to one single talk. It cannot give this
+          presentation a talk of its own, and until it has one, nothing is shown here: another
+          talk's questions under this presentation's name is the one thing this must never do.
         </p>
+        <p>A personal key fixes it for good. Four steps, once:</p>
+        <ol class="steps">
+          <li><span class="n">1</span><span><b>Open Claper in your browser</b><span>The same address this add-in uses.</span></span></li>
+          <li><span class="n">2</span><span><b>Your initials, bottom left, then Settings</b><span>Scroll to the PowerPoint section.</span></span></li>
+          <li><span class="n">3</span><span><b>Create key</b><span>It is shown once. Copy it.</span></span></li>
+          <li><span class="n">4</span><span><b>Paste it below</b><span>From then on every presentation gets a talk of its own, named after the file.</span></span></li>
+        </ol>
         <!-- The field is here rather than three screens away on the connection
              page. The fault is visible at this spot, so the fix belongs at this
              spot: telling someone where to click is not the same as putting the
@@ -296,6 +311,12 @@
         <div class="msg" id="swapMsg"></div>
       </div>
 
+      <!-- Everything below the heading, in one wrapper, so it can be taken
+           away as a whole. With a key that belongs to another talk and a deck
+           that has settled on nothing, there is nothing here that would be
+           true: the tabs would offer to write into someone else's talk and the
+           list would show that talk's questions under this file's name. -->
+      <div id="workBody">
       <div class="tabs" role="tablist">
         <button id="tabPolls" type="button" role="tab" aria-selected="true">Polls</button>
         <button id="tabQuizzes" type="button" role="tab" aria-selected="false">Quizzes</button>
@@ -629,6 +650,7 @@
           </div>
         </details>
 
+      </div>
       </div>
     </div>
 
@@ -1332,11 +1354,14 @@
             // key has exactly one event and the offer would be a dead end.
             $("changeEvent").hidden = cfg.kind !== "account";
 
-            // And when there is no Change button, say why. Without this the
-            // page shows one talk on every presentation and offers nothing,
-            // which reads as a broken add-in rather than as the key doing what
-            // it was made to do.
-            $("eventKeyNote").hidden = cfg.kind !== "event";
+            // Reaching this point means the questions being listed really do
+            // belong to this presentation, so the whole page is shown and the
+            // setup box is not. It is put back rather than assumed, because the
+            // same page may have been standing in the blocked state a moment
+            // ago and a swapped key is exactly when that happens.
+            $("eventKeyNote").hidden = true;
+            $("talkLine").hidden = false;
+            $("workBody").hidden = false;
 
             renderList(
               $("polls"),
@@ -1747,8 +1772,20 @@
 
             if (me.kind === "event") {
               cfg.event = "";
-              show("work");
-              return loadPolls();
+              // A key that belongs to one talk used to decide everything on its
+              // own, without ever reading what the deck had settled on. For a
+              // deck that had settled on this very talk that is right. For a
+              // deck that has settled on nothing it meant showing another
+              // presentation's questions under this presentation's name, which
+              // is the one thing this add-in exists to prevent.
+              return readTag(EVENT_TAG).then(function (code) {
+                var ours = code && me.event && code === me.event.code;
+                if (ours) {
+                  show("work");
+                  return loadPolls();
+                }
+                return showNothingUntilKeyIsRight();
+              });
             }
 
             return readTag(EVENT_TAG).then(function (code) {
@@ -1760,6 +1797,22 @@
             say($("connectMsg"), e.message, "err");
             show("connect");
           });
+      }
+
+      // The whole page, minus everything that would be a lie. The heading is
+      // the file, which is true. The talk line, the tabs and every list below
+      // them belong to a talk this presentation has nothing to do with, so they
+      // are not shown at all rather than shown with a warning above them: a
+      // warning over a list of someone else's questions is still a list of
+      // someone else's questions.
+      function showNothingUntilKeyIsRight() {
+        show("work");
+        $("deckName").textContent = presentationName() || t("This presentation");
+        $("talkLine").hidden = true;
+        $("changeEvent").hidden = true;
+        $("workBody").hidden = true;
+        $("eventKeyNote").hidden = false;
+        say($("swapMsg"), "");
       }
 
       // A tag travels with a copy of the file, and copying a deck is how most
