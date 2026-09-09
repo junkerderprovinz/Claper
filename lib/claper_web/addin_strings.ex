@@ -100,6 +100,10 @@ defmodule ClaperWeb.AddinStrings do
       "Setting up this presentation…" => gettext("Setting up this presentation…"),
       # What a deck that has never been saved is called, with the date after it.
       "New presentation" => gettext("New presentation"),
+      "This key belongs to one talk, so every presentation you open with it lands here. A personal key from your Claper account settings gives each presentation a talk of its own." =>
+        gettext(
+          "This key belongs to one talk, so every presentation you open with it lands here. A personal key from your Claper account settings gives each presentation a talk of its own."
+        ),
       "This presentation could not remember its event. Save the file, then reconnect." =>
         gettext("This presentation could not remember its event. Save the file, then reconnect."),
 
@@ -141,6 +145,10 @@ defmodule ClaperWeb.AddinStrings do
 
       # Telling the three kinds apart
       "Which one do I want?" => gettext("Which one do I want?"),
+      # The first shape is named "Bars" further down, in the block this map
+      # shares with the slide page. It is not repeated here: a duplicate key in
+      # a map compiles with a warning and the later one silently wins, which is
+      # the sort of thing that works until someone changes one of the two.
       "Poll" => gettext("Poll"),
       "You give the answers, the room picks one. No answer is right, and the bars grow while people vote. For opinions, warm-ups and getting a decision out of a room." =>
         gettext(
@@ -435,6 +443,8 @@ defmodule ClaperWeb.AddinStrings do
         gettext(
           "PowerPoint always paints something behind a live block. Set this to your slide's colour and the edge disappears."
         ),
+      # Two pages use this one: the shape chooser under a question in the
+      # sidebar, and the bar drawing on the slide page. One word, one meaning.
       "Bars" => gettext("Bars"),
       "Slightly rounded" => gettext("Slightly rounded"),
       "Square" => gettext("Square"),

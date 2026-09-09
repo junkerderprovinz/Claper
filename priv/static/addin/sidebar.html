@@ -72,6 +72,23 @@
          question the two words answer on their own. */
       .what { margin: 0 0 .85rem; border: 1px solid var(--line); border-radius: .6rem; background: #fbfbfc; }
       .what > summary { cursor: pointer; font-weight: 600; font-size: .8rem; padding: .5rem .65rem; color: var(--brand); }
+
+      /* The six shapes a poll can take, all on screen. A dropdown would fit in
+         less room and did, which is how five of them became invisible. */
+      /* A grid rather than a wrapping row: the row left the last line stretched
+         across the whole panel, which pushed the dot and its word to opposite
+         edges and stopped looking like one control. */
+      .shapes { display: grid; grid-template-columns: repeat(auto-fit, minmax(6.2rem, 1fr)); gap: .3rem; margin: 0 0 .7rem; }
+      .shapes label {
+        margin: 0; display: flex; align-items: center; gap: .35rem;
+        border: 1px solid var(--line); border-radius: .5rem; padding: .35rem .5rem;
+        font-size: .78rem; font-weight: 500; cursor: pointer; background: #fff;
+      }
+      .shapes label:hover { border-color: var(--brand); }
+      /* Every input on this page is full width, which for a round dot means a
+         wide empty box with the word shoved to the far edge. */
+      .shapes input { width: auto; flex: none; margin: 0; padding: 0; accent-color: var(--brand); }
+      .shapes label:has(input:checked) { border-color: var(--brand); color: var(--brand); background: #f6f5ff; }
       .what .inner { padding: 0 .65rem .6rem; }
       .what dt { font-weight: 700; font-size: .8rem; margin-top: .5rem; }
       .what dd { margin: .1rem 0 0; font-size: .78rem; color: var(--muted); }
@@ -213,6 +230,18 @@
         <button class="link" id="settings" type="button">Connection</button>
       </div>
 
+      <!-- Two kinds of key reach this page and they behave completely
+           differently, and until now the page said nothing about which one it
+           had. A key that belongs to one talk overrules everything else: the
+           deck's own record of its talk is never even read, so a presentation
+           created a minute ago shows last year's talk and the Change button is
+           not there to explain itself. That looked like a fault in the add-in
+           rather than like the key doing exactly what it is for. -->
+      <p class="help" id="eventKeyNote" hidden>
+        This key belongs to one talk, so every presentation you open with it lands here. A personal
+        key from your Claper account settings gives each presentation a talk of its own.
+      </p>
+
       <div class="tabs" role="tablist">
         <button id="tabPolls" type="button" role="tab" aria-selected="true">Polls</button>
         <button id="tabQuizzes" type="button" role="tab" aria-selected="false">Quizzes</button>
@@ -234,7 +263,7 @@
                  are missing rather than like two live next door. -->
             <p class="help">The first six are on this tab, under How it is shown. Quiz and Open question each have a tab of their own.</p>
             <dl>
-              <dt>Poll</dt>
+              <dt>Bars</dt>
               <dd>You give the answers, the room picks one. No answer is right, and the bars grow while people vote. For opinions, warm-ups and getting a decision out of a room.</dd>
               <dt>Scale</dt>
               <dd>The same thing, drawn as a row from left to right with an average underneath. For "how much do you agree" and anything else where the order of the answers means something.</dd>
@@ -262,15 +291,21 @@
         <label for="title">Question</label>
         <input id="title" type="text" placeholder="How was it?" />
 
-        <label for="pollStyle">How it is shown</label>
-        <select id="pollStyle">
-          <option value="bars">Bars, one per answer</option>
-          <option value="scale">A scale from left to right</option>
-          <option value="ranking">A ranking people put in order</option>
-          <option value="points">Points to spend across the answers</option>
-          <option value="pins">A picture people tap</option>
-          <option value="wheel">A wheel you spin</option>
-        </select>
+        <label>How it is shown</label>
+        <!-- Six shapes behind a closed dropdown read as one shape. The tabs
+             above say Polls, Quizzes, Open; someone counting the kinds the help
+             lists against the three tabs concludes that most of them cannot be
+             made at all. They can. They are the six shapes a poll can take, and
+             a closed dropdown was the only thing hiding them, so they are on
+             screen now, named exactly as the help above names them. -->
+        <div id="pollStyle" class="shapes">
+          <label><input type="radio" name="pollstyle" value="bars" checked /><span>Bars</span></label>
+          <label><input type="radio" name="pollstyle" value="scale" /><span>Scale</span></label>
+          <label><input type="radio" name="pollstyle" value="ranking" /><span>Ranking</span></label>
+          <label><input type="radio" name="pollstyle" value="points" /><span>Points</span></label>
+          <label><input type="radio" name="pollstyle" value="pins" /><span>Picture</span></label>
+          <label><input type="radio" name="pollstyle" value="wheel" /><span>Wheel</span></label>
+        </div>
         <p class="help" id="scaleHint" hidden>
           The answers become a row in the order you write them, and the slide also shows the
           average. Write the ends first if you want words: "never" through to "always".
@@ -927,8 +962,16 @@
       // Which explanation and which extra field belong to the shape now chosen.
       // A pins poll has no answers to write at all, so the list of answer boxes
       // goes away with them rather than sitting there asking to be filled in.
+      // The shape now chosen. A group of radios rather than a dropdown, so
+      // asking it for a value takes one line instead of reading `.value` off an
+      // element that no longer has one.
+      function chosenStyle() {
+        var picked = document.querySelector('input[name="pollstyle"]:checked');
+        return picked ? picked.value : "bars";
+      }
+
       function showPollStyle() {
-        var style = $("pollStyle").value;
+        var style = chosenStyle();
         $("scaleHint").hidden = style !== "scale";
         $("rankingHint").hidden = style !== "ranking";
         $("pointsHint").hidden = style !== "points";
@@ -1197,6 +1240,12 @@
             // Only a personal key can point the deck somewhere else; an event
             // key has exactly one event and the offer would be a dead end.
             $("changeEvent").hidden = cfg.kind !== "account";
+
+            // And when there is no Change button, say why. Without this the
+            // page shows one talk on every presentation and offers nothing,
+            // which reads as a broken add-in rather than as the key doing what
+            // it was made to do.
+            $("eventKeyNote").hidden = cfg.kind !== "event";
 
             renderList(
               $("polls"),
@@ -2414,7 +2463,7 @@
 
         $("create").addEventListener("click", function () {
           var title = $("title").value.trim();
-          var style = $("pollStyle").value;
+          var style = chosenStyle();
           var options = $("options").values();
 
           if (!title) { say($("createMsg"), t("The question is missing."), "err"); return; }
