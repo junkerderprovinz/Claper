@@ -61,6 +61,24 @@ if (document.readyState === "loading") {
   initializeAlerts();
 }
 
+// A delegated listener rather than a hook, since copy buttons also sit on pages
+// without a LiveView. navigator.clipboard only exists in a secure context.
+document.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-copy]");
+  if (!button || !navigator.clipboard) return;
+
+  navigator.clipboard.writeText(button.dataset.copy).then(() => {
+    const idle = button.querySelector("[data-copy-idle]");
+    const done = button.querySelector("[data-copy-done]");
+    idle.hidden = true;
+    done.hidden = false;
+    window.setTimeout(() => {
+      idle.hidden = false;
+      done.hidden = true;
+    }, 1500);
+  });
+});
+
 const Hooks = {
   // Hook for handling CSV downloads from LiveView
   CSVDownloader: {

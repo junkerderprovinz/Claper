@@ -102,6 +102,99 @@ defmodule ClaperWeb.Router do
     end
   end
 
+  # Read-only presenter views for framing in other documents, authorized by a
+  # revocable token. The event code stays out of the path, since it lets anyone join.
+  live_session :presenter_embed, on_mount: ClaperWeb.PresenterEmbedAuth do
+    scope "/", ClaperWeb do
+      # The frame plug runs first so the token plug's 404 can still show in the frame.
+      pipe_through([
+        :browser,
+        ClaperWeb.Plugs.PresenterEmbedFrame,
+        ClaperWeb.Plugs.PresenterEmbedToken
+      ])
+
+      live("/embed/presenter/:token", EventLive.Presenter, :embed)
+
+      # The interaction alone, without the deck, for a block placed on a slide.
+      live("/embed/interaction/:token", EventLive.Presenter, :interaction)
+    end
+  end
+
+  # PowerPoint sidebar API. These routes need no event yet, since they are how
+  # the sidebar finds one.
+  scope "/api/addin", ClaperWeb do
+    pipe_through([:api, ClaperWeb.Plugs.PresenterEmbedEnabled, ClaperWeb.Plugs.AddinToken])
+
+    get("/me", AddinController, :me)
+    get("/events", AddinController, :event_index)
+    post("/events", AddinController, :event_create)
+  end
+
+  # Routes for one event, which AddinEvent resolves from the key or the request.
+  scope "/api/addin", ClaperWeb do
+    pipe_through([
+      :api,
+      ClaperWeb.Plugs.PresenterEmbedEnabled,
+      ClaperWeb.Plugs.AddinToken,
+      ClaperWeb.Plugs.AddinEvent
+    ])
+
+    get("/polls", AddinController, :index)
+    post("/polls", AddinController, :create)
+    patch("/polls/:id", AddinController, :update)
+    delete("/polls/:id", AddinController, :delete)
+
+    get("/quizzes", AddinController, :quiz_index)
+    post("/quizzes", AddinController, :quiz_create)
+    patch("/quizzes/:id", AddinController, :quiz_update)
+    delete("/quizzes/:id", AddinController, :quiz_delete)
+
+    get("/forms", AddinController, :form_index)
+    post("/forms", AddinController, :form_create)
+    patch("/forms/:id", AddinController, :form_update)
+    delete("/forms/:id", AddinController, :form_delete)
+
+    post("/embed_token", AddinController, :embed_token)
+    post("/slide", AddinController, :slide)
+  end
+
+  # Add-in manifests are public so the Microsoft 365 admin center can fetch them
+  # by URL. Phoenix picks the format from the Accept header, and `:browser` would
+  # answer an XML request with 406. A file under priv/static/addin/manifest/
+  # would be served by Plug.Static instead of these routes.
+  pipeline :addin_manifest do
+    plug(:accepts, ["xml", "html"])
+    plug(:put_secure_browser_headers)
+  end
+
+  scope "/addin", ClaperWeb do
+    pipe_through([:addin_manifest, ClaperWeb.Plugs.PresenterEmbedEnabled])
+
+    get("/manifest/sidebar.xml", AddinManifestController, :sidebar)
+    get("/manifest/slide.xml", AddinManifestController, :slide)
+  end
+
+  # Translations for the static add-in pages, which cannot use gettext themselves.
+  scope "/addin", ClaperWeb do
+    pipe_through([:api, ClaperWeb.Plugs.PresenterEmbedEnabled])
+
+    get("/strings.json", AddinManifestController, :strings)
+  end
+
+  # Add-in install page.
+  scope "/addin", ClaperWeb do
+    pipe_through([:browser, ClaperWeb.Plugs.PresenterEmbedEnabled])
+
+    get("/", AddinManifestController, :show)
+  end
+
+  # Interactions a slide block can offer, reached with the read-only embed token.
+  scope "/api/embed", ClaperWeb do
+    pipe_through([:api, ClaperWeb.Plugs.PresenterEmbedEnabled, ClaperWeb.Plugs.EmbedCatalogToken])
+
+    get("/:token/interactions", EmbedCatalogController, :index)
+  end
+
   # Enables LiveDashboard only for development
   #
   # If you want to use the LiveDashboard in production, you should put

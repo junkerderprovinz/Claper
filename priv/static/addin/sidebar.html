@@ -1,0 +1,2209 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Claper</title>
+    <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #111827;
+        --muted: #5b6472;
+        --line: #e3e6ea;
+        --brand: #140553;
+        --brand-soft: #f3f1fb;
+        --danger: #b3261e;
+        --ok: #146c43;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0; padding: 0;
+        font: 14px/1.5 -apple-system, "Segoe UI", system-ui, sans-serif;
+        color: var(--ink); background: #fff;
+      }
+      .pad { padding: 1rem 1.05rem; }
+
+      .hero { background: var(--brand); color: #fff; padding: 1.6rem 1.15rem 1.4rem; }
+      .hero h1 { margin: 0 0 .45rem; font-size: 1.22rem; line-height: 1.25; letter-spacing: -.01em; }
+      .hero p { margin: 0; font-size: .86rem; color: #cfc9ea; }
+      .steps { list-style: none; margin: 1.1rem 0 0; padding: 0; }
+      .steps li { display: flex; gap: .65rem; padding: .55rem 0; font-size: .86rem; }
+      .steps .n {
+        flex: 0 0 1.4rem; height: 1.4rem; border-radius: 999px;
+        background: var(--brand-soft); color: var(--brand);
+        font-weight: 700; font-size: .76rem; display: grid; place-items: center;
+      }
+      .steps b { display: block; font-size: .86rem; }
+      .steps span { color: var(--muted); font-size: .8rem; }
+
+      h2 { font-size: .82rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 0 0 .55rem; }
+      h3 { font-size: .78rem; font-weight: 700; color: var(--ink); margin: .8rem 0 .4rem; }
+      .inner > h3:first-child { margin-top: .2rem; }
+      label { display: block; font-weight: 600; font-size: .8rem; margin: .7rem 0 .25rem; }
+      input, textarea, select {
+        width: 100%; padding: .5rem .6rem; font: inherit;
+        border: 1px solid var(--line); border-radius: .5rem; background: #fff; color: var(--ink);
+      }
+      input:focus, textarea:focus, select:focus { outline: 2px solid var(--brand); outline-offset: 1px; border-color: var(--brand); }
+      .help { color: var(--muted); font-size: .78rem; margin: .3rem 0 0; }
+
+      button {
+        padding: .52rem .9rem; border: 1px solid transparent; border-radius: .5rem;
+        font: inherit; font-weight: 600; cursor: pointer; background: var(--brand); color: #fff;
+      }
+      button.secondary { background: #fff; color: var(--ink); border-color: var(--line); }
+      button.danger-solid { background: var(--danger); color: #fff; }
+      button.danger-outline { background: #fff; color: var(--danger); border-color: #f0c9c6; }
+      button.link { background: none; border: 0; padding: .2rem .3rem; color: var(--brand); font-weight: 600; font-size: .8rem; }
+      button.small { padding: .34rem .6rem; font-size: .78rem; border-radius: .45rem; }
+      button.icon { background: none; border: 0; color: var(--muted); padding: .2rem .35rem; font-size: 1rem; line-height: 1; }
+      button.icon:hover { color: var(--danger); }
+      button:disabled { opacity: .55; cursor: default; }
+      button:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+
+      .tabs { display: flex; gap: .15rem; border-bottom: 1px solid var(--line); margin-bottom: .8rem; }
+      .tabs button {
+        background: none; color: var(--muted); border: 0; border-bottom: 2px solid transparent;
+        border-radius: 0; padding: .45rem .4rem; font-size: .8rem; flex: 1;
+      }
+      .tabs button[aria-selected="true"] { color: var(--brand); border-bottom-color: var(--brand); }
+
+      .what { margin: 0 0 .85rem; border: 1px solid var(--line); border-radius: .6rem; background: #fbfbfc; }
+      .what > summary { cursor: pointer; font-weight: 600; font-size: .8rem; padding: .5rem .65rem; color: var(--brand); }
+
+      .warn {
+        border: 1px solid #f0c36d; border-left: 4px solid #d98c00; border-radius: .5rem;
+        background: #fffaf0; padding: .6rem .7rem; margin: 0 0 .8rem;
+        font-size: .78rem; color: #6b4b00;
+      }
+      .warn p { margin: 0 0 .45rem; }
+      .warn .warnHead { font-weight: 700; color: #7a3d00; }
+      .warn label { margin-top: .2rem; color: #6b4b00; }
+      .warn .steps { margin: .2rem 0 .6rem; }
+      .warn .steps li { padding: .3rem 0; font-size: .78rem; }
+      .warn .steps .n { background: #d98c00; color: #fff; }
+      .warn .steps b { font-size: .78rem; color: #6b4b00; }
+      .warn .steps span { color: #7a5c14; font-size: .74rem; }
+
+      .deckTalk { margin: 0 0 .7rem; font-size: .75rem; color: var(--muted); }
+      .deckTalk span { font-weight: 600; }
+
+      .what .inner { padding: 0 .65rem .6rem; }
+      .what dt { font-weight: 700; font-size: .8rem; margin-top: .5rem; }
+      .what dd { margin: .1rem 0 0; font-size: .78rem; color: var(--muted); }
+      .what dl { margin: 0; }
+
+      .card { border: 1px solid var(--line); border-radius: .65rem; padding: .65rem .7rem; margin-bottom: .55rem; }
+      .card .top { display: flex; align-items: start; gap: .5rem; }
+      .card .title { font-weight: 600; font-size: .9rem; flex: 1; }
+      .tag { font-size: .68rem; font-weight: 700; padding: .1rem .4rem; border-radius: .3rem; white-space: nowrap; }
+      .tag.deck { background: #fff4e5; color: #8a4b00; }
+      .tag.own { background: var(--brand-soft); color: var(--brand); }
+      .opts { color: var(--muted); font-size: .78rem; margin: .25rem 0 .5rem; }
+      .opts .right { color: var(--ok); font-weight: 700; }
+      .actions { display: flex; gap: .35rem; flex-wrap: wrap; align-items: center; }
+      .linkrow { display: flex; gap: .35rem; margin-top: .5rem; }
+      .linkrow input { font-size: .72rem; padding: .35rem .45rem; }
+
+      .qbox { border: 1px solid var(--line); border-radius: .55rem; padding: .55rem .6rem; margin-bottom: .5rem; }
+      .qbox .qhead { display: flex; align-items: center; gap: .4rem; }
+      .qbox .qhead input { flex: 1; }
+      .answer { display: flex; align-items: center; gap: .4rem; margin-top: .35rem; }
+      .answer input[type="text"] { flex: 1; }
+      .answer label { margin: 0; font-weight: 500; font-size: .76rem; color: var(--muted); display: flex; align-items: center; gap: .25rem; white-space: nowrap; }
+      .answer input[type="checkbox"] { width: auto; }
+
+      .switch { display: flex; align-items: center; gap: .45rem; margin: .55rem 0 0; font-size: .8rem; font-weight: 600; }
+      .switch input { width: auto; }
+      .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
+      input[type="color"] { padding: .15rem; height: 2.1rem; cursor: pointer; }
+
+      /* window.confirm does not work inside Office, so confirmations are inline. */
+      .confirm { border-top: 1px solid var(--line); margin-top: .5rem; padding-top: .5rem; }
+      .confirm p { margin: 0 0 .45rem; }
+
+      .more { margin-top: .8rem; }
+      .more summary { color: var(--muted); font-weight: 600; font-size: .78rem; }
+
+      .msg { font-size: .8rem; margin-top: .55rem; min-height: 1.15rem; }
+      .msg.err { color: var(--danger); }
+      .msg.ok { color: var(--ok); }
+      hr { border: 0; border-top: 1px solid var(--line); margin: 1rem 0; }
+      details summary { cursor: pointer; font-weight: 600; font-size: .82rem; padding: .2rem 0; }
+      [hidden] { display: none !important; }
+    </style>
+  </head>
+  <body>
+    <!-- WELCOME -->
+    <div id="welcome">
+      <div class="hero">
+        <h1>Bring Claper into PowerPoint</h1>
+        <p>Write the questions here, keep the deck as your own PowerPoint file, and let the answers come in live on the slide.</p>
+      </div>
+      <div class="pad">
+        <ol class="steps">
+          <li><span class="n">1</span><span><b>Connect once</b><span>Your Claper address and the sidebar key from your account.</span></span></li>
+          <li><span class="n">2</span><span><b>Write questions</b><span>Polls, quizzes and open questions, created straight away.</span></span></li>
+          <li><span class="n">3</span><span><b>Put the join code on a slide</b><span>One button. Without it nobody in the room can answer.</span></span></li>
+          <li><span class="n">4</span><span><b>Put the answers on slides</b><span>One button per question, on this slide or on a new one.</span></span></li>
+        </ol>
+        <div style="margin-top:1rem"><button id="start" type="button">Get started</button></div>
+      </div>
+    </div>
+
+    <!-- CONNECT -->
+    <div id="connect" class="pad" hidden>
+      <h2>Connect</h2>
+      <label for="base">Claper address</label>
+      <input id="base" type="url" placeholder="https://claper.example.com" />
+
+      <label for="token">Your key</label>
+      <input id="token" type="password" placeholder="Account settings, PowerPoint" />
+      <p class="help">
+        From your account settings. It can create and delete, so it stays on this computer
+        and never inside a presentation. That is the key that lets each presentation have a
+        talk of its own. A key from a single event also connects, but then every presentation
+        you open shows that one talk and can never start its own.
+      </p>
+
+      <div style="margin-top:.9rem; display:flex; gap:.4rem">
+        <button id="save" type="button">Connect</button>
+        <button id="backToWelcome" class="secondary" type="button">Back</button>
+      </div>
+      <div class="msg" id="connectMsg"></div>
+    </div>
+
+    <!-- WHICH EVENT -->
+    <!-- Only shown on request; a new presentation gets an event without asking. -->
+    <div id="pickEvent" class="pad" hidden>
+      <h2>This presentation</h2>
+      <p class="help" style="margin-bottom:.7rem">
+        Every presentation gets an event of its own, so it never shows the questions of
+        another talk. The choice is saved in the file, so it is the same on any computer
+        that opens it.
+      </p>
+
+      <label for="newEventName">Start a new event</label>
+      <input id="newEventName" type="text" placeholder="Name of your talk" />
+      <div style="margin-top:.55rem; display:flex; gap:.4rem">
+        <button id="createEvent" type="button">Create it</button>
+        <button id="cancelPick" class="secondary" type="button" hidden>Back</button>
+      </div>
+
+      <details class="more" style="margin-top:1rem">
+        <summary>Or use one you already have</summary>
+        <div id="eventList" style="margin-top:.5rem"></div>
+      </details>
+
+      <div class="msg" id="pickMsg"></div>
+    </div>
+
+    <!-- SAME TALK OR A NEW ONE -->
+    <div id="copyCheck" class="pad" hidden>
+      <h2>Is this the same talk?</h2>
+      <p class="help" style="margin-bottom:.7rem">
+        This file was set up as the event below, but it was called something else then. A
+        presentation saved under a new name is usually a new talk, and a new talk with the
+        old event would show the old talk's questions to the new room.
+      </p>
+      <div class="card" style="margin-bottom:.8rem">
+        <div class="title" id="copyEventName"></div>
+      </div>
+      <div class="actions">
+        <button id="copyKeep" type="button">Same talk, keep it</button>
+        <button id="copyFresh" class="secondary" type="button">New talk, start fresh</button>
+      </div>
+      <p class="help" style="margin-top:.6rem">
+        Starting fresh gives this file its own event and its own link. Nothing is deleted:
+        the old talk keeps everything it had.
+      </p>
+      <div class="msg" id="copyMsg"></div>
+    </div>
+
+    <!-- WORK -->
+    <div id="work" class="pad" hidden>
+      <div style="display:flex; align-items:center; gap:.5rem; margin-bottom:.15rem">
+        <h2 style="flex:1; margin:0" id="deckName">This presentation</h2>
+        <button class="link" id="changeEvent" type="button" hidden>Change</button>
+        <button class="link" id="home" type="button">Guide</button>
+        <button class="link" id="settings" type="button">Settings</button>
+      </div>
+
+      <p class="deckTalk" id="talkLine">Talk: <span id="eventName"></span></p>
+
+      <!-- An event key is bound to one talk and overrides the deck's own event,
+           so it cannot give this presentation a talk of its own. -->
+      <div class="warn" id="eventKeyNote" hidden>
+        <p class="warnHead">Set this up once</p>
+        <p>
+          The key this add-in is connected with belongs to one single talk. It cannot give this
+          presentation a talk of its own, and until it has one, nothing is shown here: another
+          talk's questions under this presentation's name is the one thing this must never do.
+        </p>
+        <p>A personal key fixes it for good. Four steps, once:</p>
+        <ol class="steps">
+          <li><span class="n">1</span><span><b>Open Claper in your browser</b><span>The same address this add-in uses.</span></span></li>
+          <li><span class="n">2</span><span><b>Your initials, bottom left, then Settings</b><span>Scroll to the PowerPoint section.</span></span></li>
+          <li><span class="n">3</span><span><b>Create key</b><span>It is shown once. Copy it.</span></span></li>
+          <li><span class="n">4</span><span><b>Paste it below</b><span>From then on every presentation gets a talk of its own, named after the file.</span></span></li>
+        </ol>
+        <label for="swapKey">Paste a personal key</label>
+        <input id="swapKey" type="password" />
+        <div class="actions" style="margin-top:.5rem">
+          <button id="swapKeyGo" type="button">Use this key</button>
+        </div>
+        <div class="msg" id="swapMsg"></div>
+      </div>
+
+      <!-- Hidden as a whole while an event key has no talk for this deck, so
+           nothing writes into or lists another talk's questions. -->
+      <div id="workBody">
+      <div class="tabs" role="tablist">
+        <button id="tabPolls" type="button" role="tab" aria-selected="true">Polls</button>
+        <button id="tabQuizzes" type="button" role="tab" aria-selected="false">Quizzes</button>
+        <button id="tabForms" type="button" role="tab" aria-selected="false">Open</button>
+        <button id="tabSlides" type="button" role="tab" aria-selected="false">Joining</button>
+      </div>
+
+      <!-- POLLS -->
+      <div id="panePolls">
+        <details class="what">
+          <summary>What a poll is for</summary>
+          <div class="inner">
+            <p class="help">
+              You give the answers, the room picks one. No answer is right, and the bars grow
+              while people vote. Write it here, then put it on a slide with one button. The room
+              answers on their phones after scanning the join code.
+            </p>
+          </div>
+        </details>
+
+        <label for="title">Question</label>
+        <input id="title" type="text" placeholder="How was it?" />
+        <label>Answers</label>
+        <div id="options"></div>
+        <button class="link" id="addOption" type="button">Add answer</button>
+        <div style="margin-top:.65rem"><button id="create" type="button">Create poll</button></div>
+        <div class="msg" id="createMsg"></div>
+
+        <hr />
+
+        <div style="display:flex; align-items:center; gap:.5rem">
+          <h2 style="flex:1; margin:0">Polls</h2>
+          <button class="link" id="reload" type="button">Reload</button>
+        </div>
+        <div id="polls"></div>
+        <div class="msg" id="listMsg"></div>
+      </div>
+
+      <!-- QUIZZES -->
+      <div id="paneQuizzes" hidden>
+        <details class="what">
+          <summary>How a quiz differs from a poll</summary>
+          <div class="inner">
+            <p class="help">
+              A quiz has right answers and can hold several questions in a row. Tick the right
+              one while you write it. On the slide every answer looks the same until you release
+              the results in Claper, so nobody in the room can read the answer off the wall.
+            </p>
+          </div>
+        </details>
+
+        <label for="quizTitle">Quiz name</label>
+        <input id="quizTitle" type="text" placeholder="Round one" />
+
+        <div id="questions" style="margin-top:.7rem"></div>
+        <button class="link" id="addQuestion" type="button">Add another question</button>
+
+        <div style="margin-top:.65rem"><button id="createQuiz" type="button">Create quiz</button></div>
+        <div class="msg" id="quizCreateMsg"></div>
+
+        <hr />
+
+        <div style="display:flex; align-items:center; gap:.5rem">
+          <h2 style="flex:1; margin:0">Quizzes</h2>
+          <button class="link" id="reloadQuizzes" type="button">Reload</button>
+        </div>
+        <div id="quizzes"></div>
+        <div class="msg" id="quizListMsg"></div>
+      </div>
+
+      <!-- OPEN QUESTIONS -->
+      <div id="paneForms" hidden>
+        <details class="what">
+          <summary>What an open question is for</summary>
+          <div class="inner">
+            <p class="help">
+              Nothing to pick from: people write their own answer and it appears on your slide
+              as it arrives. Use it when you do not know the answers yet, for gathering questions,
+              or for one word each on how the room is feeling.
+            </p>
+            <p class="help">
+              Usually one box is enough. Add a second when you want two things at once, say a
+              name and a question.
+            </p>
+          </div>
+        </details>
+
+        <label for="formTitle">Question</label>
+        <input id="formTitle" type="text" placeholder="What should we talk about?" />
+        <label>Boxes people fill in</label>
+        <div id="formFields"></div>
+        <button class="link" id="addField" type="button">Add box</button>
+        <div style="margin-top:.65rem"><button id="createForm" type="button">Create open question</button></div>
+        <div class="msg" id="formCreateMsg"></div>
+
+        <hr />
+
+        <div style="display:flex; align-items:center; gap:.5rem">
+          <h2 style="flex:1; margin:0">Open questions</h2>
+          <button class="link" id="reloadForms" type="button">Reload</button>
+        </div>
+        <div id="forms"></div>
+        <div class="msg" id="formListMsg"></div>
+      </div>
+
+      <!-- SLIDES -->
+      <div id="paneSlides" hidden>
+        <h2>How people join</h2>
+        <p class="help" style="margin-bottom:.6rem">
+          Put this on an early slide, otherwise nobody in the room knows how to answer.
+          It is a picture, so it goes straight onto the slide you have open.
+        </p>
+        <label class="switch">
+          <input id="qrDomain" type="checkbox" />
+          <span>Show the web address as well</span>
+        </label>
+        <p class="help" style="margin-bottom:.6rem">
+          Off by default: the code is scanned, and the address underneath is one more thing
+          on your slide. Turn it on for a room where phones are not a given.
+        </p>
+        <div class="actions">
+          <button id="insertQr" type="button">Put the code on this slide</button>
+          <button id="welcomeSlide" class="secondary" type="button">Add a welcome slide</button>
+        </div>
+        <p class="help" style="margin-top:.5rem">
+          The welcome slide is a whole slide made for you: the join code big enough to read
+          from the back, the code as a picture beside it, and one line telling the room what
+          to do. Yours afterwards, so move and restyle it as you like.
+        </p>
+        <div class="msg" id="qrMsg"></div>
+
+        <details class="what">
+          <summary>How new blocks look</summary>
+          <div class="inner">
+
+        <p class="help" style="margin-bottom:.6rem">
+          Set once here and every block you add afterwards starts this way. A block you have
+          already placed keeps what it has, and each one can still be changed on its own slide.
+        </p>
+        <div class="grid2">
+          <div>
+            <label for="lookTheme">Text</label>
+            <select id="lookTheme">
+              <option value="light">Dark text</option>
+              <option value="dark">Light text</option>
+            </select>
+          </div>
+          <div>
+            <label for="lookRadius">Bars</label>
+            <select id="lookRadius">
+              <option value="soft">Slightly rounded</option>
+              <option value="sharp">Square</option>
+              <option value="round">Fully rounded</option>
+            </select>
+          </div>
+          <div>
+            <label for="lookText">Text colour</label>
+            <input id="lookText" type="color" value="#111827" />
+          </div>
+          <div>
+            <label for="lookBar">Bar colour</label>
+            <input id="lookBar" type="color" value="#140553" />
+          </div>
+          <div>
+            <label for="lookCounts">Numbers at the bar</label>
+            <select id="lookCounts">
+              <option value="both">Percent and count</option>
+              <option value="percent">Percent only</option>
+              <option value="count">Count only</option>
+            </select>
+          </div>
+        </div>
+
+        <label for="lookBg">Background behind a block</label>
+        <input id="lookBg" type="color" value="#ffffff" />
+        <p class="help" style="margin-bottom:.6rem">
+          PowerPoint always paints something behind a live block: a web object on a slide
+          cannot be see-through, and Microsoft has turned that request down. So the block
+          paints the colour you pick here instead. Set it to your slide's own colour and the
+          edge disappears.
+        </p>
+        <label class="switch">
+          <input id="lookShadow" type="checkbox" />
+          <span>Soft shadow under the block</span>
+        </label>
+        <div style="margin-top:.6rem" class="actions">
+          <button id="saveLook" type="button">Save as the standard</button>
+          <button id="resetLookAll" class="secondary" type="button">Back to plain</button>
+        </div>
+        <div class="msg" id="lookMsg"></div>
+
+          </div>
+        </details>
+
+        <details class="what">
+          <summary>The deck link, and placing the first block by hand</summary>
+          <div class="inner">
+
+            <h3>One link for the whole deck</h3>
+        <p class="help" style="margin-bottom:.6rem">
+          Made for you the moment this presentation gets its event, and stored in the file.
+          A block placed by the buttons on a question is handed the link directly, so it never
+          asks. A block you insert by hand asks once, and this is the link to paste.
+        </p>
+
+        <div class="linkrow">
+          <input id="slideLink" type="text" readonly placeholder="No link yet" />
+          <button id="copyLink" class="secondary" type="button">Copy</button>
+        </div>
+        <div style="margin-top:.6rem" class="actions">
+          <button id="makeLink" type="button">Make a new link</button>
+        </div>
+        <p class="help" style="margin-top:.5rem">
+          A new link replaces the old one everywhere. Only needed if the old one got out.
+        </p>
+        <div class="msg" id="linkMsg"></div>
+
+
+            <h3>The first live block</h3>
+        <p class="help" style="margin-bottom:.6rem">
+          The buttons on each question copy a block that already exists in this file, so the very
+          first one has to be inserted by hand. Once one is in, you never have to do this again.
+        </p>
+        <ol class="steps">
+          <li><span class="n">1</span><span><b>Insert &gt; Add-ins &gt; My Add-ins</b><span>Pick "Claper on a slide".</span></span></li>
+          <li><span class="n">2</span><span><b>Paste the link from above</b><span>Then pick what that slide should show.</span></span></li>
+        </ol>
+        <p class="help">
+          The frame around a live block, and the soft shadow along its top edge, are PowerPoint's
+          own and cannot be turned off from here. A picture has neither, which is why the joining
+          code is one.
+        </p>
+          </div>
+        </details>
+
+      </div>
+      </div>
+    </div>
+
+    <script>
+      // The token can create and delete questions, so it stays in local storage
+      // rather than in document settings, which are saved into the .pptx.
+      var LS = { base: "claper.base", token: "claper.token", seen: "claper.seen", domain: "claper.qrdomain" };
+      var DOC_EMBED = "claper.embed";
+
+      // Settings are per add-in instance and the blocks on slides cannot read
+      // these, so anything they need goes into presentation tags, which are per
+      // document. PowerPoint stores tag keys in upper case.
+      var DECK_TAG = "CLAPERLINK";
+
+      // The event code only, which is public anyway: the room types it in.
+      var EVENT_TAG = "CLAPEREVENT";
+
+      // Tags travel with a copy of the file, so a deck saved under a new name
+      // would inherit the old event. A name mismatch makes the sidebar ask.
+      var FILE_TAG = "CLAPERFILE";
+
+      var LOOK_TAG = "CLAPERLOOK";
+
+      function apiLevel(version) {
+        try {
+          return typeof PowerPoint !== "undefined" &&
+            Office.context.requirements.isSetSupported("PowerPointApi", version);
+        } catch (e) {
+          return false;
+        }
+      }
+
+      function tagsUsable() { return apiLevel("1.3"); }
+
+      function selectionUsable() { return apiLevel("1.5"); }
+
+      function readTag(key) {
+        if (!tagsUsable()) return Promise.resolve("");
+        return PowerPoint.run(function (context) {
+          var tag = context.presentation.tags.getItemOrNullObject(key);
+          tag.load("value");
+          return context.sync().then(function () {
+            return tag.isNullObject ? "" : tag.value || "";
+          });
+        }).catch(function () { return ""; });
+      }
+
+      function writeTag(key, value) {
+        if (!tagsUsable()) return Promise.resolve(false);
+        return PowerPoint.run(function (context) {
+          context.presentation.tags.add(key, value);
+          return context.sync().then(function () { return true; });
+        }).catch(function () { return false; });
+      }
+
+      function readDeckLink() { return readTag(DECK_TAG); }
+      function writeDeckLink(value) { return writeTag(DECK_TAG, value); }
+
+      var LOOK_FIELDS = ["theme", "radius", "shadow", "text", "bar", "bg", "counts"];
+
+      function lookFromForm() {
+        return {
+          theme: $("lookTheme").value,
+          radius: $("lookRadius").value,
+          shadow: $("lookShadow").checked ? "on" : "off",
+          text: $("lookText").value,
+          bar: $("lookBar").value,
+          bg: $("lookBg").value,
+          counts: $("lookCounts").value
+        };
+      }
+
+      function lookIntoForm(look) {
+        if (!look) return;
+        if (look.theme) $("lookTheme").value = look.theme;
+        if (look.radius) $("lookRadius").value = look.radius;
+        $("lookShadow").checked = look.shadow === "on";
+        if (look.text) $("lookText").value = look.text;
+        if (look.bar) $("lookBar").value = look.bar;
+        if (look.bg) $("lookBg").value = look.bg;
+        if (look.counts) $("lookCounts").value = look.counts;
+      }
+
+      function readLook() {
+        return readTag(LOOK_TAG).then(function (raw) {
+          if (!raw) return null;
+          try {
+            var parsed = JSON.parse(raw);
+            var clean = {};
+            LOOK_FIELDS.forEach(function (f) {
+              if (typeof parsed[f] === "string") clean[f] = parsed[f];
+            });
+            return clean;
+          } catch (e) {
+            return null;
+          }
+        });
+      }
+
+      function saveLook() {
+        say($("lookMsg"), t("Saving…"));
+        return writeTag(LOOK_TAG, JSON.stringify(lookFromForm())).then(function (saved) {
+          say(
+            $("lookMsg"),
+            saved
+              ? t("Saved. New blocks start this way.")
+              : t("This PowerPoint cannot store it in the file. Set it on each block instead."),
+            saved ? "ok" : "err"
+          );
+        });
+      }
+
+      var cfg = { base: "", token: "", embed: "", event: "", kind: "" };
+      var deckLength = 0;
+      var eventCode = "";
+
+      // A static file cannot render gettext, so the English text is the key into
+      // the dictionary for Office's display language.
+      var dict = {};
+
+      function t(text) { return dict[text] || text; }
+
+      function translatePage(root) {
+        var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
+        var nodes = [];
+        while (walker.nextNode()) nodes.push(walker.currentNode);
+
+        nodes.forEach(function (node) {
+          var raw = node.nodeValue;
+          var key = raw.replace(/\s+/g, " ").trim();
+          if (!key) return;
+          var hit = dict[key];
+          if (!hit || hit === key) return;
+
+          // The key is the collapsed text, so the whole node is replaced. The
+          // outer whitespace stays because it separates the node from inline
+          // neighbours.
+          node.nodeValue = raw.match(/^\s*/)[0] + hit + raw.match(/\s*$/)[0];
+        });
+
+        ["placeholder", "title", "aria-label"].forEach(function (attr) {
+          root.querySelectorAll("[" + attr + "]").forEach(function (el) {
+            var hit = dict[el.getAttribute(attr)];
+            if (hit) el.setAttribute(attr, hit);
+          });
+        });
+      }
+
+      // Office reports "de-DE" where Claper may only have "de".
+      function pickLocale(all, wanted) {
+        if (!wanted) return null;
+        var lower = String(wanted).toLowerCase();
+        var base = lower.split("-")[0];
+        var keys = Object.keys(all);
+        var exact = keys.filter(function (k) { return k.toLowerCase() === lower; })[0];
+        if (exact) return exact;
+        return keys.filter(function (k) { return k.toLowerCase().split("-")[0] === base; })[0] || null;
+      }
+
+      // Fetched from this page's own origin so the welcome screen is translated
+      // before anything is connected.
+      function loadLanguage() {
+        var wanted;
+        try { wanted = Office.context.displayLanguage; } catch (e) { wanted = null; }
+        if (!wanted) return Promise.resolve();
+
+        return fetch(window.location.origin + "/addin/strings.json")
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .then(function (all) {
+            if (!all) return;
+            var locale = pickLocale(all, wanted);
+            if (!locale) return;
+            dict = all[locale] || {};
+            translatePage(document.body);
+          })
+          .catch(function () {});
+      }
+
+      function $(id) { return document.getElementById(id); }
+      function say(el, text, kind) { el.className = "msg " + (kind || ""); el.textContent = text || ""; }
+      function show(which) {
+        ["welcome", "connect", "pickEvent", "copyCheck", "work"].forEach(function (id) {
+          $(id).hidden = id !== which;
+        });
+      }
+      function store(key, value) { try { localStorage.setItem(key, value); } catch (e) {} }
+      function read(key) { try { return localStorage.getItem(key) || ""; } catch (e) { return ""; } }
+
+      // An unsaved or read-only document can refuse settings calls.
+      function docGet(key) {
+        try { return Office.context.document.settings.get(key) || ""; } catch (e) { return ""; }
+      }
+      function docSet(key, value, done) {
+        try {
+          Office.context.document.settings.set(key, value);
+          Office.context.document.settings.saveAsync(function (r) {
+            done(r && r.status === Office.AsyncResultStatus.Succeeded);
+          });
+        } catch (e) { done(false); }
+      }
+
+      function api(path, options) {
+        options = options || {};
+        var headers = {
+          Authorization: "Bearer " + cfg.token,
+          "Content-Type": "application/json"
+        };
+        // A personal key spans events, so each request names one. An event key
+        // ignores the header.
+        if (cfg.event) headers["x-claper-event"] = cfg.event;
+        options.headers = Object.assign(headers, options.headers || {});
+        return fetch(cfg.base.replace(/\/+$/, "") + path, options).then(function (r) {
+          if (r.status === 204) return {};
+          return r.json().catch(function () { return {}; }).then(function (body) {
+            if (!r.ok) throw new Error(body.error || ("Claper answered " + r.status));
+            return body;
+          });
+        });
+      }
+
+      function embedUrl() {
+        if (!cfg.base || !cfg.embed) return "";
+        return cfg.base.replace(/\/+$/, "") + "/embed/interaction/" + cfg.embed;
+      }
+
+      // window.confirm never shows a dialog in the task pane and returns a falsy
+      // value, so the question is asked inside the card.
+      function askInCard(card, message, confirmLabel, onYes) {
+        var existing = card.querySelector(".confirm");
+        if (existing) existing.remove();
+
+        var box = document.createElement("div");
+        box.className = "confirm";
+
+        var text = document.createElement("p");
+        text.className = "help";
+        text.textContent = message;
+
+        var row = document.createElement("div");
+        row.className = "actions";
+
+        var yes = document.createElement("button");
+        yes.type = "button";
+        yes.className = "danger-solid small";
+        yes.textContent = confirmLabel;
+
+        var no = document.createElement("button");
+        no.type = "button";
+        no.className = "secondary small";
+        no.textContent = t("Keep it");
+        no.addEventListener("click", function () { box.remove(); });
+
+        yes.addEventListener("click", function () {
+          yes.disabled = true;
+          no.disabled = true;
+          onYes();
+        });
+
+        row.appendChild(yes);
+        row.appendChild(no);
+        box.appendChild(text);
+        box.appendChild(row);
+        card.appendChild(box);
+        yes.focus();
+      }
+
+      function answerList(box, values, placeholder, min) {
+        box.innerHTML = "";
+        var least = typeof min === "number" ? min : 2;
+
+        function addRow(value) {
+          var row = document.createElement("div");
+          row.className = "answer";
+
+          var field = document.createElement("input");
+          field.type = "text";
+          field.placeholder = placeholder;
+          field.value = value || "";
+
+          var drop = document.createElement("button");
+          drop.className = "icon";
+          drop.type = "button";
+          drop.title = t("Remove");
+          drop.setAttribute("aria-label", t("Remove"));
+          drop.textContent = "×";
+          drop.addEventListener("click", function () {
+            row.remove();
+            while (box.querySelectorAll(".answer").length < least) addRow("");
+          });
+
+          field.addEventListener("keydown", function (e) {
+            if (e.key !== "Enter") return;
+            e.preventDefault();
+            var rows = Array.prototype.slice.call(box.querySelectorAll(".answer"));
+            var next = rows[rows.indexOf(row) + 1];
+            if (!next) { addRow(""); next = box.lastChild; }
+            next.querySelector("input").focus();
+          });
+
+          row.appendChild(field);
+          row.appendChild(drop);
+          box.appendChild(row);
+        }
+
+        var start = (values && values.length) ? values : new Array(least).fill("");
+        start.forEach(addRow);
+        while (box.querySelectorAll(".answer").length < least) addRow("");
+
+        box.addRow = addRow;
+        box.values = function () {
+          return Array.prototype.slice
+            .call(box.querySelectorAll('.answer input[type="text"]'))
+            .map(function (i) { return i.value.trim(); })
+            .filter(Boolean);
+        };
+      }
+
+      function pollCard(poll) {
+        var wrap = document.createElement("div");
+        wrap.className = "card";
+
+        var top = document.createElement("div");
+        top.className = "top";
+
+        var title = document.createElement("div");
+        title.className = "title";
+        title.textContent = poll.title;
+        top.appendChild(title);
+
+        var tag = document.createElement("span");
+        var onDeck = deckLength > 0 && poll.position <= deckLength;
+        tag.className = "tag " + (onDeck ? "deck" : "own");
+        tag.textContent = onDeck ? t("Claper slide") + " " + poll.position : t("For PowerPoint");
+        top.appendChild(tag);
+        wrap.appendChild(top);
+
+        var opts = document.createElement("div");
+        opts.className = "opts";
+        opts.textContent = poll.options.map(function (o) { return o.content; }).join("  ·  ");
+        wrap.appendChild(opts);
+
+        var votes = poll.options.reduce(function (sum, o) { return sum + (o.votes || 0); }, 0);
+        var count = document.createElement("div");
+        count.className = "opts";
+        count.textContent = votes + " " + t("answers so far");
+        wrap.appendChild(count);
+
+        wrap.appendChild(cardActions("poll", poll.id, wrap, $("listMsg"), {
+          edit: function () { editPoll(poll, wrap); },
+          remove: t("Delete this question? The answers already given go with it."),
+          reload: loadPolls
+        }));
+
+        return wrap;
+      }
+
+      function cardActions(kind, id, card, msgEl, handlers) {
+        var actions = document.createElement("div");
+        actions.className = "actions";
+
+        if (selectionUsable()) {
+          var here = document.createElement("button");
+          here.className = "small";
+          here.type = "button";
+          here.textContent = t("On this slide");
+          here.title = t("Puts a live block on the slide you have open, keeping what is on it.");
+          here.addEventListener("click", function () {
+            putOnSlide(kind, id, here, msgEl, true);
+          });
+          actions.appendChild(here);
+        }
+
+        var newSlide = document.createElement("button");
+        newSlide.className = "secondary small";
+        newSlide.type = "button";
+        newSlide.textContent = t("New slide");
+        newSlide.title = t("Adds a slide at the end showing this question.");
+        newSlide.addEventListener("click", function () {
+          putOnSlide(kind, id, newSlide, msgEl, false);
+        });
+        actions.appendChild(newSlide);
+
+        var editBtn = document.createElement("button");
+        editBtn.className = "secondary small";
+        editBtn.type = "button";
+        editBtn.textContent = t("Edit");
+        editBtn.addEventListener("click", handlers.edit);
+        actions.appendChild(editBtn);
+
+        var delBtn = document.createElement("button");
+        delBtn.className = "danger-outline small";
+        delBtn.type = "button";
+        delBtn.textContent = t("Delete");
+        delBtn.addEventListener("click", function () {
+          askInCard(card, handlers.remove, t("Delete"), function () {
+            api("/api/addin/" + endpoint(kind) + "/" + id, { method: "DELETE" })
+              .then(handlers.reload)
+              .catch(function (e) { say(msgEl, e.message, "err"); handlers.reload(); });
+          });
+        });
+        actions.appendChild(delBtn);
+
+        return actions;
+      }
+
+      function endpoint(kind) {
+        return kind === "poll" ? "polls" : kind === "quiz" ? "quizzes" : "forms";
+      }
+
+      function editPoll(poll, card) {
+        card.innerHTML = "";
+
+        var field = document.createElement("input");
+        field.type = "text";
+        field.value = poll.title;
+        card.appendChild(field);
+
+        var label = document.createElement("label");
+        label.textContent = t("Answers");
+        card.appendChild(label);
+
+        var list = document.createElement("div");
+        answerList(list, poll.options.map(function (x) { return x.content; }), t("Answer"));
+        card.appendChild(list);
+
+        var more = document.createElement("button");
+        more.className = "link";
+        more.type = "button";
+        more.textContent = t("Add answer");
+        more.addEventListener("click", function () { list.addRow(""); });
+        card.appendChild(more);
+
+        var note = document.createElement("p");
+        note.className = "help";
+        note.textContent = t("Changing the answers clears the votes already given for this question.");
+        card.appendChild(note);
+
+        var bar = document.createElement("div");
+        bar.className = "actions";
+        bar.style.marginTop = ".5rem";
+
+        var save = document.createElement("button");
+        save.type = "button";
+        save.className = "small";
+        save.textContent = t("Save");
+
+        var cancel = document.createElement("button");
+        cancel.className = "secondary small";
+        cancel.type = "button";
+        cancel.textContent = t("Cancel");
+        cancel.addEventListener("click", loadPolls);
+
+        save.addEventListener("click", function () {
+          var options = list.values();
+          if (!field.value.trim()) { say($("listMsg"), t("The question is missing."), "err"); return; }
+          if (options.length < 2) { say($("listMsg"), t("At least two answers."), "err"); return; }
+
+          save.disabled = true;
+          var changed = options.join("\n") !== poll.options.map(function (x) { return x.content; }).join("\n");
+          var body = changed ? { title: field.value.trim(), options: options } : { title: field.value.trim() };
+
+          api("/api/addin/polls/" + poll.id, { method: "PATCH", body: JSON.stringify(body) })
+            .then(loadPolls)
+            .catch(function (e) { say($("listMsg"), e.message, "err"); save.disabled = false; });
+        });
+
+        bar.appendChild(save);
+        bar.appendChild(cancel);
+        card.appendChild(bar);
+        field.focus();
+      }
+
+      // Questions placed on the slides of a deck uploaded to Claper, as opposed
+      // to ones made for PowerPoint.
+      function onClaperDeck(item) { return deckLength > 0 && item.position <= deckLength; }
+
+      function renderList(box, items, card, emptyText, otherLabel) {
+        box.innerHTML = "";
+
+        var mine = items.filter(function (i) { return !onClaperDeck(i); });
+        var theirs = items.filter(onClaperDeck);
+
+        if (!mine.length) {
+          var empty = document.createElement("p");
+          empty.className = "help";
+          empty.textContent = emptyText;
+          box.appendChild(empty);
+        } else {
+          mine.forEach(function (i) { box.appendChild(card(i)); });
+        }
+
+        if (theirs.length) {
+          var more = document.createElement("details");
+          more.className = "more";
+          var summary = document.createElement("summary");
+          summary.textContent = theirs.length + " " + otherLabel;
+          more.appendChild(summary);
+          var inner = document.createElement("div");
+          inner.style.marginTop = ".5rem";
+          theirs.forEach(function (i) { inner.appendChild(card(i)); });
+          more.appendChild(inner);
+          box.appendChild(more);
+        }
+      }
+
+      function loadPolls() {
+        say($("listMsg"), t("Loading…"));
+        return api("/api/addin/polls")
+          .then(function (body) {
+            deckLength = (body.event && body.event.deck_length) || 0;
+            eventCode = (body.event && body.event.code) || "";
+            $("deckName").textContent = presentationName() || t("This presentation");
+            $("eventName").textContent = body.event.name;
+            // An event key has exactly one event to offer.
+            $("changeEvent").hidden = cfg.kind !== "account";
+
+            // Undo the blocked state, which a swapped key may just have left.
+            $("eventKeyNote").hidden = true;
+            $("talkLine").hidden = false;
+            $("workBody").hidden = false;
+
+            renderList(
+              $("polls"),
+              body.polls || [],
+              pollCard,
+              t("No polls for this presentation yet."),
+              t("already on the deck inside Claper")
+            );
+            say($("listMsg"), "");
+          })
+          .catch(function (e) { say($("listMsg"), e.message, "err"); });
+      }
+
+      function questionEditor(question) {
+        var box = document.createElement("div");
+        box.className = "qbox";
+
+        var head = document.createElement("div");
+        head.className = "qhead";
+
+        var text = document.createElement("input");
+        text.type = "text";
+        text.placeholder = t("What is the capital of France?");
+        text.value = question ? question.content : "";
+        head.appendChild(text);
+
+        var drop = document.createElement("button");
+        drop.className = "icon";
+        drop.type = "button";
+        drop.title = t("Remove");
+        drop.setAttribute("aria-label", t("Remove"));
+        drop.textContent = "×";
+        drop.addEventListener("click", function () { box.remove(); });
+        head.appendChild(drop);
+        box.appendChild(head);
+
+        var answers = document.createElement("div");
+        box.appendChild(answers);
+
+        function addAnswer(option) {
+          var row = document.createElement("div");
+          row.className = "answer";
+
+          var value = document.createElement("input");
+          value.type = "text";
+          value.placeholder = t("Answer");
+          value.value = option ? option.content : "";
+
+          var mark = document.createElement("label");
+          var check = document.createElement("input");
+          check.type = "checkbox";
+          check.checked = !!(option && option.correct);
+          mark.appendChild(check);
+          mark.appendChild(document.createTextNode(t("Right")));
+
+          var remove = document.createElement("button");
+          remove.className = "icon";
+          remove.type = "button";
+          remove.title = t("Remove");
+          remove.setAttribute("aria-label", t("Remove"));
+          remove.textContent = "×";
+          remove.addEventListener("click", function () { row.remove(); });
+
+          row.appendChild(value);
+          row.appendChild(mark);
+          row.appendChild(remove);
+          answers.appendChild(row);
+        }
+
+        var existing = (question && question.options) || [];
+        if (existing.length) {
+          existing.forEach(addAnswer);
+        } else {
+          addAnswer(null);
+          addAnswer(null);
+        }
+
+        var more = document.createElement("button");
+        more.className = "link";
+        more.type = "button";
+        more.textContent = t("Add answer");
+        more.addEventListener("click", function () { addAnswer(null); });
+        box.appendChild(more);
+
+        box.readQuestion = function () {
+          var options = [];
+          answers.querySelectorAll(".answer").forEach(function (row) {
+            var content = row.querySelector('input[type="text"]').value.trim();
+            if (content) options.push({ content: content, correct: row.querySelector('input[type="checkbox"]').checked });
+          });
+          return { content: text.value.trim(), options: options };
+        };
+
+        return box;
+      }
+
+      function readQuestions(container) {
+        var out = [];
+        container.querySelectorAll(".qbox").forEach(function (box) { out.push(box.readQuestion()); });
+        return out;
+      }
+
+      function questionsValid(questions, target) {
+        if (!questions.length) { say(target, t("A quiz needs at least one question."), "err"); return false; }
+        for (var i = 0; i < questions.length; i++) {
+          var q = questions[i];
+          if (!q.content) { say(target, t("A question is missing its text."), "err"); return false; }
+          if (q.options.length < 2) { say(target, t("Every question needs at least two answers."), "err"); return false; }
+          if (!q.options.some(function (o) { return o.correct; })) {
+            say(target, t("Every question needs one answer ticked as right."), "err");
+            return false;
+          }
+        }
+        return true;
+      }
+
+      function quizCard(quiz) {
+        var wrap = document.createElement("div");
+        wrap.className = "card";
+
+        var top = document.createElement("div");
+        top.className = "top";
+
+        var title = document.createElement("div");
+        title.className = "title";
+        title.textContent = quiz.title;
+        top.appendChild(title);
+
+        var tag = document.createElement("span");
+        var onDeck = deckLength > 0 && quiz.position <= deckLength;
+        tag.className = "tag " + (onDeck ? "deck" : "own");
+        tag.textContent = onDeck ? t("Claper slide") + " " + quiz.position : t("For PowerPoint");
+        top.appendChild(tag);
+        wrap.appendChild(top);
+
+        (quiz.questions || []).forEach(function (question) {
+          var line = document.createElement("div");
+          line.className = "opts";
+          var parts = question.options.map(function (o) {
+            var span = document.createElement("span");
+            if (o.correct) span.className = "right";
+            span.textContent = o.content;
+            return span;
+          });
+          line.appendChild(document.createTextNode(question.content + ": "));
+          parts.forEach(function (span, i) {
+            if (i) line.appendChild(document.createTextNode("  ·  "));
+            line.appendChild(span);
+          });
+          wrap.appendChild(line);
+        });
+
+        var answered = (quiz.questions || []).reduce(function (sum, question) {
+          return sum + question.options.reduce(function (n, o) { return n + (o.responses || 0); }, 0);
+        }, 0);
+        var count = document.createElement("div");
+        count.className = "opts";
+        count.textContent = answered + " " + t("answers so far");
+        wrap.appendChild(count);
+
+        wrap.appendChild(cardActions("quiz", quiz.id, wrap, $("quizListMsg"), {
+          edit: function () { editQuiz(quiz, wrap); },
+          remove: t("Delete this quiz? The answers already given go with it."),
+          reload: loadQuizzes
+        }));
+
+        return wrap;
+      }
+
+      function editQuiz(quiz, card) {
+        card.innerHTML = "";
+
+        var field = document.createElement("input");
+        field.type = "text";
+        field.value = quiz.title;
+        card.appendChild(field);
+
+        var holder = document.createElement("div");
+        holder.style.marginTop = ".55rem";
+        (quiz.questions || []).forEach(function (q) { holder.appendChild(questionEditor(q)); });
+        card.appendChild(holder);
+
+        var more = document.createElement("button");
+        more.className = "link";
+        more.type = "button";
+        more.textContent = t("Add another question");
+        more.addEventListener("click", function () { holder.appendChild(questionEditor(null)); });
+        card.appendChild(more);
+
+        var note = document.createElement("p");
+        note.className = "help";
+        note.textContent = t("Saving rebuilds the questions, which clears the answers already given for this quiz.");
+        card.appendChild(note);
+
+        var bar = document.createElement("div");
+        bar.className = "actions";
+        bar.style.marginTop = ".5rem";
+
+        var save = document.createElement("button");
+        save.type = "button";
+        save.className = "small";
+        save.textContent = t("Save");
+
+        var cancel = document.createElement("button");
+        cancel.className = "secondary small";
+        cancel.type = "button";
+        cancel.textContent = t("Cancel");
+        cancel.addEventListener("click", loadQuizzes);
+
+        save.addEventListener("click", function () {
+          if (!field.value.trim()) { say($("quizListMsg"), t("The quiz needs a name."), "err"); return; }
+          var questions = readQuestions(holder);
+          if (!questionsValid(questions, $("quizListMsg"))) return;
+
+          save.disabled = true;
+          api("/api/addin/quizzes/" + quiz.id, {
+            method: "PATCH",
+            body: JSON.stringify({
+              title: field.value.trim(),
+              questions: questions
+            })
+          })
+            .then(loadQuizzes)
+            .catch(function (e) { say($("quizListMsg"), e.message, "err"); save.disabled = false; });
+        });
+
+        bar.appendChild(save);
+        bar.appendChild(cancel);
+        card.appendChild(bar);
+        field.focus();
+      }
+
+      function loadQuizzes() {
+        say($("quizListMsg"), t("Loading…"));
+        return api("/api/addin/quizzes")
+          .then(function (body) {
+            if (body.event && typeof body.event.deck_length === "number") {
+              deckLength = body.event.deck_length;
+            }
+            renderList(
+              $("quizzes"),
+              body.quizzes || [],
+              quizCard,
+              t("No quizzes for this presentation yet."),
+              t("already on the deck inside Claper")
+            );
+            say($("quizListMsg"), "");
+          })
+          .catch(function (e) { say($("quizListMsg"), e.message, "err"); });
+      }
+
+      function formCard(form) {
+        var wrap = document.createElement("div");
+        wrap.className = "card";
+
+        var top = document.createElement("div");
+        top.className = "top";
+
+        var title = document.createElement("div");
+        title.className = "title";
+        title.textContent = form.title;
+        top.appendChild(title);
+
+        var tag = document.createElement("span");
+        var onDeck = deckLength > 0 && form.position <= deckLength;
+        tag.className = "tag " + (onDeck ? "deck" : "own");
+        tag.textContent = onDeck ? t("Claper slide") + " " + form.position : t("For PowerPoint");
+        top.appendChild(tag);
+        wrap.appendChild(top);
+
+        var boxes = document.createElement("div");
+        boxes.className = "opts";
+        boxes.textContent = (form.fields || []).map(function (f) { return f.name; }).join("  ·  ");
+        wrap.appendChild(boxes);
+
+        wrap.appendChild(cardActions("form", form.id, wrap, $("formListMsg"), {
+          edit: function () { editForm(form, wrap); },
+          remove: t("Delete this open question? What people wrote goes with it."),
+          reload: loadForms
+        }));
+
+        return wrap;
+      }
+
+      function editForm(form, card) {
+        card.innerHTML = "";
+
+        var field = document.createElement("input");
+        field.type = "text";
+        field.value = form.title;
+        card.appendChild(field);
+
+        var label = document.createElement("label");
+        label.textContent = t("Boxes people fill in");
+        card.appendChild(label);
+
+        var list = document.createElement("div");
+        fieldList(list, (form.fields || []).map(function (f) { return f.name; }));
+        card.appendChild(list);
+
+        var more = document.createElement("button");
+        more.className = "link";
+        more.type = "button";
+        more.textContent = t("Add box");
+        more.addEventListener("click", function () { list.addRow(""); });
+        card.appendChild(more);
+
+        var bar = document.createElement("div");
+        bar.className = "actions";
+        bar.style.marginTop = ".5rem";
+
+        var save = document.createElement("button");
+        save.type = "button";
+        save.className = "small";
+        save.textContent = t("Save");
+
+        var cancel = document.createElement("button");
+        cancel.className = "secondary small";
+        cancel.type = "button";
+        cancel.textContent = t("Cancel");
+        cancel.addEventListener("click", loadForms);
+
+        save.addEventListener("click", function () {
+          var fields = list.values();
+          if (!field.value.trim()) { say($("formListMsg"), t("The question is missing."), "err"); return; }
+          if (!fields.length) { say($("formListMsg"), t("At least one box."), "err"); return; }
+
+          save.disabled = true;
+          api("/api/addin/forms/" + form.id, {
+            method: "PATCH",
+            body: JSON.stringify({ title: field.value.trim(), fields: fields })
+          })
+            .then(loadForms)
+            .catch(function (e) { say($("formListMsg"), e.message, "err"); save.disabled = false; });
+        });
+
+        bar.appendChild(save);
+        bar.appendChild(cancel);
+        card.appendChild(bar);
+        field.focus();
+      }
+
+      function fieldList(box, values) {
+        answerList(
+          box,
+          (values && values.length) ? values : [t("Your answer")],
+          t("Name of the box"),
+          1
+        );
+      }
+
+      function loadForms() {
+        say($("formListMsg"), t("Loading…"));
+        return api("/api/addin/forms")
+          .then(function (body) {
+            if (body.event && typeof body.event.deck_length === "number") {
+              deckLength = body.event.deck_length;
+            }
+            renderList(
+              $("forms"),
+              body.forms || [],
+              formCard,
+              t("No open questions for this presentation yet."),
+              t("already on the deck inside Claper")
+            );
+            say($("formListMsg"), "");
+          })
+          .catch(function (e) { say($("formListMsg"), e.message, "err"); });
+      }
+
+      // An event key fixes the event. A personal key takes the one stored in the
+      // presentation, or creates one for a presentation that has none.
+      function begin() {
+        say($("connectMsg"), t("Checking…"));
+
+        return api("/api/addin/me")
+          .then(function (me) {
+            cfg.kind = me.kind;
+
+            if (me.kind === "event") {
+              cfg.event = "";
+              // Unless the deck is bound to this key's event, listing it would
+              // show another talk's questions under this presentation's name.
+              return readTag(EVENT_TAG).then(function (code) {
+                var ours = code && me.event && code === me.event.code;
+                if (ours) {
+                  show("work");
+                  return loadPolls();
+                }
+                return showNothingUntilKeyIsRight();
+              });
+            }
+
+            return readTag(EVENT_TAG).then(function (code) {
+              if (!code) return startOwnEvent();
+              return checkItIsStillTheSameTalk(code);
+            });
+          })
+          .catch(function (e) {
+            say($("connectMsg"), e.message, "err");
+            show("connect");
+          });
+      }
+
+      function showNothingUntilKeyIsRight() {
+        show("work");
+        $("deckName").textContent = presentationName() || t("This presentation");
+        $("talkLine").hidden = true;
+        $("changeEvent").hidden = true;
+        $("workBody").hidden = true;
+        $("eventKeyNote").hidden = false;
+        say($("swapMsg"), "");
+      }
+
+      // A different file name may mean a copy made for a new talk, or only a
+      // rename, so the author is asked.
+      function checkItIsStillTheSameTalk(code) {
+        var now = presentationName();
+
+        return readTag(FILE_TAG).then(function (was) {
+          if (!was || !now || was === now) {
+            if (now && was !== now) writeTag(FILE_TAG, now);
+            cfg.event = code;
+            show("work");
+            return loadPolls();
+          }
+          return askWhetherSameTalk(code, now);
+        });
+      }
+
+      function askWhetherSameTalk(code, name) {
+        show("copyCheck");
+        say($("copyMsg"), "");
+        $("copyEventName").textContent = code;
+
+        // Show the code first; the name lookup fails for an event this key
+        // cannot reach.
+        cfg.event = code;
+        api("/api/addin/events")
+          .then(function (body) {
+            (body.events || []).forEach(function (event) {
+              if (event.code === code) $("copyEventName").textContent = event.name;
+            });
+          })
+          .catch(function () {});
+
+        $("copyKeep").onclick = function () {
+          writeTag(FILE_TAG, name);
+          cfg.event = code;
+          show("work");
+          loadPolls();
+        };
+
+        $("copyFresh").onclick = function () {
+          cfg.event = "";
+          startOwnEvent();
+        };
+      }
+
+      // An unsaved deck has no file name and is almost certainly new, so it gets
+      // a dated name rather than the picker.
+      function startOwnEvent() {
+        var name = presentationName() || fallbackName();
+
+        say($("connectMsg"), t("Setting up this presentation…"));
+
+        return api("/api/addin/events", { method: "POST", body: JSON.stringify({ name: name }) })
+          .then(function (body) { return useEvent(body.event.code); })
+          .catch(function () { return offerEvents(false); });
+      }
+
+      // The slide link belongs to the event that issued it, so switching events
+      // also replaces the link the blocks read.
+      function useEvent(code) {
+        cfg.event = code;
+
+        // Before the event tag, so a deck never ends up with an event but no
+        // file name to compare against.
+        writeTag(FILE_TAG, presentationName());
+
+        return writeTag(EVENT_TAG, code)
+          .then(function (saved) {
+            show("work");
+            return newDeckLink().then(function () { return saved; });
+          })
+          .then(function (saved) {
+            return loadPolls().then(function () {
+              if (!saved) {
+                say($("listMsg"), t("This presentation could not remember its event. Save the file, then reconnect."), "err");
+              }
+            });
+          });
+      }
+
+      // A failure here is not fatal; a link can still be made from the Joining
+      // tab.
+      function newDeckLink() {
+        return api("/api/addin/embed_token", { method: "POST" })
+          .then(function (body) {
+            cfg.embed = body.token;
+            docSet(DOC_EMBED, body.token, function () {});
+            return writeDeckLink(embedUrl());
+          })
+          .then(function () { showLink(); })
+          .catch(function () { showLink(); });
+      }
+
+      function offerEvents(canCancel) {
+        show("pickEvent");
+        say($("pickMsg"), "");
+        $("cancelPick").hidden = !canCancel;
+
+        if (!$("newEventName").value) $("newEventName").value = presentationName() || fallbackName();
+
+        return api("/api/addin/events")
+          .then(function (body) {
+            var box = $("eventList");
+            box.innerHTML = "";
+            var events = body.events || [];
+
+            if (!events.length) {
+              box.innerHTML = '<p class="help">' + t("You have no events yet.") + "</p>";
+              return;
+            }
+
+            events.forEach(function (event) {
+              var row = document.createElement("div");
+              row.className = "card";
+              var title = document.createElement("div");
+              title.className = "title";
+              title.textContent = event.name;
+              var pick = document.createElement("button");
+              pick.className = "small";
+              pick.type = "button";
+              pick.textContent = t("Use this one");
+              pick.addEventListener("click", function () { useEvent(event.code); });
+              row.appendChild(title);
+              row.appendChild(pick);
+              box.appendChild(row);
+            });
+          })
+          .catch(function (e) { say($("pickMsg"), e.message, "err"); });
+      }
+
+      function presentationName() {
+        try {
+          var url = Office.context.document.url || "";
+          var file = url.split(/[\\/]/).pop() || "";
+          return decodeURIComponent(file).replace(/\.pptx?$/i, "");
+        } catch (e) {
+          return "";
+        }
+      }
+
+      function fallbackName() {
+        var day = "";
+        try { day = new Date().toLocaleDateString(); } catch (e) { day = ""; }
+        return day ? t("New presentation") + " " + day : t("New presentation");
+      }
+
+      function createEvent() {
+        var name = $("newEventName").value.trim();
+        if (!name) { say($("pickMsg"), t("Give it a name."), "err"); return; }
+
+        $("createEvent").disabled = true;
+        say($("pickMsg"), t("Creating…"));
+
+        api("/api/addin/events", { method: "POST", body: JSON.stringify({ name: name }) })
+          .then(function (body) { return useEvent(body.event.code); })
+          .catch(function (e) { say($("pickMsg"), e.message, "err"); })
+          .then(function () { $("createEvent").disabled = false; });
+      }
+
+      // The server copies the first slide that already carries a Claper block,
+      // so the add-in has to send the whole file, which Office hands out in
+      // slices.
+      function readDeck() {
+        return new Promise(function (resolve, reject) {
+          Office.context.document.getFileAsync(
+            Office.FileType.Compressed,
+            { sliceSize: 4194304 },
+            function (result) {
+              if (result.status !== Office.AsyncResultStatus.Succeeded) {
+                reject(new Error((result.error && result.error.message) || "PowerPoint would not hand over the file."));
+                return;
+              }
+
+              var file = result.value;
+              var slices = [];
+              var next = 0;
+
+              function take() {
+                if (next >= file.sliceCount) {
+                  file.closeAsync(function () {});
+                  var total = slices.reduce(function (n, s) { return n + s.length; }, 0);
+                  var all = new Uint8Array(total);
+                  var at = 0;
+                  slices.forEach(function (s) { all.set(s, at); at += s.length; });
+                  resolve(toBase64(all));
+                  return;
+                }
+
+                file.getSliceAsync(next, function (slice) {
+                  if (slice.status !== Office.AsyncResultStatus.Succeeded) {
+                    file.closeAsync(function () {});
+                    reject(new Error("PowerPoint stopped handing over the file."));
+                    return;
+                  }
+                  slices.push(new Uint8Array(slice.value.data));
+                  next++;
+                  take();
+                });
+              }
+
+              take();
+            }
+          );
+        });
+      }
+
+      // Chunked because String.fromCharCode.apply overflows the call stack on a
+      // presentation-sized array.
+      function toBase64(bytes) {
+        var binary = "";
+        var CHUNK = 0x8000;
+        for (var i = 0; i < bytes.length; i += CHUNK) {
+          binary += String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK));
+        }
+        return btoa(binary);
+      }
+
+      // The server finds the slide in the file by position, not by id.
+      function currentSlide() {
+        return PowerPoint.run(function (context) {
+          var selected = context.presentation.getSelectedSlides();
+          selected.load("items/id");
+          var all = context.presentation.slides;
+          all.load("items/id");
+
+          return context.sync().then(function () {
+            if (!selected.items.length) throw new Error(t("Open the slide you want it on first."));
+            var id = selected.items[0].id;
+            var at = -1;
+            all.items.forEach(function (slide, index) { if (slide.id === id) at = index; });
+            if (at < 0) throw new Error(t("Open the slide you want it on first."));
+            return { id: id, position: at + 1 };
+          });
+        });
+      }
+
+      function insertDeck(base64, afterId) {
+        return PowerPoint.run(function (context) {
+          var options = { formatting: PowerPoint.InsertSlideFormatting.useDestinationTheme };
+          if (afterId) options.targetSlideId = afterId;
+          context.presentation.insertSlidesFromBase64(base64, options);
+          return context.sync();
+        });
+      }
+
+      function deleteSlide(id) {
+        return PowerPoint.run(function (context) {
+          context.presentation.slides.getItem(id).delete();
+          return context.sync();
+        });
+      }
+
+      // Saves uploading the whole deck for every new slide. Placing onto the
+      // current slide still needs the full file, because it needs that slide.
+      var deckTemplate = "";
+
+      function putOnSlide(kind, id, button, msgEl, onCurrent) {
+        button.disabled = true;
+        say(msgEl, t("Building the slide…"));
+
+        var target = null;
+
+        Promise.resolve(onCurrent ? currentSlide() : null)
+          .then(function (slide) {
+            target = slide;
+            return onCurrent ? readDeck() : Promise.resolve(deckTemplate || readDeck());
+          })
+          .then(function (deck) {
+            var body = { kind: kind, id: id, deck: deck };
+            if (target) body.onto = target.position;
+            return api("/api/addin/slide", { method: "POST", body: JSON.stringify(body) });
+          })
+          .then(function (body) {
+            // A slide built on the author's own slide carries their content, so
+            // only a fresh one is kept as the template.
+            if (!onCurrent) deckTemplate = body.slide;
+            return insertDeck(body.slide, target && target.id);
+          })
+          .then(function () {
+            // Deleted only after the copy is in, so a failed insert loses nothing.
+            if (target) return deleteSlide(target.id);
+          })
+          .then(function () {
+            say(msgEl, onCurrent ? t("Done. It is on the slide you had open.") : t("Added as a new slide at the end."), "ok");
+          })
+          .catch(function (e) {
+            say(msgEl, e.message, "err");
+          })
+          .then(function () { button.disabled = false; });
+      }
+
+      // The QR code is read from Claper's joining screen in a hidden frame, and
+      // that screen is only served behind the read-only link.
+      function ensureLink() {
+        if (cfg.embed) return Promise.resolve();
+        return api("/api/addin/embed_token", { method: "POST" }).then(function (body) {
+          cfg.embed = body.token;
+          docSet(DOC_EMBED, body.token, function () {});
+          return writeDeckLink(embedUrl()).then(function () { showLink(); });
+        });
+      }
+
+      // Large enough to stay sharp at slide size.
+      var QR_PIXELS = 1040;
+
+      function readQrCanvas() {
+        return new Promise(function (resolve, reject) {
+          var url = embedUrl();
+          if (!url) { reject(new Error("Claper did not give out a link.")); return; }
+
+          var frame = document.createElement("iframe");
+          frame.setAttribute("aria-hidden", "true");
+          // Room for the code at full size, or the layout shrinks it again.
+          frame.style.cssText = "position:absolute;left:-10000px;top:0;width:" +
+            (QR_PIXELS + 160) + "px;height:" + (QR_PIXELS + 400) + "px;border:0";
+          frame.src = url + "?show=join&qr=" + QR_PIXELS;
+
+          var settled = false;
+          var tries = 0;
+
+          function finish(error, value) {
+            if (settled) return;
+            settled = true;
+            frame.remove();
+            error ? reject(error) : resolve(value);
+          }
+
+          // A LiveView hook draws the code once the socket connects, so there is
+          // nothing to read at load time.
+          var timer = setInterval(function () {
+            tries++;
+            try {
+              var canvas = frame.contentDocument &&
+                frame.contentDocument.querySelector("#embed-qr canvas");
+              if (canvas && canvas.width > 0) {
+                clearInterval(timer);
+                finish(null, canvas.toDataURL("image/png"));
+                return;
+              }
+            } catch (e) {
+              clearInterval(timer);
+              finish(new Error("Claper did not let this page read the code."));
+              return;
+            }
+            if (tries > 60) {
+              clearInterval(timer);
+              finish(new Error("Claper did not draw the code in time."));
+            }
+          }, 250);
+
+          document.body.appendChild(frame);
+        });
+      }
+
+      function joinPicture(qrUrl) {
+        return new Promise(function (resolve, reject) {
+          var withDomain = $("qrDomain").checked;
+
+          var img = new Image();
+          img.onerror = function () { reject(new Error("The code could not be drawn.")); };
+          img.onload = function () {
+            // Never scaled, which would blur the modules.
+            var size = img.width || QR_PIXELS;
+            var pad = Math.round(size * 0.077);
+            var W = size + pad * 2;
+            var codeLine = Math.round(size * 0.133);
+            var domainLine = withDomain ? Math.round(size * 0.1) : 0;
+            var H = size + pad * 2 + codeLine + domainLine;
+
+            var canvas = document.createElement("canvas");
+            canvas.width = W;
+            canvas.height = H;
+
+            var g = canvas.getContext("2d");
+            g.imageSmoothingEnabled = false;
+            g.fillStyle = "#ffffff";
+            g.fillRect(0, 0, W, H);
+            g.drawImage(img, pad, pad, size, size);
+
+            g.textAlign = "center";
+            var baseline = pad + size;
+
+            if (withDomain) {
+              g.fillStyle = "#5b6472";
+              g.font = "500 " + Math.round(size * 0.051) + "px 'Segoe UI', system-ui, sans-serif";
+              baseline += Math.round(size * 0.1);
+              g.fillText(cfg.base.replace(/^https?:\/\//, "").replace(/\/+$/, ""), W / 2, baseline);
+            }
+
+            g.fillStyle = "#111827";
+            g.font = "700 " + Math.round(size * 0.133) + "px 'Segoe UI', system-ui, sans-serif";
+            g.fillText("#" + eventCode.toUpperCase(), W / 2, baseline + Math.round(size * 0.118));
+
+            resolve(canvas.toDataURL("image/png"));
+          };
+          img.src = qrUrl;
+        });
+      }
+
+      function putPictureOnSlide(dataUrl) {
+        return new Promise(function (resolve, reject) {
+          Office.context.document.setSelectedDataAsync(
+            // This call wants bare base64. Positions are in points; the slide
+            // size is unknown here, so the picture goes near the top left corner.
+            dataUrl.split(",")[1],
+            {
+              coercionType: Office.CoercionType.Image,
+              imageLeft: 60,
+              imageTop: 60,
+              imageWidth: 220
+            },
+            function (result) {
+              if (result.status === Office.AsyncResultStatus.Succeeded) resolve();
+              else reject(new Error((result.error && result.error.message) || "PowerPoint refused it."));
+            }
+          );
+        });
+      }
+
+      // Built with PowerPoint's own shapes rather than inserted from a file, so
+      // the slide takes the deck's layout and fonts.
+      function addWelcomeSlide() {
+        var button = $("welcomeSlide");
+        button.disabled = true;
+        say($("qrMsg"), t("Building the slide…"));
+
+        if (!selectionUsable()) {
+          say($("qrMsg"), t("This PowerPoint is too old to add a slide from here. Add one yourself and use the button above."), "err");
+          button.disabled = false;
+          return;
+        }
+
+        ensureLink()
+          .then(readQrCanvas)
+          .then(joinPicture)
+          .then(function (picture) {
+            return appendAndSelectSlide().then(function () { return picture; });
+          })
+          .then(function (picture) {
+            return putPictureOnSlide(picture);
+          })
+          .then(writeWelcomeWords)
+          .then(function (wrote) {
+            say(
+              $("qrMsg"),
+              wrote
+                ? t("Added at the end. Move it to the front and it is your opening slide.")
+                : t("Added at the end. This PowerPoint cannot write the text, so type the code beside the picture."),
+              wrote ? "ok" : "err"
+            );
+          })
+          .catch(function (e) { say($("qrMsg"), e.message, "err"); })
+          .then(function () { button.disabled = false; });
+      }
+
+      function appendAndSelectSlide() {
+        return PowerPoint.run(function (context) {
+          context.presentation.slides.add();
+          return context.sync().then(function () {
+            var all = context.presentation.slides;
+            all.load("items/id");
+            return context.sync().then(function () {
+              var last = all.items[all.items.length - 1];
+              if (!last) throw new Error(t("PowerPoint did not add the slide."));
+              // setSelectedDataAsync cannot name a slide; it writes to the
+              // selected one.
+              context.presentation.setSelectedSlides([last.id]);
+              return context.sync();
+            });
+          });
+        });
+      }
+
+      // Text boxes need PowerPointApi 1.4; without it the slide keeps just the
+      // picture.
+      function writeWelcomeWords() {
+        if (!apiLevel("1.4")) return Promise.resolve(false);
+
+        return PowerPoint.run(function (context) {
+          var all = context.presentation.slides;
+          all.load("items/id");
+          return context.sync().then(function () {
+            var slide = all.items[all.items.length - 1];
+            if (!slide) return false;
+
+            // Right of the picture placed by putPictureOnSlide.
+            var heading = slide.shapes.addTextBox(t("Join in"), {
+              left: 310, top: 70, width: 340, height: 60
+            });
+            heading.textFrame.textRange.font.size = 40;
+            heading.textFrame.textRange.font.bold = true;
+
+            var how = slide.shapes.addTextBox(
+              t("Open the camera, point it at the code, answer on your phone."),
+              { left: 310, top: 140, width: 340, height: 80 }
+            );
+            how.textFrame.textRange.font.size = 18;
+
+            if (eventCode) {
+              var code = slide.shapes.addTextBox(eventCode, {
+                left: 310, top: 225, width: 340, height: 50
+              });
+              code.textFrame.textRange.font.size = 26;
+              code.textFrame.textRange.font.bold = true;
+            }
+
+            return context.sync().then(function () { return true; });
+          });
+        }).catch(function () { return false; });
+      }
+
+      function insertJoinPicture() {
+        $("insertQr").disabled = true;
+        say($("qrMsg"), t("Drawing the code…"));
+
+        ensureLink()
+          .then(readQrCanvas)
+          .then(joinPicture)
+          .then(function (picture) {
+            say($("qrMsg"), t("Putting it on the slide…"));
+            return putPictureOnSlide(picture);
+          })
+          .then(function () {
+            say($("qrMsg"), t("Done. It landed on the slide you have open."), "ok");
+          })
+          .catch(function (e) { say($("qrMsg"), e.message, "err"); })
+          .then(function () { $("insertQr").disabled = false; });
+      }
+
+      function showLink() {
+        var url = embedUrl();
+        $("slideLink").value = url;
+        $("makeLink").hidden = false;
+      }
+
+      function makeLink() {
+        $("makeLink").disabled = true;
+        say($("linkMsg"), t("Asking Claper…"));
+
+        api("/api/addin/embed_token", { method: "POST" })
+          .then(function (body) {
+            cfg.embed = body.token;
+            docSet(DOC_EMBED, body.token, function () {});
+
+            return writeDeckLink(embedUrl()).then(function (shared) {
+              showLink();
+              say(
+                $("linkMsg"),
+                shared
+                  ? t("Ready. Blocks you put on slides pick it up on their own.")
+                  : t("Ready. This PowerPoint cannot hand it over on its own, so paste it into each Claper object."),
+                "ok"
+              );
+            });
+          })
+          .catch(function (e) { say($("linkMsg"), e.message, "err"); })
+          .then(function () { $("makeLink").disabled = false; });
+      }
+
+      function selectTab(which) {
+        var tabs = { polls: "tabPolls", quizzes: "tabQuizzes", forms: "tabForms", slides: "tabSlides" };
+        var panes = { polls: "panePolls", quizzes: "paneQuizzes", forms: "paneForms", slides: "paneSlides" };
+        Object.keys(tabs).forEach(function (key) {
+          $(tabs[key]).setAttribute("aria-selected", String(key === which));
+          $(panes[key]).hidden = key !== which;
+        });
+        if (which === "quizzes") loadQuizzes();
+        if (which === "forms") loadForms();
+        if (which === "slides") {
+          showLink();
+          // A deck can have an event but no link if creating the link failed.
+          ensureLink().then(showLink).catch(function (e) { say($("linkMsg"), e.message, "err"); });
+          readLook().then(lookIntoForm);
+        }
+      }
+
+      Office.onReady(function () {
+        cfg.base = read(LS.base);
+        cfg.token = read(LS.token);
+        cfg.embed = docGet(DOC_EMBED);
+
+        // Before anything is shown, so the text does not switch language
+        // in front of the reader.
+        loadLanguage().then(start);
+      });
+
+      function start() {
+        // The tag is shared by every add-in in the deck, so it wins over this
+        // instance's settings.
+        readDeckLink().then(function (deckLink) {
+          var match = deckLink && deckLink.match(/\/embed\/interaction\/([^/?#]+)/);
+          if (match) cfg.embed = match[1];
+          showLink();
+        });
+
+        $("base").value = cfg.base;
+        $("token").value = cfg.token;
+        $("qrDomain").checked = read(LS.domain) === "1";
+
+        answerList($("options"), null, t("Answer"));
+        fieldList($("formFields"), null);
+        $("questions").appendChild(questionEditor(null));
+
+        if (cfg.base && cfg.token) {
+          begin();
+        } else if (read(LS.seen)) {
+          show("connect");
+        } else {
+          show("welcome");
+        }
+
+        $("start").addEventListener("click", function () {
+          store(LS.seen, "1");
+          show(cfg.base && cfg.token ? "work" : "connect");
+        });
+        $("backToWelcome").addEventListener("click", function () {
+          show(cfg.base && cfg.token ? "work" : "welcome");
+        });
+        $("home").addEventListener("click", function () { show("welcome"); });
+        $("settings").addEventListener("click", function () { show("connect"); });
+
+        // A new key may be of another kind, so everything is decided again.
+        $("swapKeyGo").addEventListener("click", function () {
+          var key = $("swapKey").value.trim();
+          if (!key) { say($("swapMsg"), t("Both are needed."), "err"); return; }
+          cfg.token = key;
+          store(LS.token, key);
+          $("swapKey").value = "";
+          say($("swapMsg"), t("Checking…"));
+          begin();
+        });
+        $("reload").addEventListener("click", loadPolls);
+        $("reloadQuizzes").addEventListener("click", loadQuizzes);
+        $("reloadForms").addEventListener("click", loadForms);
+
+        $("tabPolls").addEventListener("click", function () { selectTab("polls"); });
+        $("tabQuizzes").addEventListener("click", function () { selectTab("quizzes"); });
+        $("tabForms").addEventListener("click", function () { selectTab("forms"); });
+        $("tabSlides").addEventListener("click", function () { selectTab("slides"); });
+
+        $("makeLink").addEventListener("click", makeLink);
+        $("insertQr").addEventListener("click", insertJoinPicture);
+        $("welcomeSlide").addEventListener("click", addWelcomeSlide);
+        $("saveLook").addEventListener("click", saveLook);
+        $("resetLookAll").addEventListener("click", function () {
+          // The tag is cleared, not set to these values, so blocks treat it as
+          // never set.
+          $("lookTheme").value = "light";
+          $("lookRadius").value = "soft";
+          $("lookShadow").checked = false;
+          $("lookText").value = "#111827";
+          $("lookBar").value = "#140553";
+          $("lookBg").value = "#ffffff";
+          $("lookCounts").value = "both";
+          writeTag(LOOK_TAG, "").then(function () {
+            say($("lookMsg"), t("Back to plain. New blocks look the way Claper draws them."), "ok");
+          });
+        });
+        $("qrDomain").addEventListener("change", function () {
+          store(LS.domain, $("qrDomain").checked ? "1" : "0");
+        });
+        $("addOption").addEventListener("click", function () { $("options").addRow(""); });
+        $("addField").addEventListener("click", function () { $("formFields").addRow(""); });
+
+        $("copyLink").addEventListener("click", function () {
+          var field = $("slideLink");
+          if (!field.value) return;
+          // Selected first, so it can still be copied by hand where the
+          // clipboard API is missing.
+          field.select();
+          if (!navigator.clipboard) return;
+          navigator.clipboard.writeText(field.value).then(function () {
+            $("copyLink").textContent = t("Copied");
+            setTimeout(function () { $("copyLink").textContent = t("Copy"); }, 1500);
+          });
+        });
+
+        $("save").addEventListener("click", function () {
+          cfg.base = $("base").value.trim();
+          cfg.token = $("token").value.trim();
+
+          if (!cfg.base || !cfg.token) {
+            say($("connectMsg"), t("Both are needed."), "err");
+            return;
+          }
+
+          store(LS.base, cfg.base);
+          store(LS.token, cfg.token);
+          store(LS.seen, "1");
+
+          say($("connectMsg"), "");
+          begin();
+        });
+
+        $("changeEvent").addEventListener("click", function () { offerEvents(true); });
+        $("cancelPick").addEventListener("click", function () { show("work"); });
+        $("createEvent").addEventListener("click", createEvent);
+        $("newEventName").addEventListener("keydown", function (e) {
+          if (e.key === "Enter") createEvent();
+        });
+
+        $("create").addEventListener("click", function () {
+          var title = $("title").value.trim();
+          var options = $("options").values();
+
+          if (!title) { say($("createMsg"), t("The question is missing."), "err"); return; }
+          if (options.length < 2) { say($("createMsg"), t("At least two answers."), "err"); return; }
+
+          $("create").disabled = true;
+          say($("createMsg"), t("Creating…"));
+
+          api("/api/addin/polls", { method: "POST", body: JSON.stringify({ title: title, options: options }) })
+            .then(function () {
+              $("title").value = "";
+              answerList($("options"), null, t("Answer"));
+              say($("createMsg"), t("Created. Put it on a slide below."), "ok");
+              return loadPolls();
+            })
+            .catch(function (e) { say($("createMsg"), e.message, "err"); })
+            .then(function () { $("create").disabled = false; });
+        });
+
+        $("addQuestion").addEventListener("click", function () {
+          $("questions").appendChild(questionEditor(null));
+        });
+
+        $("createQuiz").addEventListener("click", function () {
+          var title = $("quizTitle").value.trim();
+          if (!title) { say($("quizCreateMsg"), t("The quiz needs a name."), "err"); return; }
+
+          var questions = readQuestions($("questions"));
+          if (!questionsValid(questions, $("quizCreateMsg"))) return;
+
+          $("createQuiz").disabled = true;
+          say($("quizCreateMsg"), t("Creating…"));
+
+          api("/api/addin/quizzes", {
+            method: "POST",
+            body: JSON.stringify({
+              title: title,
+              questions: questions
+            })
+          })
+            .then(function () {
+              $("quizTitle").value = "";
+              $("questions").innerHTML = "";
+              $("questions").appendChild(questionEditor(null));
+              say($("quizCreateMsg"), t("Created. Put it on a slide below."), "ok");
+              return loadQuizzes();
+            })
+            .catch(function (e) { say($("quizCreateMsg"), e.message, "err"); })
+            .then(function () { $("createQuiz").disabled = false; });
+        });
+
+        $("createForm").addEventListener("click", function () {
+          var title = $("formTitle").value.trim();
+          var fields = $("formFields").values();
+
+          if (!title) { say($("formCreateMsg"), t("The question is missing."), "err"); return; }
+          if (!fields.length) { say($("formCreateMsg"), t("At least one box."), "err"); return; }
+
+          $("createForm").disabled = true;
+          say($("formCreateMsg"), t("Creating…"));
+
+          api("/api/addin/forms", { method: "POST", body: JSON.stringify({ title: title, fields: fields }) })
+            .then(function () {
+              $("formTitle").value = "";
+              fieldList($("formFields"), null);
+              say($("formCreateMsg"), t("Created. Put it on a slide below."), "ok");
+              return loadForms();
+            })
+            .catch(function (e) { say($("formCreateMsg"), e.message, "err"); })
+            .then(function () { $("createForm").disabled = false; });
+        });
+      }
+    </script>
+  </body>
+</html>

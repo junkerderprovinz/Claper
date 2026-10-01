@@ -128,6 +128,10 @@ remote_ip_headers =
 
 same_site_cookie = get_var_from_path_or_env(config_dir, "SAME_SITE_COOKIE", "Lax")
 
+# CSP frame-ancestors source list for the embeddable presenter view.
+presenter_embed_frame_ancestors =
+  get_var_from_path_or_env(config_dir, "PRESENTER_EMBED_FRAME_ANCESTORS", "'none'")
+
 secure_cookie =
   get_var_from_path_or_env(config_dir, "SECURE_COOKIE", "false") |> String.to_existing_atom()
 
@@ -255,7 +259,8 @@ config :claper,
   remote_ip_proxies: remote_ip_proxies,
   remote_ip_headers: remote_ip_headers,
   terms_url: terms_url,
-  privacy_url: privacy_url
+  privacy_url: privacy_url,
+  presenter_embed_frame_ancestors: presenter_embed_frame_ancestors
 
 config :claper, :presentations,
   max_file_size: max_file_size,

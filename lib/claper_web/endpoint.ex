@@ -23,6 +23,16 @@ defmodule ClaperWeb.Endpoint do
       ]
     ]
 
+  # The add-in pages live at fixed addresses named in the installed Office
+  # manifest, unlike the hashed assets below, so Office has to revalidate them.
+  # "no-cache" still lets the ETag answer with a 304.
+  plug Plug.Static,
+    at: "/",
+    from: :claper,
+    gzip: false,
+    only: ~w(addin),
+    cache_control_for_etags: "no-cache"
+
   # Serve at "/" the static files from "priv/static" directory.
   #
   # You should set gzip to true if you are running phx.digest

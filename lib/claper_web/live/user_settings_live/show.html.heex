@@ -423,6 +423,82 @@
       </div>
     </div>
     
+<!-- PowerPoint Card -->
+    <div :if={@addin_available} class="card bg-base-100 shadow-md">
+      <div class="card-body">
+        <div class="flex items-center gap-3 mb-6">
+          <div class="p-2 bg-primary/10 rounded-xl">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              class="w-5 h-5 text-primary"
+            >
+              <path d="M5.625 1.5H9a3.75 3.75 0 0 1 3.75 3.75v1.875c0 1.036.84 1.875 1.875 1.875H16.5a3.75 3.75 0 0 1 3.75 3.75v7.875c0 1.035-.84 1.875-1.875 1.875H5.625a1.875 1.875 0 0 1-1.875-1.875V3.375c0-1.036.84-1.875 1.875-1.875Z" />
+              <path d="M12.971 1.816A5.23 5.23 0 0 1 14.25 5.25v1.875c0 .207.168.375.375.375H16.5a5.23 5.23 0 0 1 3.434 1.279 9.768 9.768 0 0 0-6.963-6.963Z" />
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-lg font-semibold text-base-content">PowerPoint</h3>
+            <p class="text-sm text-base-content/60">
+              {gettext("Write questions for your talks without leaving your slides")}
+            </p>
+          </div>
+        </div>
+
+        <p class="text-sm text-base-content/70">
+          {gettext(
+            "The Claper sidebar asks for this key once. With it, a new presentation can start a new event of its own, so one talk's questions never turn up in another."
+          )}
+        </p>
+
+        <div :if={@addin_token} class="mt-4 space-y-2">
+          <input
+            type="text"
+            readonly
+            value={@addin_token}
+            onclick="this.select()"
+            class="input input-bordered w-full text-sm"
+          />
+          <p class="text-sm font-semibold">
+            {gettext("Copy it now. It is stored hashed and cannot be shown again.")}
+          </p>
+        </div>
+
+        <p class="mt-4 text-sm text-base-content/60">
+          {gettext(
+            "It can create and delete questions and events, so keep it on your own computer and never inside a presentation you share."
+          )}
+        </p>
+
+        <div class="mt-4 flex flex-wrap gap-2">
+          <button
+            type="button"
+            phx-click="create-addin-account-token"
+            data-confirm={
+              if @addin_token_exists,
+                do: gettext("Replace the key? The sidebar will ask for the new one.")
+            }
+            class="btn btn-primary btn-sm"
+          >
+            {if @addin_token_exists, do: gettext("New key"), else: gettext("Create key")}
+          </button>
+          <button
+            :if={@addin_token_exists}
+            type="button"
+            phx-click="revoke-addin-account-token"
+            data-confirm={gettext("Revoke the key?")}
+            class="btn btn-sm"
+          >
+            {gettext("Revoke")}
+          </button>
+          <.link href="/addin" target="_blank" class="btn btn-sm btn-soft">
+            {gettext("How to add Claper to PowerPoint")}
+          </.link>
+        </div>
+      </div>
+    </div>
+    
 <!-- Danger Zone Card -->
     <div :if={!@is_external_user} class="card bg-base-100 shadow-md border border-error/20">
       <div class="card-body">

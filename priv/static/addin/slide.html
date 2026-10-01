@@ -1,0 +1,634 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Claper on this slide</title>
+    <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #111827;
+        --muted: #4b5563;
+        --line: #d1d5db;
+        --brand: #140553;
+        --danger: #b91c1c;
+      }
+      * { box-sizing: border-box; }
+      /* The author sizes the object on the slide, so the content fits it
+         instead of scrolling. */
+      html, body {
+        margin: 0; height: 100%; overflow: hidden;
+        font: 14px/1.45 system-ui, "Segoe UI", sans-serif; color: var(--ink);
+        background: transparent;
+      }
+      body { display: flex; }
+      iframe { border: 0; width: 100%; height: 100%; display: block; }
+
+      .stage { position: relative; width: 100%; height: 100%; }
+      .change {
+        position: absolute; top: .35rem; right: .35rem; opacity: 0;
+        transition: opacity .12s; background: rgba(17,24,39,.75); color: #fff;
+        border: 0; border-radius: .4rem; padding: .2rem .5rem;
+        font: inherit; font-size: .72rem; font-weight: 600; cursor: pointer;
+      }
+      .stage:hover .change, .change:focus-visible { opacity: 1; }
+
+      /* The page is transparent, so the form needs its own ground to stay
+         readable on a dark slide. */
+      .setup {
+        margin: auto; padding: 1.25rem; max-width: 24rem; width: 100%;
+        max-height: 100%; overflow-y: auto;
+        background: #fff; color: var(--ink);
+        border-radius: .75rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,.2), 0 8px 24px rgba(0,0,0,.25);
+      }
+      .setup h1 { font-size: 1rem; margin: 0 0 .25rem; }
+      .setup p { margin: 0 0 .9rem; color: var(--muted); font-size: .8rem; }
+      label { display: block; font-weight: 600; font-size: .78rem; margin: .75rem 0 .2rem; }
+      input, select {
+        width: 100%; padding: .5rem .6rem; border: 1px solid var(--line);
+        border-radius: .5rem; font: inherit; background: #fff; color: var(--ink);
+      }
+      input:focus, select:focus { outline: 2px solid var(--brand); outline-offset: 1px; }
+      button.go {
+        margin-top: 1rem; width: 100%; padding: .55rem; border: 0; border-radius: 999px;
+        background: var(--brand); color: #fff; font: inherit; font-weight: 600; cursor: pointer;
+      }
+      button.go:disabled { opacity: .55; cursor: default; }
+      button.plain {
+        margin-top: .45rem; width: 100%; padding: .45rem; border: 1px solid var(--line);
+        border-radius: 999px; background: #fff; color: var(--ink); font: inherit; cursor: pointer;
+      }
+      .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
+      .switch { display: flex; align-items: center; gap: .45rem; margin: .7rem 0 .2rem; font-size: .78rem; font-weight: 600; }
+      .switch input { width: auto; }
+      input[type="color"] { padding: .15rem; height: 2.1rem; cursor: pointer; }
+      details { margin-top: .8rem; border: 1px solid var(--line); border-radius: .5rem; }
+      details summary {
+        cursor: pointer; font-weight: 600; font-size: .8rem; color: var(--brand);
+        padding: .5rem .65rem; list-style-position: inside;
+      }
+      details[open] summary { border-bottom: 1px solid var(--line); }
+      details > .grid2, details > .switch, details > div { margin: .55rem .65rem; }
+      .err { color: var(--danger); font-size: .78rem; margin-top: .6rem; min-height: 1rem; }
+      .err.ok { color: #146c43; }
+      [hidden] { display: none !important; }
+    </style>
+  </head>
+  <body>
+    <div class="stage" id="stage" hidden>
+      <iframe id="frame" title="Claper interaction"></iframe>
+      <button class="change" id="change" type="button">Change</button>
+    </div>
+
+    <div class="setup" id="setup" hidden>
+      <h1>Claper on this slide</h1>
+      <p id="intro">
+        Paste the link from the Claper sidebar once. It is stored with this presentation, so everyone
+        who opens the file sees the same thing.
+      </p>
+
+      <div id="step1">
+        <label for="url">Slide link</label>
+        <input id="url" type="url" placeholder="https://claper.example.com/embed/interaction/KEY" />
+        <button class="go" id="connect" type="button">Continue</button>
+      </div>
+
+      <div id="step2" hidden>
+        <label for="what">Show on this slide</label>
+        <select id="what"></select>
+
+        <!-- Closed by default so the form fits the object's default height. -->
+        <details id="look">
+          <summary>Colours, background and more</summary>
+          <div class="grid2" style="margin-top:.5rem">
+            <div>
+              <label for="theme">Text</label>
+              <select id="theme">
+                <option value="light">Dark text</option>
+                <option value="dark">Light text</option>
+              </select>
+            </div>
+            <div>
+              <label for="panel">Shape</label>
+              <select id="panel">
+                <option value="off">Plain</option>
+                <option value="on">Card</option>
+              </select>
+            </div>
+            <div>
+              <label for="radius">Bars</label>
+              <select id="radius">
+                <option value="soft">Slightly rounded</option>
+                <option value="sharp">Square</option>
+                <option value="round">Fully rounded</option>
+              </select>
+            </div>
+            <div>
+              <label for="shadow">Shadow</label>
+              <select id="shadow">
+                <option value="off">None</option>
+                <option value="on">Soft shadow</option>
+              </select>
+            </div>
+            <div>
+              <label for="counts">Numbers at the bar</label>
+              <select id="counts">
+                <option value="both">Percent and count</option>
+                <option value="percent">Percent only</option>
+                <option value="count">Count only</option>
+              </select>
+            </div>
+          </div>
+
+          <label class="switch">
+            <input id="ownColours" type="checkbox" />
+            <span>Use my own colours</span>
+          </label>
+          <div class="grid2" id="colours" hidden>
+            <div>
+              <label for="text">Text colour</label>
+              <input id="text" type="color" value="#111827" />
+            </div>
+            <div>
+              <label for="bar">Bar colour</label>
+              <input id="bar" type="color" value="#140553" />
+            </div>
+          </div>
+
+          <!-- Office paints an opaque ground under a web object on a slide, so
+               transparency is not an option; matching the slide's colour is. -->
+          <div>
+            <label for="bg">Background behind this block</label>
+            <input id="bg" type="color" value="#ffffff" />
+            <p style="margin:.35rem 0 0; font-size:.72rem; color:var(--muted)">
+              PowerPoint always paints something behind a live block. Set this to your
+              slide's colour and the edge disappears.
+            </p>
+          </div>
+
+          <div>
+            <button class="plain" id="resetLook" type="button">Back to the standard look</button>
+          </div>
+        </details>
+
+        <button class="go" id="save" type="button">Show it</button>
+        <button class="plain" id="useOther" type="button">Use a different link</button>
+      </div>
+
+      <div class="err" id="err"></div>
+    </div>
+
+    <script>
+      // Stored in this object's settings, which travel inside the .pptx. Only
+      // the read-only embed link belongs here, never the sidebar's token.
+      var KEY = "claper.slide";
+
+      // Settings are per add-in instance, so the sidebar hands the link over
+      // through a presentation tag, which is per document. PowerPoint stores tag
+      // keys in upper case.
+      var DECK_TAG = "CLAPERLINK";
+
+      function tagsUsable() {
+        try {
+          return typeof PowerPoint !== "undefined" &&
+            Office.context.requirements.isSetSupported("PowerPointApi", "1.3");
+        } catch (e) {
+          return false;
+        }
+      }
+
+      // The deck's standard look, set in the sidebar.
+      var LOOK_TAG = "CLAPERLOOK";
+
+      function readTagValue(key) {
+        if (!tagsUsable()) return Promise.resolve("");
+        return PowerPoint.run(function (context) {
+          var tag = context.presentation.tags.getItemOrNullObject(key);
+          tag.load("value");
+          return context.sync().then(function () {
+            return tag.isNullObject ? "" : tag.value || "";
+          });
+        }).catch(function () { return ""; });
+      }
+
+      function readDeckLink() { return readTagValue(DECK_TAG); }
+
+      function readDeckLook() {
+        return readTagValue(LOOK_TAG).then(function (raw) {
+          if (!raw) return null;
+          try {
+            var parsed = JSON.parse(raw);
+            var clean = {};
+            ["theme", "radius", "shadow", "text", "bar", "bg", "counts"].forEach(function (f) {
+              if (typeof parsed[f] === "string" && parsed[f]) clean[f] = parsed[f];
+            });
+            return clean;
+          } catch (e) {
+            return null;
+          }
+        });
+      }
+
+      var state = {
+        link: "",
+        show: "interaction",
+        poll: null,
+        quiz: null,
+        form: null,
+        theme: "light",
+        panel: "off",
+        bg: "",
+        radius: "soft",
+        shadow: "off",
+        counts: "both",
+        // Empty means the theme's colour.
+        text: "",
+        bar: ""
+      };
+
+      // A static file cannot render gettext, so the English text is the key into
+      // the dictionary for Office's display language.
+      var dict = {};
+
+      function t(text) { return dict[text] || text; }
+
+      function translatePage(root) {
+        var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
+        var nodes = [];
+        while (walker.nextNode()) nodes.push(walker.currentNode);
+        nodes.forEach(function (node) {
+          var raw = node.nodeValue;
+          var key = raw.replace(/\s+/g, " ").trim();
+          if (!key) return;
+          var hit = dict[key];
+          if (!hit || hit === key) return;
+
+          // The key is the collapsed text, so a sentence wrapped across lines in
+          // the markup never contains it; replace the whole node instead.
+          node.nodeValue = raw.match(/^\s*/)[0] + hit + raw.match(/\s*$/)[0];
+        });
+        ["placeholder", "title", "aria-label"].forEach(function (attr) {
+          root.querySelectorAll("[" + attr + "]").forEach(function (el) {
+            var hit = dict[el.getAttribute(attr)];
+            if (hit) el.setAttribute(attr, hit);
+          });
+        });
+      }
+
+      function pickLocale(all, wanted) {
+        if (!wanted) return null;
+        var lower = String(wanted).toLowerCase();
+        var base = lower.split("-")[0];
+        var keys = Object.keys(all);
+        var exact = keys.filter(function (k) { return k.toLowerCase() === lower; })[0];
+        if (exact) return exact;
+        return keys.filter(function (k) { return k.toLowerCase().split("-")[0] === base; })[0] || null;
+      }
+
+      // Fetched from this page's own origin rather than the block's link, which
+      // the first screen does not have yet.
+      function loadLanguage() {
+        var wanted;
+        try { wanted = Office.context.displayLanguage; } catch (e) { wanted = null; }
+        if (!wanted) return Promise.resolve();
+
+        return fetch(window.location.origin + "/addin/strings.json")
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .then(function (all) {
+            if (!all) return;
+            var locale = pickLocale(all, wanted);
+            if (!locale) return;
+            dict = all[locale] || {};
+            translatePage(document.body);
+          })
+          .catch(function () {});
+      }
+
+      function $(id) { return document.getElementById(id); }
+      function say(text, ok) { var e = $("err"); e.className = "err" + (ok ? " ok" : ""); e.textContent = text || ""; }
+
+      function parseLink(url) {
+        try {
+          var u = new URL(url);
+          var ok = (u.protocol === "https:" || u.hostname === "localhost") &&
+                   u.pathname.indexOf("/embed/interaction/") === 0;
+          var token = u.pathname.slice("/embed/interaction/".length).replace(/\/+$/, "");
+          if (!ok || !token) return null;
+          return { origin: u.origin, token: token, base: u.origin + "/embed/interaction/" + token };
+        } catch (e) {
+          return null;
+        }
+      }
+
+      function viewUrl() {
+        var parts = parseLink(state.link);
+        if (!parts) return "";
+        var q = [
+          "theme=" + state.theme,
+          "panel=" + state.panel,
+          "radius=" + state.radius,
+          "shadow=" + state.shadow,
+          "counts=" + state.counts
+        ];
+        // Unset colours are left out so the block follows Claper's defaults.
+        if (state.text) q.push("text=" + encodeURIComponent(state.text));
+        if (state.bar) q.push("bar=" + encodeURIComponent(state.bar));
+        if (state.bg) q.push("bg=" + encodeURIComponent(state.bg));
+
+        if (state.show === "join" || state.show === "messages") {
+          q.unshift("show=" + state.show);
+        } else if (state.quiz) {
+          q.unshift("quiz=" + state.quiz);
+        } else if (state.form) {
+          q.unshift("form=" + state.form);
+        } else if (state.poll) {
+          q.unshift("poll=" + state.poll);
+        }
+        return parts.base + "?" + q.join("&");
+      }
+
+      function present() {
+        var url = viewUrl();
+        if (!url) { openSetup(false); return; }
+
+        var stage = $("stage");
+        stage.hidden = false;
+        $("setup").hidden = true;
+        $("frame").src = url;
+
+        // A replaced slide link would otherwise frame a bare 404 page. Only a
+        // 404 counts; a network error may pass while the room is watching.
+        var parts = parseLink(state.link);
+        if (parts) {
+          loadCatalogue(parts).catch(function (e) {
+            if (e.status !== 404) return;
+            $("frame").src = "about:blank";
+            openSetup(false);
+            say(t("This slide link no longer works. Ask the Claper sidebar for the current one."));
+          });
+        }
+      }
+
+      function reconfigure() {
+        $("frame").src = "about:blank";
+        $("stage").hidden = true;
+        say("");
+
+        var parts = parseLink(state.link);
+        if (!parts) { openSetup(false); return; }
+
+        openSetup(true);
+        loadCatalogue(parts)
+          .then(fillChoices)
+          .catch(function (e) { say(e.message); openSetup(false); });
+      }
+
+      function loadCatalogue(parts) {
+        return fetch(parts.origin + "/api/embed/" + parts.token + "/interactions")
+          .then(function (r) {
+            return r.json().catch(function () { return {}; }).then(function (body) {
+              if (!r.ok) {
+                var e = new Error(body.error || ("Claper answered " + r.status));
+                e.status = r.status;
+                throw e;
+              }
+              return body;
+            });
+          });
+      }
+
+      function fillChoices(body) {
+        var what = $("what");
+        what.innerHTML = "";
+
+        function add(value, text) {
+          var o = document.createElement("option");
+          o.value = value;
+          o.textContent = text;
+          what.appendChild(o);
+        }
+
+        function group(name) {
+          var g = document.createElement("optgroup");
+          g.label = t(name);
+          what.appendChild(g);
+          return g;
+        }
+
+        add("join", t("How to join (QR code and code)"));
+        add("messages", t("Messages from the audience"));
+        add("interaction", t("Whatever Claper is showing right now"));
+
+        var polls = body.polls || [];
+        if (polls.length) {
+          var gp = group(t("Polls"));
+          polls.forEach(function (p) {
+            var o = document.createElement("option");
+            o.value = "poll:" + p.id;
+            o.textContent = p.title;
+            gp.appendChild(o);
+          });
+        }
+
+        var quizzes = body.quizzes || [];
+        if (quizzes.length) {
+          var gq = group(t("Quizzes"));
+          quizzes.forEach(function (q) {
+            var o = document.createElement("option");
+            o.value = "quiz:" + q.id;
+            o.textContent = q.title;
+            gq.appendChild(o);
+          });
+        }
+
+        var forms = body.forms || [];
+        if (forms.length) {
+          var gf = group(t("Open questions"));
+          forms.forEach(function (f) {
+            var o = document.createElement("option");
+            o.value = "form:" + f.id;
+            o.textContent = f.title;
+            gf.appendChild(o);
+          });
+        }
+
+        var current = state.quiz
+          ? "quiz:" + state.quiz
+          : state.form
+            ? "form:" + state.form
+            : state.poll
+              ? "poll:" + state.poll
+              : state.show;
+        what.value = current;
+        if (!what.value) what.value = "join";
+      }
+
+      function readChoices() {
+        var value = $("what").value;
+        state.poll = null;
+        state.quiz = null;
+        state.form = null;
+
+        if (value.indexOf("poll:") === 0) {
+          state.show = "interaction";
+          state.poll = parseInt(value.slice(5), 10);
+        } else if (value.indexOf("quiz:") === 0) {
+          state.show = "interaction";
+          state.quiz = parseInt(value.slice(5), 10);
+        } else if (value.indexOf("form:") === 0) {
+          state.show = "interaction";
+          state.form = parseInt(value.slice(5), 10);
+        } else {
+          state.show = value;
+        }
+
+        ["theme", "panel", "radius", "shadow", "counts"].forEach(function (key) { state[key] = $(key).value; });
+
+        var own = $("ownColours").checked;
+        state.text = own ? $("text").value : "";
+        state.bar = own ? $("bar").value : "";
+
+        // Always sent: the host paints white unless told otherwise, so there is
+        // no default to follow.
+        state.bg = $("bg").value;
+      }
+
+      function openSetup(atStep2) {
+        $("setup").hidden = false;
+        $("stage").hidden = true;
+        $("step1").hidden = !!atStep2;
+        $("step2").hidden = !atStep2;
+        $("save").disabled = false;
+        $("connect").disabled = false;
+        $("url").value = state.link;
+        ["theme", "panel", "radius", "shadow", "counts"].forEach(function (key) { $(key).value = state[key]; });
+
+        var own = !!(state.text || state.bar);
+        $("ownColours").checked = own;
+        $("colours").hidden = !own;
+        if (state.text) $("text").value = state.text;
+        if (state.bar) $("bar").value = state.bar;
+        if (state.bg) $("bg").value = state.bg;
+      }
+
+      function goToStep2() {
+        var parts = parseLink($("url").value.trim());
+        if (!parts) { say(t("That does not look like a Claper slide link.")); return; }
+
+        state.link = parts.base;
+        $("connect").disabled = true;
+        say(t("Asking Claper…"));
+
+        loadCatalogue(parts)
+          .then(function (body) {
+            fillChoices(body);
+            $("intro").textContent = body.event && body.event.name
+              ? t("Connected to {name}. Choose what this slide shows.").replace("{name}", body.event.name)
+              : t("Choose what this slide shows.");
+            openSetup(true);
+            say("");
+          })
+          .catch(function (e) { say(e.message); })
+          .then(function () { $("connect").disabled = false; });
+      }
+
+      Office.onReady(function () {
+        var saved = null;
+        try { saved = JSON.parse(Office.context.document.settings.get(KEY) || "null"); } catch (e) {}
+        if (saved) state = Object.assign(state, saved);
+
+        // The deck's link wins over the one saved here, so a new link reaches
+        // blocks already on slides.
+        readDeckLink().then(function (deckLink) {
+          var fromDeck = deckLink && parseLink(deckLink);
+          // A different link is a different event, where the saved question id
+          // may name another question. Drop the choice but keep the look.
+          var moved = fromDeck && saved && saved.link && saved.link !== fromDeck.base;
+
+          if (fromDeck) state.link = fromDeck.base;
+
+          if (moved) {
+            state.poll = null;
+            state.quiz = null;
+            state.form = null;
+            state.show = "interaction";
+            saved = null;
+          }
+
+          // Only a new block takes the deck's standard look; configured blocks
+          // keep theirs.
+          var carry = saved
+            ? Promise.resolve()
+            : readDeckLook().then(function (look) {
+                if (look) state = Object.assign(state, look);
+              });
+
+          return carry
+            .then(loadLanguage)
+            .then(function () { decide(saved, moved); });
+        });
+
+        function decide(saved, moved) {
+          if (saved && saved.link && state.link) {
+            present();
+          } else if (state.link) {
+            reconfigure();
+            if (moved) {
+              say(t("This presentation now belongs to a different event. Choose what this slide shows."));
+            }
+          } else {
+            openSetup(false);
+          }
+        }
+
+        $("change").addEventListener("click", reconfigure);
+        $("ownColours").addEventListener("change", function () {
+          $("colours").hidden = !$("ownColours").checked;
+        });
+
+        $("resetLook").addEventListener("click", function () {
+          // The deck's standard where the sidebar set one, Claper's otherwise.
+          readDeckLook().then(function (look) {
+            $("theme").value = (look && look.theme) || "light";
+            $("panel").value = "off";
+            $("radius").value = (look && look.radius) || "soft";
+            $("shadow").value = (look && look.shadow) || "off";
+            $("counts").value = (look && look.counts) || "both";
+            $("bg").value = (look && look.bg) || "#ffffff";
+            var own = !!(look && (look.text || look.bar));
+            $("ownColours").checked = own;
+            $("colours").hidden = !own;
+            if (look && look.text) $("text").value = look.text;
+            if (look && look.bar) $("bar").value = look.bar;
+            say(t("Set back to the standard look. Save it below to apply."), true);
+          });
+        });
+        $("connect").addEventListener("click", goToStep2);
+        $("url").addEventListener("keydown", function (e) { if (e.key === "Enter") goToStep2(); });
+        $("useOther").addEventListener("click", function () { openSetup(false); say(""); });
+
+        $("save").addEventListener("click", function () {
+          readChoices();
+          $("save").disabled = true;
+
+          try {
+            Office.context.document.settings.set(KEY, JSON.stringify(state));
+            Office.context.document.settings.saveAsync(function (result) {
+              if (result.status === Office.AsyncResultStatus.Succeeded) {
+                present();
+              } else {
+                $("save").disabled = false;
+                say(t("PowerPoint could not save this:") + " " + (result.error && result.error.message));
+              }
+            });
+          } catch (e) {
+            $("save").disabled = false;
+            say(t("PowerPoint could not save this."));
+          }
+        });
+      });
+    </script>
+  </body>
+</html>
