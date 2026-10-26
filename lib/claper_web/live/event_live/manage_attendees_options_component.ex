@@ -40,6 +40,31 @@ defmodule ClaperWeb.EventLive.ManageAttendeesOptionsComponent do
       <div class="space-y-2 px-1">
         <.toggle_row
           label={
+            if @event.self_paced,
+              do: gettext("Follow the presenter again"),
+              else: gettext("Let people answer at their own pace")
+          }
+          checked={@event.self_paced}
+          key={:self_paced}
+          show_shortcut={@show_shortcut}
+        >
+          <:icon>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="h-5 w-5"
+            >
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M9 6h11" /><path d="M9 12h11" /><path d="M9 18h11" /><path d="M5 6v.01" /><path d="M5 12v.01" /><path d="M5 18v.01" />
+            </svg>
+          </:icon>
+        </.toggle_row>
+        <.toggle_row
+          label={
             if @state.chat_enabled, do: gettext("Disable messages"), else: gettext("Enable messages")
           }
           checked={@state.chat_enabled}

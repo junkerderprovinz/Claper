@@ -30,6 +30,10 @@ defmodule Claper.Presentations.PresentationState do
     field :banned, {:array, :string}, default: []
     field :show_only_pinned, :boolean, default: false
     field :show_attendee_count, :boolean, default: true
+    # Which option the wheel last landed on. Here rather than in a broadcast
+    # alone, so somebody who joins after the spin sees the result instead of an
+    # empty wheel.
+    field :wheel_opt_id, :integer
 
     belongs_to :presentation_file, Claper.Presentations.PresentationFile
 
@@ -50,7 +54,8 @@ defmodule Claper.Presentations.PresentationState do
       :anonymous_chat_enabled,
       :show_only_pinned,
       :show_attendee_count,
-      :message_reaction_enabled
+      :message_reaction_enabled,
+      :wheel_opt_id
     ])
     |> validate_required([])
   end

@@ -5,6 +5,7 @@ defmodule Claper.Quizzes.QuizResponse do
   @type t :: %__MODULE__{
           id: integer(),
           attendee_identifier: String.t() | nil,
+          name: String.t() | nil,
           quiz: Claper.Quizzes.Quiz.t() | nil,
           quiz_question: Claper.Quizzes.QuizQuestion.t() | nil,
           quiz_question_opt: Claper.Quizzes.QuizQuestionOpt.t() | nil,
@@ -15,6 +16,10 @@ defmodule Claper.Quizzes.QuizResponse do
 
   schema "quiz_responses" do
     field :attendee_identifier, :string
+    # What to call this person on a leaderboard. The identifier above is opaque
+    # by design, and a board of opaque identifiers is one nobody can find
+    # themselves in.
+    field :name, :string
 
     belongs_to :quiz, Claper.Quizzes.Quiz
     belongs_to :quiz_question, Claper.Quizzes.QuizQuestion
@@ -29,6 +34,7 @@ defmodule Claper.Quizzes.QuizResponse do
     quiz_response
     |> cast(attrs, [
       :attendee_identifier,
+      :name,
       :quiz_id,
       :quiz_question_id,
       :quiz_question_opt_id

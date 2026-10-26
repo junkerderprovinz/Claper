@@ -82,6 +82,49 @@ defmodule Claper.Accounts.UserToken do
     {:ok, query}
   end
 
+  @addin_context "addin_account"
+
+  @doc """
+  Returns the context string for the PowerPoint sidebar's personal key.
+  """
+  def addin_account_context, do: @addin_context
+
+  @doc """
+  Builds the personal key the PowerPoint sidebar signs in with.
+
+  The key is bound to the user rather than to an event, so the sidebar can
+  create events. It does not expire and is revoked from the account settings.
+  `sent_to` holds the email, so changing the address invalidates it.
+  """
+  def build_addin_account_token(user) do
+    build_hashed_token(user, @addin_context, user.email)
+  end
+
+  @doc """
+  Returns the query for the user of a personal sidebar key.
+
+  There is no age check; the key stops working when the account's email changes.
+  """
+  def verify_addin_account_token_query(token) when is_binary(token) do
+    case Base.url_decode64(token, padding: false) do
+      {:ok, decoded_token} ->
+        hashed_token = :crypto.hash(@hash_algorithm, decoded_token)
+
+        query =
+          from token in token_and_context_query(hashed_token, @addin_context),
+            join: user in assoc(token, :user),
+            where: token.sent_to == user.email and is_nil(user.deleted_at),
+            select: user
+
+        {:ok, query}
+
+      :error ->
+        :error
+    end
+  end
+
+  def verify_addin_account_token_query(_token), do: :error
+
   @doc """
   Builds a token and its hash to be delivered to the user's email.
 

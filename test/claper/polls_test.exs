@@ -176,4 +176,186 @@ defmodule Claper.PollsTest do
                )
     end
   end
+
+  # A scale IS a poll: the same question, the same options, the same one vote
+  # each. What changes is that the options are ordered, so they are drawn as a
+  # row and an average is worth printing. Giving it a column rather than a
+  # table of its own is what lets everything a poll already has apply to it.
+  describe "a poll drawn as a scale" do
+    import Claper.{PollsFixtures, PresentationsFixtures}
+
+    alias Claper.Polls.Poll
+
+    defp scale(votes) do
+      file = presentation_file_fixture()
+
+      {:ok, poll} =
+        Polls.create_poll(%{
+          "title" => "how much do you agree",
+          "presentation_file_id" => file.id,
+          "position" => 1,
+          "style" => "scale",
+          "poll_opts" =>
+            Enum.map(votes, fn {label, count} -> %{"content" => label, "vote_count" => count} end)
+        })
+
+      Polls.get_poll!(poll.id)
+    end
+
+    test "a poll is bars unless it is asked to be a scale" do
+      file = presentation_file_fixture()
+      assert poll_fixture(%{presentation_file_id: file.id}).style == "bars"
+    end
+
+    test "the average is the position in the row, so labels can be words" do
+      poll = scale([{"never", 1}, {"sometimes", 0}, {"always", 1}])
+
+      assert Poll.average(poll) == 2.0
+    end
+
+    test "nobody having answered is not an average of zero" do
+      assert Poll.average(scale([{"never", 0}, {"always", 0}])) == nil
+    end
+
+    test "a poll drawn as bars has no average to print" do
+      file = presentation_file_fixture()
+      assert Poll.average(poll_fixture(%{presentation_file_id: file.id})) == nil
+    end
+
+    # Ticking three boxes on a scale from one to five is not a rating, and the
+    # average underneath would be arithmetic on nothing.
+    test "a scale cannot also take several answers" do
+      file = presentation_file_fixture()
+
+      assert {:error, changeset} =
+               Polls.create_poll(%{
+                 "title" => "both at once",
+                 "presentation_file_id" => file.id,
+                 "position" => 1,
+                 "style" => "scale",
+                 "multiple" => true,
+                 "poll_opts" => [%{"content" => "1"}, %{"content" => "5"}]
+               })
+
+      assert %{multiple: ["a scale takes one answer"]} = errors_on(changeset)
+    end
+
+    test "a style that is neither is refused" do
+      file = presentation_file_fixture()
+
+      assert {:error, changeset} =
+               Polls.create_poll(%{
+                 "title" => "what is this",
+                 "presentation_file_id" => file.id,
+                 "position" => 1,
+                 "style" => "pie chart",
+                 "poll_opts" => [%{"content" => "a"}, %{"content" => "b"}]
+               })
+
+      assert errors_on(changeset)[:style]
+    end
+  end
+
+  # A ranking's answer is an order, not a choice, which is the one thing that
+  # separates it from the other two. It still fits in poll_votes: the unique
+  # index that once allowed one vote per person was dropped for multiple-choice
+  # polls, so several rows per person is the shape the table already takes.
+  describe "a poll people put in order" do
+    import Claper.PresentationsFixtures
+
+    alias Claper.Polls.Poll
+
+    defp ranking(labels) do
+      # With the event preloaded: rank/4 broadcasts on the event uuid.
+      file = presentation_file_fixture(%{}, [:event])
+
+      {:ok, poll} =
+        Polls.create_poll(%{
+          "title" => "what should we do first",
+          "presentation_file_id" => file.id,
+          "position" => 1,
+          "style" => "ranking",
+          "poll_opts" => Enum.map(labels, &%{"content" => &1})
+        })
+
+      {Polls.get_poll!(poll.id), file}
+    end
+
+    test "an unanswered ranking keeps the order the author wrote" do
+      {poll, _file} = ranking(["a", "b", "c"])
+
+      assert [{%{content: "a"}, nil}, {%{content: "b"}, nil}, {%{content: "c"}, nil}] =
+               Poll.ranked(poll, [])
+    end
+
+    test "one person's order is the result while they are the only one" do
+      {poll, file} = ranking(["a", "b", "c"])
+      [a, b, c] = poll.poll_opts
+
+      Polls.rank("someone", file.event.uuid, [c, a, b], poll.id)
+
+      assert [{%{content: "c"}, 1.0}, {%{content: "a"}, 2.0}, {%{content: "b"}, 3.0}] =
+               Poll.ranked(Polls.get_poll!(poll.id), Polls.list_poll_votes(poll.id))
+    end
+
+    # The result of a ranking is where things landed on average, not how often
+    # they were picked. Two people who disagree meet in the middle.
+    test "two people who disagree average out" do
+      {poll, file} = ranking(["a", "b"])
+      [a, b] = poll.poll_opts
+
+      Polls.rank("first", file.event.uuid, [a, b], poll.id)
+      Polls.rank("second", file.event.uuid, [b, a], poll.id)
+
+      assert [{_, 1.5}, {_, 1.5}] =
+               Poll.ranked(Polls.get_poll!(poll.id), Polls.list_poll_votes(poll.id))
+    end
+
+    test "an option nobody ranked keeps its place at the end" do
+      {poll, file} = ranking(["a", "b", "c"])
+      [a, _b, c] = poll.poll_opts
+
+      Polls.rank("someone", file.event.uuid, [c, a], poll.id)
+
+      result = Poll.ranked(Polls.get_poll!(poll.id), Polls.list_poll_votes(poll.id))
+
+      assert [{%{content: "c"}, 1.0}, {%{content: "a"}, 2.0}, {%{content: "b"}, nil}] = result
+    end
+
+    test "a ranking cannot also take several answers" do
+      file = presentation_file_fixture()
+
+      assert {:error, changeset} =
+               Polls.create_poll(%{
+                 "title" => "both at once",
+                 "presentation_file_id" => file.id,
+                 "position" => 1,
+                 "style" => "ranking",
+                 "multiple" => true,
+                 "poll_opts" => [%{"content" => "a"}, %{"content" => "b"}]
+               })
+
+      assert %{multiple: ["a ranking uses every answer"]} = errors_on(changeset)
+    end
+
+    # A ranking has no winner by frequency, and "everyone picked all of them" is
+    # a number without a meaning.
+    test "ranking does not touch the vote counts" do
+      {poll, file} = ranking(["a", "b"])
+      [a, b] = poll.poll_opts
+
+      Polls.rank("someone", file.event.uuid, [a, b], poll.id)
+
+      assert Enum.all?(Polls.get_poll!(poll.id).poll_opts, &(&1.vote_count == 0))
+    end
+
+    test "the same option twice in one order is counted once" do
+      {poll, file} = ranking(["a", "b"])
+      [a, _b] = poll.poll_opts
+
+      Polls.rank("someone", file.event.uuid, [a, a], poll.id)
+
+      assert length(Polls.list_poll_votes(poll.id)) == 1
+    end
+  end
 end

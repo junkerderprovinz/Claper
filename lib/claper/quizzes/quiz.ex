@@ -9,6 +9,7 @@ defmodule Claper.Quizzes.Quiz do
           enabled: boolean(),
           show_results: boolean(),
           allow_anonymous: boolean(),
+          seconds_per_question: integer() | nil,
           lti_line_item_url: String.t() | nil,
           lti_resource: Lti13.Resources.Resource.t() | nil,
           quiz_responses: [Claper.Quizzes.QuizResponse.t()] | nil,
@@ -24,6 +25,9 @@ defmodule Claper.Quizzes.Quiz do
     field :enabled, :boolean, default: false
     field :show_results, :boolean, default: true
     field :allow_anonymous, :boolean, default: false
+    # How long the room has per question. Null means no limit, which is what
+    # every quiz had before this existed.
+    field :seconds_per_question, :integer
     field :lti_line_item_url, :string
 
     belongs_to :presentation_file, Claper.Presentations.PresentationFile
@@ -48,10 +52,18 @@ defmodule Claper.Quizzes.Quiz do
       :enabled,
       :show_results,
       :allow_anonymous,
+      :seconds_per_question,
       :lti_resource_id,
       :lti_line_item_url
     ])
     |> validate_required([:title, :position, :presentation_file_id])
+    # Five seconds is not a question, and an hour is not a timer. Outside that
+    # the value is refused rather than clamped, so an author who typed a wrong
+    # number is told instead of quietly given a different one.
+    |> validate_number(:seconds_per_question,
+      greater_than_or_equal_to: 5,
+      less_than_or_equal_to: 600
+    )
     |> cast_assoc(:quiz_questions,
       required: true,
       with: &Claper.Quizzes.QuizQuestion.changeset/2,

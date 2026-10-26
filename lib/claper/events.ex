@@ -8,7 +8,7 @@ defmodule Claper.Events do
   import Ecto.Query, warn: false
 
   alias Claper.{Accounts, Presentations, Repo}
-  alias Claper.Events.{Event, ActivityLeader}
+  alias Claper.Events.{Event, ActivityLeader, EventToken}
 
   @default_page_size 5
 
@@ -348,6 +348,218 @@ defmodule Claper.Events do
   end
 
   @doc """
+  Creates an embeddable presenter link for an event and returns its raw token.
+
+  Replaces any previous link of the event and disconnects frames still open on
+  it. Only the hash of the token is stored.
+
+  ## Examples
+
+      iex> create_presenter_embed_token(event, user)
+      {:ok, "TfEAFDU-..."}
+
+      iex> create_presenter_embed_token(event, someone_else)
+      {:error, :unauthorized}
+
+  """
+  def create_presenter_embed_token(%Event{} = event, %Accounts.User{} = user) do
+    if leads_event?(event, user) do
+      do_create_presenter_embed_token(event, user)
+    else
+      {:error, :unauthorized}
+    end
+  end
+
+  @doc """
+  Creates an embeddable presenter link on behalf of the PowerPoint sidebar.
+
+  The caller has already authenticated the sidebar, so the link is attributed to
+  the event's owner. Existing links are kept, since several decks can embed the
+  same event; `revoke_presenter_embed_tokens/2` still removes them all.
+  """
+  def create_presenter_embed_token_for_addin(%Event{} = event) do
+    with %Event{user: %Accounts.User{} = owner} <- Repo.preload(event, :user),
+         {encoded_token, event_token} <- EventToken.build_presenter_embed_token(event, owner),
+         {:ok, _} <- Repo.insert(event_token) do
+      Claper.Audit.log_resource_action(owner, "event.embed_token.create", "event", event.id)
+      {:ok, encoded_token}
+    else
+      {:error, changeset} -> {:error, changeset}
+      _ -> {:error, :no_owner}
+    end
+  end
+
+  defp do_create_presenter_embed_token(%Event{} = event, %Accounts.User{} = user) do
+    {encoded_token, event_token} = EventToken.build_presenter_embed_token(event, user)
+
+    result =
+      Repo.transaction(fn ->
+        {replaced, _} =
+          Repo.delete_all(
+            EventToken.event_and_contexts_query(event, [EventToken.presenter_embed_context()])
+          )
+
+        case Repo.insert(event_token) do
+          {:ok, _event_token} -> replaced
+          {:error, changeset} -> Repo.rollback(changeset)
+        end
+      end)
+
+    with {:ok, replaced} <- result do
+      Claper.Audit.log_resource_action(user, "event.embed_token.create", "event", event.id)
+      if replaced > 0, do: broadcast_event(event.uuid, {:presenter_embed_revoked})
+      {:ok, encoded_token}
+    end
+  end
+
+  @doc """
+  Revokes every embeddable presenter link of an event and disconnects frames
+  that are still open.
+  """
+  def revoke_presenter_embed_tokens(%Event{} = event, %Accounts.User{} = user) do
+    if leads_event?(event, user) do
+      {:ok, delete_presenter_embed_tokens(event, user)}
+    else
+      {:error, :unauthorized}
+    end
+  end
+
+  # No authorization check: callers either checked the user already or have none,
+  # as when an event is terminated.
+  defp delete_presenter_embed_tokens(%Event{} = event, user) do
+    {count, _} =
+      Repo.delete_all(
+        EventToken.event_and_contexts_query(event, [EventToken.presenter_embed_context()])
+      )
+
+    if count > 0 do
+      if user,
+        do: Claper.Audit.log_resource_action(user, "event.embed_token.revoke", "event", event.id)
+
+      broadcast_event(event.uuid, {:presenter_embed_revoked})
+    end
+
+    count
+  end
+
+  @doc """
+  Returns true when the user owns the event or is one of its activity leaders.
+
+  ## Examples
+
+      iex> leads_event?(event, user)
+      true
+
+  """
+  def leads_event?(%Event{} = event, %Accounts.User{} = user) do
+    from(e in Event,
+      left_join: a in ActivityLeader,
+      on: e.id == a.event_id,
+      where: e.id == ^event.id and (e.user_id == ^user.id or a.email == ^user.email),
+      select: 1,
+      limit: 1
+    )
+    |> Repo.one()
+    |> is_integer()
+  end
+
+  @doc """
+  Returns true when an event has an embeddable presenter link.
+  """
+  def presenter_embed_token?(%Event{} = event) do
+    EventToken.event_and_contexts_query(event, [EventToken.presenter_embed_context()])
+    |> Repo.exists?()
+  end
+
+  @doc """
+  Returns true when an event has a PowerPoint sidebar token.
+  """
+  def addin_token?(%Event{} = event) do
+    EventToken.event_and_contexts_query(event, [EventToken.addin_context()])
+    |> Repo.exists?()
+  end
+
+  @doc """
+  Gets the event an embeddable presenter token was issued for.
+
+  Returns `nil` for an unknown, malformed or revoked token, and for a token
+  whose event has expired.
+  """
+  def get_event_by_presenter_embed_token(token, preload \\ [])
+
+  def get_event_by_presenter_embed_token(token, preload) when is_binary(token) do
+    case EventToken.verify_presenter_embed_token_query(token) do
+      {:ok, query} -> query |> Repo.one() |> Repo.preload(preload)
+      :error -> nil
+    end
+  end
+
+  def get_event_by_presenter_embed_token(_token, _preload), do: nil
+
+  @doc """
+  Creates the token the PowerPoint sidebar uses for an event, replacing any
+  previous one.
+
+  It can create polls, so it is kept separate from the embed token, which ends
+  up inside shared documents.
+  """
+  def create_addin_token(%Event{} = event, %Accounts.User{} = user) do
+    if leads_event?(event, user) do
+      {encoded_token, event_token} = EventToken.build_addin_token(event, user)
+
+      with {:ok, :ok} <- replace_addin_token(event, event_token) do
+        Claper.Audit.log_resource_action(user, "event.addin_token.create", "event", event.id)
+        {:ok, encoded_token}
+      end
+    else
+      {:error, :unauthorized}
+    end
+  end
+
+  defp replace_addin_token(event, event_token) do
+    Repo.transaction(fn ->
+      Repo.delete_all(EventToken.event_and_contexts_query(event, [EventToken.addin_context()]))
+
+      case Repo.insert(event_token) do
+        {:ok, _} -> :ok
+        {:error, changeset} -> Repo.rollback(changeset)
+      end
+    end)
+  end
+
+  @doc """
+  Revokes the sidebar token of an event.
+  """
+  def revoke_addin_tokens(%Event{} = event, %Accounts.User{} = user) do
+    if leads_event?(event, user) do
+      {count, _} =
+        Repo.delete_all(EventToken.event_and_contexts_query(event, [EventToken.addin_context()]))
+
+      if count > 0 do
+        Claper.Audit.log_resource_action(user, "event.addin_token.revoke", "event", event.id)
+      end
+
+      {:ok, count}
+    else
+      {:error, :unauthorized}
+    end
+  end
+
+  @doc """
+  Gets the event a sidebar token belongs to, or `nil`.
+  """
+  def get_event_by_addin_token(token, preload \\ [])
+
+  def get_event_by_addin_token(token, preload) when is_binary(token) do
+    case EventToken.verify_addin_token_query(token) do
+      {:ok, query} -> query |> Repo.one() |> Repo.preload(preload)
+      :error -> nil
+    end
+  end
+
+  def get_event_by_addin_token(_token, _preload), do: nil
+
+  @doc """
   Check if a user is a facilitator of a specific event.
 
   ## Examples
@@ -470,6 +682,9 @@ defmodule Claper.Events do
   @doc """
   Terminates an event.
 
+  Also deletes its embeddable presenter links, so clearing `expired_at` later
+  does not bring them back.
+
   ## Examples
 
       iex> terminate_event(event)
@@ -482,6 +697,7 @@ defmodule Claper.Events do
     |> Repo.update()
     |> case do
       {:ok, event} ->
+        delete_presenter_embed_tokens(event, nil)
         broadcast_all_users({:updated, event})
         broadcast_event(event.uuid, {:event_terminated, event.uuid})
         {:ok, event}

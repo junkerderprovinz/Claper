@@ -316,8 +316,13 @@ defmodule Claper.Quizzes do
   #   end
   # end
 
-  def submit_quiz(%User{} = user, event_uuid, quiz_opts, quiz_id) do
+  def submit_quiz(who, event_uuid, quiz_opts, quiz_id, name \\ nil)
+
+  def submit_quiz(%User{} = user, event_uuid, quiz_opts, quiz_id, name) do
     quiz_opts = quiz_opts |> Enum.uniq_by(& &1.id) |> Enum.with_index()
+    # A logged in person already has a name on their account, so the one the
+    # caller passes is only a fallback.
+    name = if name in [nil, ""], do: display_name(user), else: name
 
     case Enum.reduce(quiz_opts, Ecto.Multi.new(), fn {opt, index}, multi ->
            unique_key = "#{opt.id}_#{user.id + index}"
@@ -330,6 +335,7 @@ defmodule Claper.Quizzes do
            |> Ecto.Multi.insert(
              "insert_quiz_response_#{unique_key}",
              Ecto.build_assoc(user, :quiz_responses, %{
+               name: name,
                quiz_question_opt_id: opt.id,
                quiz_question_id: opt.quiz_question_id,
                quiz_id: quiz_id
@@ -345,7 +351,7 @@ defmodule Claper.Quizzes do
     end
   end
 
-  def submit_quiz(attendee_identifier, event_uuid, quiz_opts, quiz_id)
+  def submit_quiz(attendee_identifier, event_uuid, quiz_opts, quiz_id, name)
       when is_binary(attendee_identifier) and is_list(quiz_opts) do
     quiz_opts = Enum.uniq_by(quiz_opts, & &1.id)
 
@@ -359,6 +365,9 @@ defmodule Claper.Quizzes do
              {:insert_quiz_response, opt.id},
              QuizResponse.changeset(%QuizResponse{}, %{
                attendee_identifier: attendee_identifier,
+               # The name the person already gave the chat, carried onto the
+               # answer so a leaderboard can be drawn without asking twice.
+               name: name,
                quiz_question_opt_id: opt.id,
                quiz_question_id: opt.quiz_question_id,
                quiz_id: quiz_id
@@ -371,6 +380,80 @@ defmodule Claper.Quizzes do
         broadcast({:ok, quiz, event_uuid}, :quiz_updated)
         {:ok, quiz}
     end
+  end
+
+  # What to call a logged in person on a board: the name on the account, or the
+  # part of the address in front of the @ when there is none. Never the whole
+  # address, which would put somebody's email on a wall.
+  defp display_name(%User{} = user) do
+    case String.trim("#{user.first_name} #{user.last_name}") do
+      "" -> user.email |> to_string() |> String.split("@") |> List.first()
+      name -> name
+    end
+  end
+
+  @doc """
+  Who did best, as `{name, correct, total, finished_at}` from best to worst.
+
+  A quiz without a board tells the room an average and nothing else, which is
+  the one number nobody in it is interested in. This is the other thing a quiz
+  is for.
+
+  Grouped by person rather than by response: somebody answering four questions
+  is one row with four chances at a point, not four rows. Ties are broken by
+  who got there first, which is what makes answering quickly worth anything.
+
+  A person who never gave a name is left out entirely rather than shown as an
+  identifier: the identifier is opaque on purpose, and a row nobody can claim
+  is a row that only takes up space on a slide.
+
+  ## Examples
+
+      iex> leaderboard(123)
+      [{"Ada", 4, 4, ~N[2026-09-07 12:00:00]}, {"Grace", 3, 4, ~N[2026-09-07 12:00:02]}]
+
+  """
+  def leaderboard(quiz_id, limit \\ 10) do
+    quiz = get_quiz!(quiz_id, [:quiz_questions, quiz_questions: :quiz_question_opts])
+
+    correct =
+      quiz.quiz_questions
+      |> Enum.flat_map(& &1.quiz_question_opts)
+      |> Enum.filter(& &1.is_correct)
+      |> MapSet.new(& &1.id)
+
+    total = length(quiz.quiz_questions)
+
+    from(r in QuizResponse,
+      where: r.quiz_id == ^quiz_id,
+      select: %{
+        user_id: r.user_id,
+        attendee_identifier: r.attendee_identifier,
+        name: r.name,
+        opt: r.quiz_question_opt_id,
+        at: r.inserted_at
+      }
+    )
+    |> Repo.all()
+    # One row per person, whether they were logged in or not, which is the same
+    # grouping calculate_average_score/1 uses.
+    |> Enum.group_by(fn row -> row.user_id || row.attendee_identifier end)
+    |> Enum.map(fn {_who, rows} ->
+      {
+        rows |> Enum.map(& &1.name) |> Enum.find(&(&1 not in [nil, ""])),
+        Enum.count(rows, &MapSet.member?(correct, &1.opt)),
+        total,
+        rows |> Enum.map(& &1.at) |> Enum.max(NaiveDateTime)
+      }
+    end)
+    |> Enum.reject(fn {name, _score, _total, _at} -> name in [nil, ""] end)
+    # Most right answers first, and among equals whoever finished first. The
+    # time goes through to_erl because a tuple of {integer, NaiveDateTime} has
+    # no useful order of its own.
+    |> Enum.sort_by(fn {_name, score, _total, at} ->
+      {-score, NaiveDateTime.to_erl(at)}
+    end)
+    |> Enum.take(limit)
   end
 
   @doc """

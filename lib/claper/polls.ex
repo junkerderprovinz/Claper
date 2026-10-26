@@ -257,6 +257,145 @@ defmodule Claper.Polls do
     )
   end
 
+  @doc """
+  Records an order somebody put the options in, best first.
+
+  A ranking is one row per option rather than one row per person, each carrying
+  the place it was given. That is what lets the result be an average place, and
+  it is why this does not go through `vote/4`: there an answer is a choice, here
+  it is a position, and every option gets one.
+
+  Nothing is counted into `vote_count`. A ranking has no winner by frequency,
+  and a count that says "everyone picked all of them" is a number without a
+  meaning.
+
+  ## Examples
+
+      iex> rank("abc123", event_uuid, [opt_b, opt_a], poll_id)
+      {:ok, %Poll{}}
+
+  """
+  def rank(who, event_uuid, ordered_opts, poll_id) when is_list(ordered_opts) do
+    ordered_opts = Enum.uniq_by(ordered_opts, & &1.id)
+
+    multi =
+      ordered_opts
+      |> Enum.with_index(1)
+      |> Enum.reduce(Ecto.Multi.new(), fn {opt, place}, multi ->
+        attrs = %{
+          poll_opt_id: opt.id,
+          poll_id: poll_id,
+          rank: place
+        }
+
+        attrs =
+          if is_number(who),
+            do: Map.put(attrs, :user_id, who),
+            else: Map.put(attrs, :attendee_identifier, who)
+
+        Ecto.Multi.insert(
+          multi,
+          {:insert_rank, opt.id},
+          PollVote.changeset(%PollVote{}, attrs)
+        )
+      end)
+
+    case Repo.transaction(multi) do
+      {:ok, _} ->
+        poll = get_poll!(poll_id)
+        broadcast({:ok, poll, event_uuid}, :poll_updated)
+
+      {:error, _, changeset, _} ->
+        {:error, changeset}
+    end
+  end
+
+  @doc """
+  Spends a budget across the options, one row per option that got something.
+
+  `spent` is `%{poll_opt_id => points}`. Options given nothing are not written
+  at all: a zero carries no information and one row per option per person is
+  what a hundred-point poll in a full room would otherwise cost.
+
+  `vote_count` is deliberately left alone, the way `rank/4` leaves it alone.
+  Adding points into it would make the ordinary bar rendering come out right by
+  accident and make the number beside the bar a lie: it counts people, and
+  points are not people. The result is read back out of the rows instead, with
+  `Poll.spent/2`.
+  """
+  def allocate(who, event_uuid, spent, poll_id) when is_map(spent) do
+    multi =
+      spent
+      |> Enum.filter(fn {_opt_id, points} -> is_integer(points) and points > 0 end)
+      |> Enum.reduce(Ecto.Multi.new(), fn {opt_id, points}, multi ->
+        attrs = %{
+          poll_opt_id: opt_id,
+          poll_id: poll_id,
+          points: points
+        }
+
+        attrs =
+          if is_number(who),
+            do: Map.put(attrs, :user_id, who),
+            else: Map.put(attrs, :attendee_identifier, who)
+
+        Ecto.Multi.insert(
+          multi,
+          {:insert_points, opt_id},
+          PollVote.changeset(%PollVote{}, attrs)
+        )
+      end)
+
+    case Repo.transaction(multi) do
+      {:ok, _} ->
+        poll = get_poll!(poll_id)
+        broadcast({:ok, poll, event_uuid}, :poll_updated)
+
+      {:error, _, changeset, _} ->
+        {:error, changeset}
+    end
+  end
+
+  @doc """
+  Records one tap on the picture, as fractions of its width and height.
+
+  A pins poll has exactly one option, created with it, so the vote still hangs
+  off an option the way every other vote does and nothing downstream has to
+  learn about a vote without one.
+  """
+  def pin(who, event_uuid, {x, y}, poll_id) do
+    poll = get_poll!(poll_id)
+
+    case poll.poll_opts do
+      [opt | _] ->
+        attrs = %{poll_opt_id: opt.id, poll_id: poll_id, x: x, y: y}
+
+        attrs =
+          if is_number(who),
+            do: Map.put(attrs, :user_id, who),
+            else: Map.put(attrs, :attendee_identifier, who)
+
+        case %PollVote{} |> PollVote.changeset(attrs) |> Repo.insert() do
+          {:ok, _vote} -> broadcast({:ok, get_poll!(poll_id), event_uuid}, :poll_updated)
+          {:error, changeset} -> {:error, changeset}
+        end
+
+      _ ->
+        {:error, :no_option}
+    end
+  end
+
+  @doc """
+  Every vote cast on one poll, which for a ranking is every place given.
+
+  Read as a whole rather than aggregated in the database: the result is an
+  average place per option, and the poll is on a slide that redraws whenever
+  somebody answers, so the rows are wanted anyway.
+  """
+  def list_poll_votes(poll_id) do
+    from(v in PollVote, where: v.poll_id == ^poll_id) |> Repo.all()
+  end
+
   def vote(user_id, event_uuid, poll_opts, poll_id)
       when is_number(user_id) and is_list(poll_opts) do
     case Enum.reduce(poll_opts, Ecto.Multi.new(), fn opt, multi ->

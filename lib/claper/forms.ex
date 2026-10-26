@@ -266,6 +266,23 @@ defmodule Claper.Forms do
   end
 
   @doc """
+  Returns the submissions of a form, newest first.
+
+  ## Examples
+
+      iex> list_form_submits_for_form(123)
+      [%FormSubmit{}, ...]
+
+  """
+  def list_form_submits_for_form(form_id) do
+    from(fs in FormSubmit,
+      where: fs.form_id == ^form_id,
+      order_by: [desc: fs.inserted_at, desc: fs.id]
+    )
+    |> Repo.all()
+  end
+
+  @doc """
   Gets a single FormSubmit.
 
   ## Examples

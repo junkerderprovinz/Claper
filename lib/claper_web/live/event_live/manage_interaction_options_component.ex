@@ -38,6 +38,17 @@ defmodule ClaperWeb.EventLive.ManageInteractionOptionsComponent do
 
       <div class="space-y-2 px-1">
         <%= case @current_interaction do %>
+          <% %Claper.Polls.Poll{style: "wheel"} -> %>
+            <%!-- A wheel has no results to show or hide, because nobody answers
+            it. What it has is one action, and it belongs where every other
+            control for the current interaction already is. --%>
+            <button
+              type="button"
+              phx-click="spin-wheel"
+              class="btn-gradient w-full rounded-lg px-3 py-2 text-sm font-bold"
+            >
+              {if @state.wheel_opt_id, do: gettext("Spin again"), else: gettext("Spin the wheel")}
+            </button>
           <% %Claper.Polls.Poll{} -> %>
             <.toggle_row
               label={
